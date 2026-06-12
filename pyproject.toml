@@ -1,0 +1,11 @@
+[project]
+name = "rebot-isaacsim"
+version = "0.1.0"
+description = "reBotArm + Isaac Sim real-to-simulation joint mirror"
+requires-python = ">=3.10"
+
+[tool.uv.workspace]
+members = ["third_party/reBotArm_control_py"]
+
+[tool.uv]
+locked = false

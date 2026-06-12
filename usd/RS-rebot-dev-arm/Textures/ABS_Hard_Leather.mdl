@@ -1,0 +1,766 @@
+/******************************************************************************
+ *	 Copyright 2023 NVIDIA Corporation. All rights reserved.	 *
+ ******************************************************************************
+
+Permission is hereby granted by NVIDIA Corporation ("NVIDIA"), free of charge,
+to any person obtaining a copy of the sample definition code that uses our
+Material Definition Language (the "MDL Materials"), to reproduce and distribute
+the MDL Materials, including without limitation the rights to use, copy, merge,
+publish, distribute, and sell modified and unmodified copies of the MDL
+Materials, and to permit persons to whom the MDL Materials is furnished to do
+so, in all cases solely for use with NVIDIA's Material Definition Language,
+subject to the following further conditions:
+
+1. The above copyright notices, this list of conditions, and the disclaimer
+that follows shall be retained in all copies of one or more of the MDL
+Materials, including in any software with which the MDL Materials are bundled,
+redistributed, and/or sold, and included either as stand-alone text files,
+human-readable headers or in the appropriate machine-readable metadata fields
+within text or binary files as long as those fields can be easily viewed by the
+user, as applicable.
+2. The name of NVIDIA shall not be used to promote, endorse or advertise any
+Modified Version without specific prior written permission, except a) to comply
+ with the notice requirements otherwise contained herein; or b) to acknowledge
+the contribution(s) of NVIDIA.
+
+THE MDL MATERIALS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF COPYRIGHT, PATENT,
+TRADEMARK, OR OTHER RIGHT. IN NO EVENT SHALL NVIDIA CORPORATION BE LIABLE FOR
+ANY CLAIM, DAMAGES OR OTHER LIABILITY, INCLUDING ANY GENERAL, SPECIAL,
+INDIRECT, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, WHETHER IN AN ACTION OF
+CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF THE USE OR INABILITY TO USE
+THE MDL MATERIALS OR FROM OTHER DEALINGS IN THE MDL MATERIALS.
+*/
+
+
+mdl 1.6;
+
+import ::anno::*;
+import ::base::*;
+import ::df::*;
+import ::math::*;
+import ::state::*;
+import ::tex::*;
+import ::nvidia::core_definitions::blend_colors;
+import ::nvidia::core_definitions::dimension;
+
+
+const string COPYRIGHT =
+" Copyright 2023 NVIDIA Corporation. All rights reserved.\n"
+" MDL MATERIALS ARE PROVIDED PURSUANT TO AN END USER LICENSE  AGREEMENT,\n"
+" WHICH WAS ACCEPTED IN ORDER TO GAIN ACCESS TO THIS FILE.  IN PARTICULAR,\n"
+" THE MDL MATERIALS ARE PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND,\n"
+" EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF\n"
+" MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF\n"
+" COPYRIGHT, PATENT, TRADEMARK, OR OTHER RIGHT. IN NO EVENT SHALL NVIDIA\n"
+" CORPORATION BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, INCLUDING ANY\n"
+" GENERAL, SPECIAL,  INDIRECT, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, WHETHER IN\n"
+" AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF THE USE OR\n"
+" INABILITY TO USE THE MDL MATERIALS OR FROM OTHER DEALINGS IN THE MDL MATERIALS.\n";
+
+const string DESCRIPTION = "A synthetic leather material.";
+
+annotation preview_scale( float f);
+
+
+
+float remap(float input, float low, float high)
+{
+	//return low + input * (high - low);
+	return ::math::lerp(low, high, input);
+}
+
+int lowbias32(int x)
+{
+    x ^= x >>> 16;
+    x *= 0x7feb352d;
+    x ^= x >>> 15;
+    x *= 0x846ca68b;
+    x ^= x >>> 16;
+    return x;
+}
+
+float uint2float(int x)
+{
+    return float(x & 0x7FFFFFFF) + (x < 0 ? 2147483648.0 : 0.0);
+}
+
+
+
+float2 rnd22(int2 p) {
+	float2 ret_val = float2(
+		uint2float(lowbias32(p[0] + lowbias32(p[1]))) / 4294967296.f,
+		uint2float(lowbias32(p[0] + 32000 + lowbias32(p[1]))) / 4294967296.f
+	);
+    return ret_val;
+}
+
+float2x2 invert_2x2(float2x2 M)
+{
+	float det = M[0][0]*M[1][1] - M[0][1]*M[1][0];
+	//https://www.chilimath.com/lessons/advanced-algebra/inverse-of-a-2x2-matrix/
+	return (1.0 / det) * float2x2(M[1][1], -M[0][1], -M[1][0], M[0][0]);
+}
+
+float3 srgb2rgb(float3 val) 
+{
+	return ::math::pow(::math::max(val, float3(0.0f)), 2.2);
+}
+
+float3 rgb2srgb(float3 val) [[ anno::unused() ]] {
+    return ::math::pow( ::math::max(val, float3(0.f)), float3(1./2.2) );
+}
+
+
+float3 nonrepeat_lookup(
+	uniform texture_2d texture = texture_2d(),
+	::base::texture_coordinate_info uvw = ::base::coordinate_source(),
+	float texture_scale = 1.0,
+	float3 average_color = float3(0.5),
+	float patch_size = 8.0
+)
+{
+	
+	float2 uv_in = float2(uvw.position[0], uvw.position[1]) * texture_scale;
+	float Z =  patch_size;     // patch scale inside example texture
+	
+	float3 O = float3(0.f);
+	float2x2 M0 = float2x2(1.f,0.f, 0.5f, ::math::sqrt(3.f)/2.f);
+	float2x2 M = invert_2x2(M0); // transform matrix <-> tilted space
+	
+	float2 U = uv_in;
+	float2 V = M * uv_in; //pre-tilted hexa coordinates
+	int2 I = int2(::math::floor(V)); // hexa-tile id
+	
+	// The mean color needs to be determined in Photoshop then to make the
+	// average color work out, take the float value and calculate the apropriate
+	// mean value as (value^(1/2.2))
+
+	float3 m = average_color;
+	
+	float3 F = float3(::math::frac(V)[0], ::math::frac(V)[1], 0.f), W;
+	F[2] = 1.0 - F[0] - F[1]; // local hexa coordinates
+	
+	if( F[2] > 0.f )
+		O = (W[0] = F[2]) * (( ::tex::lookup_float3(texture, U/Z-rnd22(I))) - m)
+		  + (W[1] = F[1]) * (( ::tex::lookup_float3(texture, U/Z-rnd22(I+int2(0,1)))) - m)
+		  + (W[2] = F[0]) * (( ::tex::lookup_float3(texture, U/Z-rnd22(I+int2(1,0)))) - m);
+	else
+		O = (W[0] =      -F[2]) * (( ::tex::lookup_float3(texture, U/Z-rnd22(I+int2(1))))   - m)
+	      + (W[1] = 1.f - F[1]) * (( ::tex::lookup_float3(texture, U/Z-rnd22(I+int2(1, 0)))) - m)
+		  + (W[2] = 1.f - F[0]) * (( ::tex::lookup_float3(texture, U/Z-rnd22(I+int2(0, 1)))) - m);
+	O = m + O/::math::length(W);
+	O = ::math::clamp( (O), 0.0, 1.0);
+	
+	return float3(O);
+}
+
+float histogram_range(float input, float range = 1.0f, float position = 0.5f)
+{	
+	float low = ::math::clamp(1.0 - ::math::min(((1.0 - position) + range * 0.5), (1.0 - position) * 2), 0.0, 1.0);
+	float high = ::math::clamp(math::min((position + range * 0.5 ), position * 2.0), 0.0, 1.0);
+	return ::math::lerp(low, high, input);
+}
+
+float remap_xy_to_0_1(float input, float x, float y)
+{
+	return (input - x)/(y - x);
+}
+
+float histogram_scan_big(float input, float width, float position)
+{
+	return ::math::clamp(
+				remap_xy_to_0_1(input,
+					::math::lerp(-width, 1.0, position),
+					::math::lerp(0.0, 1.0 + width, position)),
+				0.0,
+				1.0);
+}
+
+float3 endless_normal(
+	uniform texture_2d texture = texture_2d(),
+	float factor = 1.0,
+	bool flip_tangent_u = false,
+	bool flip_tangent_v = false,
+	::base::texture_coordinate_info uvw = ::base::coordinate_source(),
+	float texture_scale = 10.0,
+	float3 average_color = float3(0.5, 0.5, 1.0),
+	float patch_size = 8.0
+	//bool srgb2rgb = false,
+	//bool rgb2srgb = false
+)
+{
+	float3 transformed_tangent_u = flip_tangent_u ? uvw.tangent_u : - uvw.tangent_u;
+    float3 transformed_tangent_v = flip_tangent_v ? uvw.tangent_v : - uvw.tangent_v;
+
+	// normalized Lookup
+	float3 tangent_space_normal =
+         (nonrepeat_lookup (
+			texture: texture,
+			uvw: uvw,
+			texture_scale: texture_scale,
+			average_color: average_color,
+			patch_size: patch_size
+		) - 0.5) * (2.0 * factor);
+			 
+	 return ::math::normalize(transformed_tangent_u * tangent_space_normal.x +
+          transformed_tangent_v * tangent_space_normal.y +
+          state::normal()*1.0); 
+}
+
+::base::texture_coordinate_info transform_coordinate_2(
+    float4x4 transform                                         
+        [[ anno::description("A transformation to be applied to the source coordinates. rotation_translation_scale() is a suggested means to compute the transformation matrix") ]],
+    ::base::texture_coordinate_info coordinate = ::base::texture_coordinate_info()
+        [[ anno::description("Coordinate, typically sourced from coordinate_source or coordinate_projection") ]]
+) [[ 
+    ::anno::description("Transform a texture coordinate by a matrix") ,
+    ::anno::noinline()
+  ]]
+{
+	// Version 2
+	float4 r_position = transform * float4(coordinate.position.x,coordinate.position.y,coordinate.position.z,1);
+	//Hack: try aproximating it for the case that the rotation is only aroud z and assuming the texture layout is nice and z is ~constant.
+	//just pretend there is no other rotation happening
+	//get rid of scaling and translation. Then extract fields where sin and cos would be in a simple 2d transform around z.
+	float4 u = transform[0];
+	float3 ru = ::math::normalize(float3(u.x,u.y,u.z));
+	float cos =  ru.x; 
+	float sin =  -ru.y;
+	
+	
+    return ::base::texture_coordinate_info(
+        float3(r_position.x,r_position.y,r_position.z),
+		math::normalize(cos * coordinate.tangent_u - sin * coordinate.tangent_v),
+		math::normalize(cos * coordinate.tangent_v + sin * coordinate.tangent_u));
+}
+
+::base::texture_coordinate_info vmat_transform(
+								float2 translation = float2(0.0, 0.0),
+								float rotation     = 0.0,				// rotation in degrees
+								float2 scaling     = float2(1.0, 1.0),
+								uniform ::base::texture_coordinate_system system = ::base::texture_coordinate_uvw,
+								uniform int uv_space       = 0
+)
+{
+	float rotation_rad = (rotation * 3.1415926535897932384626433832f) / 180.f;
+	float4x4 scale =
+	float4x4(1.0 /scaling.x, 0.             ,  0. ,     0.,
+			 0.            , 1.0 /scaling.y ,  0. ,     0.,
+			 0.            , 0.             ,  1.0,     0.,
+			 translation.x , translation.y  ,  0.0,     1.);
+
+    float s = ::math::sin(rotation_rad);
+    float c = ::math::cos(rotation_rad);
+    float4x4 rotate =
+	float4x4(  c  ,  -s   , 0.0 , 0.0,
+			   s  ,   c   , 0.0 , 0.0,
+			   0.0,   0.0 , 1.0 , 0.0,
+			   0. ,   0.0 , 0.0 , 1.);
+	
+	return transform_coordinate_2(scale*rotate, ::base::coordinate_source(system, uv_space));
+}
+
+
+color endless_texture(
+	uniform texture_2d texture = texture_2d(),
+	::base::texture_coordinate_info uvw = ::base::coordinate_source(),
+	float texture_scale = 10.0,
+	float3 average_color = float3(0.5, 0.5, .5),
+	float patch_size = 8.0,
+	bool gamma_correct_lookup = true
+)
+{
+	return gamma_correct_lookup ? color(srgb2rgb(
+			nonrepeat_lookup (
+				texture: texture,
+				uvw: uvw,
+				texture_scale: texture_scale,
+				average_color: average_color,
+				patch_size: patch_size
+			))
+		) : color(nonrepeat_lookup (
+			texture: texture,
+			uvw: uvw,
+			texture_scale: texture_scale,
+			average_color: average_color,
+			patch_size: patch_size
+		));
+}
+export material ABS_Hard_Leather(
+    uniform bool infinite_tiling = false [[
+        ::anno::description("Enables infinite tiling feature which removes repeating texture patterns. Note that depending on the material this feature changes the appearance of the material slightly."),
+        ::anno::display_name("Infinite Tiling"),
+        ::anno::in_group("Appearance"),
+        ::anno::ui_order(0)
+    ]],
+    color leather_color = color(0.012983f, 0.012983f, 0.012983f) [[
+        ::anno::description("Choose the color of the leather."),
+        ::anno::display_name("Leather Color"),
+        ::anno::in_group("Appearance"),
+        ::anno::ui_order(1)
+    ]],
+    float brightness_ao_cavity = 0.2f [[
+        ::anno::description("Adjusts the lightness of the cavity."),
+        ::anno::display_name("Cavity Brightness"),
+        ::anno::in_group("Appearance"),
+        ::anno::soft_range(0.f, 1.f),
+        ::anno::hard_range(0.f, 1.f),
+        ::anno::ui_order(2)
+    ]],
+    float roughness = .6f [[
+        ::anno::description("Higher roughness values lead to bigger highlights and blurrier reflections."),
+        ::anno::display_name("Roughness"),
+        ::anno::in_group("Appearance"),
+        ::anno::hard_range(0.f, 1.f),
+        ::anno::ui_order(3)
+    ]],
+    float reflectivity = 1.f [[
+        ::anno::description("Amount of variation applied to the roughness, higher numbers lead to non uniform reflections of the material."),
+        ::anno::display_name("Roughness Variation"),
+        ::anno::in_group("Appearance"),
+        ::anno::hard_range(0.f, 1.f),
+        ::anno::ui_order(4)
+    ]],
+    uniform float bump_strength = 0.5f [[
+        ::anno::description("Specifies the strength of the bump."),
+        ::anno::display_name("Bump Strength"),
+        ::anno::in_group("Appearance"),
+        ::anno::soft_range(0.f, 1.f),
+        ::anno::hard_range(0.f, 2.f),
+        ::anno::ui_order(5)
+    ]],
+    float2 texture_translate = float2(0.f) [[
+        ::anno::description("Controls the position of the texture."),
+        ::anno::display_name("Texture Translate"),
+        ::anno::in_group("Transform"),
+        ::anno::ui_order(6)
+    ]],
+    float texture_rotate = 0.f [[
+        ::anno::description("Rotates angle of the texture in degrees."),
+        ::anno::display_name("Texture Rotate"),
+        ::anno::in_group("Transform"),
+        ::anno::soft_range(0.f, 360.f),
+        ::anno::ui_order(7)
+    ]],
+    float2 texture_scale = float2(1.f) [[
+        ::anno::description("Larger numbers increase the size."),
+        ::anno::display_name("Texture Scale"),
+        ::anno::in_group("Transform"),
+        ::nvidia::core_definitions::dimension(float2(1.0f, 1.0f)),
+		::preview_scale(3.0f),
+        ::anno::ui_order(8)
+    ]],
+    uniform int uv_space_index = 0 [[
+        ::anno::description("Uses selected UV space for material."),
+        ::anno::display_name("UV Space Index"),
+        ::anno::in_group("Transform"),
+        ::anno::ui_order(9)
+    ]],
+    uniform bool enable_round_corners = false [[
+        ::anno::description("Enables the round corner effect. Comes at a slight performance cost as additional raytracing calls are rquired to evaluate the round corner effect."),
+        ::anno::display_name("Enable Round Corners"),
+        ::anno::in_group("Round Corners"),
+        ::anno::ui_order(10)
+    ]],
+    uniform float radius = 1.5f [[
+        ::anno::description("Radius of the rounded corners in millimeters."),
+        ::anno::display_name("Round Corner Radius"),
+        ::anno::in_group("Round Corners"),
+        ::anno::ui_order(11)
+    ]],
+    uniform bool across_materials = false [[
+        ::anno::description("Applies the round corner effect across different materials when enabled."),
+        ::anno::display_name("Across Materials"),
+        ::anno::in_group("Round Corners"),
+        ::anno::ui_order(12)
+    ]])
+[[
+	::anno::description(DESCRIPTION),
+        ::anno::display_name("ABS Hard Leather Black"),
+	::anno::copyright_notice(COPYRIGHT),
+        ::anno::key_words(string[]("dielectric", "automotive", "ABS", "artifical", "black", "soft", "leather", "car", "dashboard", "cloth", "furniture")),
+	::anno::thumbnail("./.thumbs/ABS_Hard_Leather.ABS_Hard_Leather.png"),
+	::anno::author("Nvidia vMaterials"),
+	::anno::contributor("Maik Rohland"),
+	::anno::contributor("Ruediger Raab")
+]]
+ = 
+    let {
+        bool tmp0 = false;
+        material_surface tmp1(df::custom_curve_layer(0.0399999991f, 1.f, 5.f, math::pow(histogram_scan_big(float3(infinite_tiling ? endless_texture(texture_2d("./abs_hard_leather_multi_R_rough_G_height_B_ao.jpg", ::tex::gamma_linear), vmat_transform(texture_translate, texture_rotate, texture_scale * 0.5f, base::texture_coordinate_uvw, uv_space_index), 13.f, float3(0.792156994f, 0.545098007f, 0.800000012f), 13.f, false) : base::file_texture(texture_2d("./abs_hard_leather_multi_R_rough_G_height_B_ao.jpg", ::tex::gamma_linear), color(0.f, 0.f, 0.f), color(1.f, 1.f, 1.f), base::mono_alpha, vmat_transform(texture_translate, texture_rotate, texture_scale * 0.5f, base::texture_coordinate_uvw, uv_space_index), float2(0.f, 1.f), float2(0.f, 1.f), tex::wrap_repeat, tex::wrap_repeat, false, 0.f, int2(0), tex::wrap_repeat, 30.f).tint)[1], 0.389999986f, math::lerp(0.f, 0.560000002f, math::pow(reflectivity, 0.349999994f))), 1.49000001f), df::microfacet_ggx_smith_bsdf(histogram_range(float3(infinite_tiling ? endless_texture(texture_2d("./abs_hard_leather_multi_R_rough_G_height_B_ao.jpg", ::tex::gamma_linear), vmat_transform(texture_translate, texture_rotate, texture_scale * 0.5f, base::texture_coordinate_uvw, uv_space_index), 13.f, float3(0.792156994f, 0.545098007f, 0.800000012f), 13.f, false) : base::file_texture(texture_2d("./abs_hard_leather_multi_R_rough_G_height_B_ao.jpg", ::tex::gamma_linear), color(0.f, 0.f, 0.f), color(1.f, 1.f, 1.f), base::mono_alpha, vmat_transform(texture_translate, texture_rotate, texture_scale * 0.5f, base::texture_coordinate_uvw, uv_space_index), float2(0.f, 1.f), float2(0.f, 1.f), tex::wrap_repeat, tex::wrap_repeat, false, 0.f, int2(0), tex::wrap_repeat, 30.f).tint)[0], 0.300000012f, math::lerp(0.300000012f, 0.859999955f, roughness)) * histogram_range(float3(infinite_tiling ? endless_texture(texture_2d("./abs_hard_leather_multi_R_rough_G_height_B_ao.jpg", ::tex::gamma_linear), vmat_transform(texture_translate, texture_rotate, texture_scale * 0.5f, base::texture_coordinate_uvw, uv_space_index), 13.f, float3(0.792156994f, 0.545098007f, 0.800000012f), 13.f, false) : base::file_texture(texture_2d("./abs_hard_leather_multi_R_rough_G_height_B_ao.jpg", ::tex::gamma_linear), color(0.f, 0.f, 0.f), color(1.f, 1.f, 1.f), base::mono_alpha, vmat_transform(texture_translate, texture_rotate, texture_scale * 0.5f, base::texture_coordinate_uvw, uv_space_index), float2(0.f, 1.f), float2(0.f, 1.f), tex::wrap_repeat, tex::wrap_repeat, false, 0.f, int2(0), tex::wrap_repeat, 30.f).tint)[0], 0.300000012f, math::lerp(0.300000012f, 0.859999955f, roughness)), histogram_range(float3(infinite_tiling ? endless_texture(texture_2d("./abs_hard_leather_multi_R_rough_G_height_B_ao.jpg", ::tex::gamma_linear), vmat_transform(texture_translate, texture_rotate, texture_scale * 0.5f, base::texture_coordinate_uvw, uv_space_index), 13.f, float3(0.792156994f, 0.545098007f, 0.800000012f), 13.f, false) : base::file_texture(texture_2d("./abs_hard_leather_multi_R_rough_G_height_B_ao.jpg", ::tex::gamma_linear), color(0.f, 0.f, 0.f), color(1.f, 1.f, 1.f), base::mono_alpha, vmat_transform(texture_translate, texture_rotate, texture_scale * 0.5f, base::texture_coordinate_uvw, uv_space_index), float2(0.f, 1.f), float2(0.f, 1.f), tex::wrap_repeat, tex::wrap_repeat, false, 0.f, int2(0), tex::wrap_repeat, 30.f).tint)[0], 0.300000012f, math::lerp(0.300000012f, 0.859999955f, roughness)) * histogram_range(float3(infinite_tiling ? endless_texture(texture_2d("./abs_hard_leather_multi_R_rough_G_height_B_ao.jpg", ::tex::gamma_linear), vmat_transform(texture_translate, texture_rotate, texture_scale * 0.5f, base::texture_coordinate_uvw, uv_space_index), 13.f, float3(0.792156994f, 0.545098007f, 0.800000012f), 13.f, false) : base::file_texture(texture_2d("./abs_hard_leather_multi_R_rough_G_height_B_ao.jpg", ::tex::gamma_linear), color(0.f, 0.f, 0.f), color(1.f, 1.f, 1.f), base::mono_alpha, vmat_transform(texture_translate, texture_rotate, texture_scale * 0.5f, base::texture_coordinate_uvw, uv_space_index), float2(0.f, 1.f), float2(0.f, 1.f), tex::wrap_repeat, tex::wrap_repeat, false, 0.f, int2(0), tex::wrap_repeat, 30.f).tint)[0], 0.300000012f, math::lerp(0.300000012f, 0.859999955f, roughness)), color(1.f, 1.f, 1.f), nvidia::core_definitions::blend_colors(leather_color, color(histogram_range(0.100000001f, 0.289999992f, float3(infinite_tiling ? endless_texture(texture_2d("./abs_hard_leather_multi_R_rough_G_height_B_ao.jpg", ::tex::gamma_linear), vmat_transform(texture_translate, texture_rotate, texture_scale * 0.5f, base::texture_coordinate_uvw, uv_space_index), 13.f, float3(0.792156994f, 0.545098007f, 0.800000012f), 13.f, false) : base::file_texture(texture_2d("./abs_hard_leather_multi_R_rough_G_height_B_ao.jpg", ::tex::gamma_linear), color(0.f, 0.f, 0.f), color(1.f, 1.f, 1.f), base::mono_alpha, vmat_transform(texture_translate, texture_rotate, texture_scale * 0.5f, base::texture_coordinate_uvw, uv_space_index), float2(0.f, 1.f), float2(0.f, 1.f), tex::wrap_repeat, tex::wrap_repeat, false, 0.f, int2(0), tex::wrap_repeat, 30.f).tint)[2])), base::color_layer_multiply, math::lerp(0.930000007f, 0.149999991f, remap(brightness_ao_cavity, 0.f, 20.f)), true).tint, state::texture_tangent_u(0), df::scatter_reflect), df::weighted_layer(1.f, df::diffuse_reflection_bsdf(nvidia::core_definitions::blend_colors(leather_color, color(histogram_range(0.100000001f, 0.289999992f, float3(infinite_tiling ? endless_texture(texture_2d("./abs_hard_leather_multi_R_rough_G_height_B_ao.jpg", ::tex::gamma_linear), vmat_transform(texture_translate, texture_rotate, texture_scale * 0.5f, base::texture_coordinate_uvw, uv_space_index), 13.f, float3(0.792156994f, 0.545098007f, 0.800000012f), 13.f, false) : base::file_texture(texture_2d("./abs_hard_leather_multi_R_rough_G_height_B_ao.jpg", ::tex::gamma_linear), color(0.f, 0.f, 0.f), color(1.f, 1.f, 1.f), base::mono_alpha, vmat_transform(texture_translate, texture_rotate, texture_scale * 0.5f, base::texture_coordinate_uvw, uv_space_index), float2(0.f, 1.f), float2(0.f, 1.f), tex::wrap_repeat, tex::wrap_repeat, false, 0.f, int2(0), tex::wrap_repeat, 30.f).tint)[2])), base::color_layer_multiply, math::lerp(0.930000007f, 0.149999991f, remap(brightness_ao_cavity, 0.f, 20.f)), true).tint, 0.f), bsdf(), infinite_tiling ? endless_normal(texture_2d("./abs_hard_leather_norm.jpg", ::tex::gamma_linear), math::lerp(0.f, 2.f, bump_strength), false, false, vmat_transform(texture_translate, texture_rotate, texture_scale * 0.5f, base::texture_coordinate_uvw, uv_space_index), 13.f, float3(0.505882025f, 0.494118005f, 0.92156899f), 13.f) : base::tangent_space_normal_texture(texture_2d("./abs_hard_leather_norm.jpg", ::tex::gamma_linear), math::lerp(0.f, 2.f, bump_strength), false, false, vmat_transform(texture_translate, texture_rotate, texture_scale * 0.5f, base::texture_coordinate_uvw, uv_space_index), float2(0.f, 1.f), float2(0.f, 1.f), tex::wrap_repeat, tex::wrap_repeat, false, 1.f, 0.f, 0.f, int2(0), tex::wrap_repeat, 30.f)), infinite_tiling ? endless_normal(texture_2d("./abs_hard_leather_norm.jpg", ::tex::gamma_linear), math::lerp(0.f, 2.f, bump_strength), false, false, vmat_transform(texture_translate, texture_rotate, texture_scale * 0.5f, base::texture_coordinate_uvw, uv_space_index), 13.f, float3(0.505882025f, 0.494118005f, 0.92156899f), 13.f) : base::tangent_space_normal_texture(texture_2d("./abs_hard_leather_norm.jpg", ::tex::gamma_linear), math::lerp(0.f, 2.f, bump_strength), false, false, vmat_transform(texture_translate, texture_rotate, texture_scale * 0.5f, base::texture_coordinate_uvw, uv_space_index), float2(0.f, 1.f), float2(0.f, 1.f), tex::wrap_repeat, tex::wrap_repeat, false, 1.f, 0.f, 0.f, int2(0), tex::wrap_repeat, 30.f)), material_emission(emission: edf(), intensity: color(0.f, 0.f, 0.f), mode: intensity_radiant_exitance));
+        material_surface tmp2 = material_surface(scattering: bsdf(), emission: material_emission(emission: edf(), intensity: color(0.f, 0.f, 0.f), mode: intensity_radiant_exitance));
+        color tmp3 = color(1.f, 1.f, 1.f);
+        material_geometry tmp5(float3(0.f), 1.f, enable_round_corners ? state::rounded_corner_normal(radius, across_materials, 1.f) : state::normal());
+        
+    } in
+        material(
+            thin_walled: tmp0,
+            surface: tmp1,
+            backface: tmp2,
+            ior: tmp3,
+            geometry: tmp5);
+
+export material ABS_Hard_Leather_Brown(*)
+[[
+        ::anno::description(DESCRIPTION),
+        ::anno::display_name("ABS Hard Leather Brown"),
+	::anno::copyright_notice(COPYRIGHT),
+        ::anno::key_words(string[]("dielectric", "automotive", "ABS", "warm", "artifical", "brown", "hard", "leather", "car", "dashboard", "cloth", "furniture")),
+	::anno::thumbnail("./.thumbs/ABS_Hard_Leather.ABS_Hard_Leather_Brown.png"),
+	::anno::author("Nvidia vMaterials"),
+	::anno::contributor("Maik Rohland"),
+	::anno::contributor("Ruediger Raab")
+]]
+= ABS_Hard_Leather
+(
+    infinite_tiling: false,
+    leather_color: color(0.013702f, 0.005182f, 0.0f),
+    brightness_ao_cavity: .3f,
+    roughness: .5f,
+    reflectivity: .0f,
+    bump_strength: .5f,
+    texture_translate: float2(0.0f),
+	texture_rotate: 0.0f,
+	texture_scale: float2(1.f),
+    uv_space_index: 0,
+	enable_round_corners: false,
+	radius: 1.5f,
+	across_materials: false
+);  
+
+
+export material ABS_Hard_Leather_Grey(*)
+[[
+        ::anno::description(DESCRIPTION),
+        ::anno::display_name("ABS Hard Leather Grey"),
+	::anno::copyright_notice(COPYRIGHT),
+        ::anno::key_words(string[]("dielectric", "automotive", "ABS", "artifical", "grey", "hard", "leather", "car", "dashboard", "cloth", "furniture")),
+	::anno::thumbnail("./.thumbs/ABS_Hard_Leather.ABS_Hard_Leather_Grey.png"),
+	::anno::author("Nvidia vMaterials"),
+	::anno::contributor("Maik Rohland"),
+	::anno::contributor("Ruediger Raab")
+]]
+= ABS_Hard_Leather
+(
+    infinite_tiling: false,
+    leather_color: color(0.033105f, 0.033105f, 0.033105f),
+    brightness_ao_cavity: .2f,
+    roughness: .2f,
+    reflectivity: .0f,
+    bump_strength: .5f,
+    texture_translate: float2(0.0f),
+	texture_rotate: 0.0f,
+	texture_scale: float2(1.f),
+    uv_space_index: 0,
+	enable_round_corners: false,
+	radius: 1.5f,
+	across_materials: false
+); 
+
+export material ABS_Hard_Leather_Peach(*)
+[[
+        ::anno::description(DESCRIPTION),
+        ::anno::display_name("ABS Hard Leather Peach"),
+	::anno::copyright_notice(COPYRIGHT),
+        ::anno::key_words(string[]("dielectric", "automotive", "ABS", "artifical", "warm", "peach", "orange", "hard", "leather", "car", "dashboard", "cloth", "furniture")),
+	::anno::thumbnail("./.thumbs/ABS_Hard_Leather.ABS_Hard_Leather_Peach.png"),
+	::anno::author("Nvidia vMaterials"),
+	::anno::contributor("Maik Rohland"),
+	::anno::contributor("Ruediger Raab")
+]]
+= ABS_Hard_Leather
+(
+    infinite_tiling: false,
+    leather_color: color(0.274677f, 0.078187f, 0.004777f),
+    brightness_ao_cavity: .2f,
+    roughness: .2f,
+    reflectivity: .0f,
+    bump_strength: .5f,
+    texture_translate: float2(0.0f),
+	texture_rotate: 0.0f,
+	texture_scale: float2(1.f),
+    uv_space_index: 0,
+	enable_round_corners: false,
+	radius: 1.5f,
+	across_materials: false
+); 
+
+export material ABS_Hard_Leather_Vintage_Rose(*)
+[[
+        ::anno::description(DESCRIPTION),
+        ::anno::display_name("ABS Hard Leather Vintage Rose"),
+	::anno::copyright_notice(COPYRIGHT),
+        ::anno::key_words(string[]("dielectric", "automotive", "ABS", "artifical", "warm", "vintage", "rose", "hard", "leather", "car", "dashboard", "cloth", "furniture")),
+	::anno::thumbnail("./.thumbs/ABS_Hard_Leather.ABS_Hard_Leather_Vintage_Rose.png"),
+	::anno::author("Nvidia vMaterials"),
+	::anno::contributor("Maik Rohland"),
+	::anno::contributor("Ruediger Raab")
+]]
+= ABS_Hard_Leather
+(
+    infinite_tiling: false,
+    leather_color: color(0.135633f, 0.059511f, 0.059511f),
+    brightness_ao_cavity: .2f,
+    roughness: .25f,
+    reflectivity: .0f,
+    bump_strength: .5f,
+    texture_translate: float2(0.0f),
+	texture_rotate: 0.0f,
+	texture_scale: float2(1.f),
+    uv_space_index: 0,
+	enable_round_corners: false,
+	radius: 1.5f,
+	across_materials: false
+); 
+
+
+export material ABS_Hard_Leather_Moss(*)
+[[
+        ::anno::description(DESCRIPTION),
+        ::anno::display_name("ABS Hard Leather Moss"),
+	::anno::copyright_notice(COPYRIGHT),
+        ::anno::key_words(string[]("dielectric", "automotive", "ABS", "artifical", "cold", "green", "moss", "hard", "leather", "car", "dashboard", "cloth", "furniture")),
+	::anno::thumbnail("./.thumbs/ABS_Hard_Leather.ABS_Hard_Leather_Moss.png"),
+	::anno::author("Nvidia vMaterials"),
+	::anno::contributor("Maik Rohland"),
+	::anno::contributor("Ruediger Raab")
+]]
+= ABS_Hard_Leather
+(
+    infinite_tiling: false,
+    leather_color: color(0.031896f, 0.034340f, 0.004777f),
+    brightness_ao_cavity: .2f,
+    roughness: .4f,
+    reflectivity: .0f,
+    bump_strength: .5f,
+    texture_translate: float2(0.0f),
+	texture_rotate: 0.0f,
+	texture_scale: float2(1.f),
+    uv_space_index: 0,
+	enable_round_corners: false,
+	radius: 1.5f,
+	across_materials: false
+); 
+
+export material ABS_Hard_Leather_Sky(*)
+[[
+        ::anno::description(DESCRIPTION),
+        ::anno::display_name("ABS Hard Leather Sky"),
+	::anno::copyright_notice(COPYRIGHT),
+        ::anno::key_words(string[]("dielectric", "automotive", "ABS", "artifical", "cold", "blue", "sky", "baby", "hard", "leather", "car", "dashboard", "cloth", "furniture")),
+	::anno::thumbnail("./.thumbs/ABS_Hard_Leather.ABS_Hard_Leather_Sky.png"),
+	::anno::author("Nvidia vMaterials"),
+	::anno::contributor("Maik Rohland"),
+	::anno::contributor("Ruediger Raab")
+]]
+= ABS_Hard_Leather
+(
+    infinite_tiling: false,
+    leather_color: color(0.042311f, 0.116971f, 0.187821f),
+    brightness_ao_cavity: .2f,
+    roughness: .2f,
+    reflectivity: .0f,
+    bump_strength: .5f,
+    texture_translate: float2(0.0f),
+	texture_rotate: 0.0f,
+	texture_scale: float2(1.f),
+    uv_space_index: 0,
+	enable_round_corners: false,
+	radius: 1.5f,
+	across_materials: false
+); 
+
+export material ABS_Hard_Leather_Pop_Turquoise(*)
+[[
+        ::anno::description(DESCRIPTION),
+        ::anno::display_name("ABS Hard Leather Pop Turquoise"),
+	::anno::copyright_notice(COPYRIGHT),
+        ::anno::key_words(string[]("dielectric", "automotive", "ABS", "artifical", "cold", "pop", "turquoise", "blue", "hard", "leather", "car", "dashboard", "cloth", "furniture")),
+	::anno::thumbnail("./.thumbs/ABS_Hard_Leather.ABS_Hard_Leather_Pop_Turquoise.png"),
+	::anno::author("Nvidia vMaterials"),
+	::anno::contributor("Maik Rohland"),
+	::anno::contributor("Ruediger Raab")
+]]
+= ABS_Hard_Leather
+(
+    infinite_tiling: false,
+    leather_color: color(0.024158f, 0.445201f, 0.361307f),
+    brightness_ao_cavity: .1f,
+    roughness: .0f,
+    reflectivity: 1.f,
+    bump_strength: .6f,
+    texture_translate: float2(0.0f),
+	texture_rotate: 0.0f,
+	texture_scale: float2(1.f),
+    uv_space_index: 0,
+	enable_round_corners: false,
+	radius: 1.5f,
+	across_materials: false
+); 
+
+export material ABS_Hard_Leather_Pop_Pink(*)
+[[
+        ::anno::description(DESCRIPTION),
+        ::anno::display_name("ABS Hard Leather Pop Pink"),
+	::anno::copyright_notice(COPYRIGHT),
+        ::anno::key_words(string[]("dielectric", "automotive", "ABS", "cold", "artifical", "pop", "pink", "hard", "leather", "car", "dashboard", "cloth", "furniture")),
+	::anno::thumbnail("./.thumbs/ABS_Hard_Leather.ABS_Hard_Leather_Pop_Pink.png"),
+	::anno::author("Nvidia vMaterials"),
+	::anno::contributor("Maik Rohland"),
+	::anno::contributor("Ruediger Raab")
+]]
+= ABS_Hard_Leather
+(
+    infinite_tiling: false,
+    leather_color: color(0.386429f, 0.009721f, 0.520996f),
+    brightness_ao_cavity: .1f,
+    roughness: .0f,
+    reflectivity: 1.f,
+    bump_strength: .6f,
+    texture_translate: float2(0.0f),
+	texture_rotate: 0.0f,
+	texture_scale: float2(1.f),
+    uv_space_index: 0,
+	enable_round_corners: false,
+	radius: 1.5f,
+	across_materials: false
+); 
+
+export material ABS_Hard_Leather_Pop_Lime(*)
+[[
+        ::anno::description(DESCRIPTION),
+        ::anno::display_name("ABS Hard Leather Pop Lime"),
+	::anno::copyright_notice(COPYRIGHT),
+        ::anno::key_words(string[]("dielectric", "automotive", "ABS", "cold", "artifical", "pop", "lime", "green", "hard", "leather", "car", "dashboard", "cloth", "furniture")),
+	::anno::thumbnail("./.thumbs/ABS_Hard_Leather.ABS_Hard_Leather_Pop_Lime.png"),
+	::anno::author("Nvidia vMaterials"),
+	::anno::contributor("Maik Rohland"),
+	::anno::contributor("Ruediger Raab")
+]]
+= ABS_Hard_Leather
+(
+    infinite_tiling: false,
+    leather_color: color(0.254152f, 0.533276f, 0.042311f),
+    brightness_ao_cavity: .1f,
+    roughness: .0f,
+    reflectivity: 1.f,
+    bump_strength: .6f,
+    texture_translate: float2(0.0f),
+	texture_rotate: 0.0f,
+	texture_scale: float2(1.f),
+    uv_space_index: 0,
+	enable_round_corners: false,
+	radius: 1.5f,
+	across_materials: false
+); 
+
+export material ABS_Hard_Leather_Deep_Ocean(*)
+[[
+        ::anno::description(DESCRIPTION),
+        ::anno::display_name("ABS Hard Leather Deep Ocean"),
+	::anno::copyright_notice(COPYRIGHT),
+        ::anno::key_words(string[]("dielectric", "automotive", "ABS", "artifical", "cold", "deep", "ocean", "dark", "hard", "leather", "car", "dashboard", "cloth", "furniture")),
+	::anno::thumbnail("./.thumbs/ABS_Hard_Leather.ABS_Hard_Leather_Deep_Ocean.png"),
+	::anno::author("Nvidia vMaterials"),
+	::anno::contributor("Maik Rohland"),
+	::anno::contributor("Ruediger Raab")
+]]
+= ABS_Hard_Leather
+(
+    infinite_tiling: false,
+    leather_color: color(0.003035f, 0.008568f, 0.034340f),
+    brightness_ao_cavity: .1f,
+    roughness: .3f,
+    reflectivity: 1.f,
+    bump_strength: .6f,
+    texture_translate: float2(0.0f),
+	texture_rotate: 0.0f,
+	texture_scale: float2(1.f),
+    uv_space_index: 0,
+	enable_round_corners: false,
+	radius: 1.5f,
+	across_materials: false
+); 
+
+export material ABS_Hard_Leather_Deep_Green(*)
+[[
+        ::anno::description(DESCRIPTION),
+        ::anno::display_name("ABS Hard Leather Deep Green"),
+	::anno::copyright_notice(COPYRIGHT),
+        ::anno::key_words(string[]("dielectric", "automotive", "ABS", "artifical", "cold", "deep", "green", "dark", "hard", "leather", "car", "dashboard", "cloth", "furniture")),
+	::anno::thumbnail("./.thumbs/ABS_Hard_Leather.ABS_Hard_Leather_Deep_Green.png"),
+	::anno::author("Nvidia vMaterials"),
+	::anno::contributor("Maik Rohland"),
+	::anno::contributor("Ruediger Raab")
+]]
+= ABS_Hard_Leather
+(
+    infinite_tiling: false,
+    leather_color: color(0.010960f, 0.042311f, 0.028426f),
+    brightness_ao_cavity: .1f,
+    roughness: .2f,
+    reflectivity: 1.f,
+    bump_strength: .6f,
+    texture_translate: float2(0.0f),
+	texture_rotate: 0.0f,
+	texture_scale: float2(1.f),
+    uv_space_index: 0,
+	enable_round_corners: false,
+	radius: 1.5f,
+	across_materials: false
+); 
+
+export material ABS_Hard_Leather_Deep_Violet(*)
+[[
+        ::anno::description(DESCRIPTION),
+        ::anno::display_name("ABS Hard Leather Deep Violet"),
+	::anno::copyright_notice(COPYRIGHT),
+        ::anno::key_words(string[]("dielectric", "automotive", "ABS", "cold", "artifical", "deep", "violet", "dark", "hard", "leather", "car", "dashboard", "cloth", "furniture")),
+	::anno::thumbnail("./.thumbs/ABS_Hard_Leather.ABS_Hard_Leather_Deep_Violet.png"),
+	::anno::author("Nvidia vMaterials"),
+	::anno::contributor("Maik Rohland"),
+	::anno::contributor("Ruediger Raab")
+]]
+= ABS_Hard_Leather
+(
+    infinite_tiling: false,
+    leather_color: color(0.021219f, 0.003677f, 0.046665f),
+    brightness_ao_cavity: .1f,
+    roughness: .5f,
+    reflectivity: .3f,
+    bump_strength: .6f,
+    texture_translate: float2(0.0f),
+	texture_rotate: 0.0f,
+	texture_scale: float2(1.f),
+    uv_space_index: 0,
+	enable_round_corners: false,
+	radius: 1.5f,
+	across_materials: false
+); 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
