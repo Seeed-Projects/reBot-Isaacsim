@@ -1,11 +1,30 @@
 #!/usr/bin/env python3
-"""Isaac Sim 机械臂 + 地面 + UDP 关节角接收端。
+"""
+Isaac Sim 机械臂 + 地面 + UDP 关节角接收端
+
+Isaac Sim arm + ground + UDP joint-angle receiver.
 
 功能概述：
 1. 使用 Isaac 官方 Python 运行时启动 `SimulationApp`。
 2. 创建地面并加载 `usd/RS-rebot-dev-arm` 机械臂资产。
 3. 通过 UDP 接收真实机械臂前 6 个关节角，并实时同步到 Isaac Sim。
 4. 将收到的夹爪角度乘以 `0.01` 后，作为双关节位置目标同步到仿真夹爪。
+
+推荐运行方式：
+- 使用 Isaac 官方 `python.sh` 启动本脚本。
+- 先用 `uv run` 启动 `gravity_joint_sender.py` 推送关节角。
+
+Overview:
+1. Launch `SimulationApp` via the official Isaac Python runtime.
+2. Create the ground plane and load the `usd/RS-rebot-dev-arm` robot asset.
+3. Receive the first 6 joint angles from the physical arm over UDP and mirror
+   them in Isaac Sim in real time.
+4. Multiply the received gripper angle by `0.01` and use the result as a
+   position target for the simulated two-joint gripper.
+
+Recommended usage:
+- Launch this script with the official Isaac `python.sh` runner.
+- Start `gravity_joint_sender.py` via `uv run` to publish joint angles.
 """
 
 from __future__ import annotations
@@ -26,13 +45,15 @@ try:
     from isaacsim import SimulationApp
 except ImportError as exc:  # pragma: no cover
     raise RuntimeError(
-        "未检测到可用的 Isaac Sim Python 环境，请使用 Isaac 官方 python.sh 运行本脚本。"
+        "未检测到可用的 Isaac Sim Python 环境，请使用 Isaac 官方 python.sh 运行本脚本 \n"
+        "No usable Isaac Sim Python environment found; please run this script with the official Isaac python.sh \n"
     ) from exc
 
 if not callable(SimulationApp):
     raise RuntimeError(
-        "检测到了不完整的 Isaac Sim Python 运行时：`SimulationApp` 不可调用。"
-        "请使用 Isaac 官方 python.sh 运行本脚本。"
+        "检测到了不完整的 Isaac Sim Python 运行时：`SimulationApp` 不可调用，请使用 Isaac 官方 python.sh 运行本脚本 \n"
+        "Incomplete Isaac Sim Python runtime detected: `SimulationApp` is not callable, \n"
+        "please run this script with the official Isaac python.sh \n"
     )
 
 ARM_JOINT_COUNT = 6
@@ -50,7 +71,7 @@ _running = True
 def _sigint_handler(signum, frame) -> None:
     del signum, frame
     global _running
-    print("\n[receiver] 收到 Ctrl+C，准备退出...")
+    print("\n[receiver] 收到 Ctrl+C，准备退出... / received Ctrl+C, preparing to exit...")
     _running = False
 
 
@@ -58,12 +79,17 @@ signal.signal(signal.SIGINT, _sigint_handler)
 
 
 class IsaacJointMirror:
-    """接收 UDP 关节角并同步到 Isaac Sim。"""
+    """接收 UDP 关节角并同步到 Isaac Sim。
+
+    Receive UDP joint angles and mirror them to the Isaac Sim articulation.
+    """
 
     def __init__(self, host: str = DEFAULT_HOST, port: int = DEFAULT_PORT) -> None:
         self.asset_path = REPO_ROOT / ASSET_RELATIVE_PATH
         if not self.asset_path.exists():
-            raise FileNotFoundError(f"Isaac Sim 资产不存在: {self.asset_path}")
+            raise FileNotFoundError(
+                f"Isaac Sim 资产不存在: {self.asset_path} / Isaac Sim asset not found: {self.asset_path}"
+            )
 
         self.host = host
         self.port = port
@@ -96,7 +122,10 @@ class IsaacJointMirror:
         add_reference_to_stage(str(self.asset_path), ROBOT_PRIM_PATH)
 
         if not is_prim_path_valid(ROBOT_PRIM_PATH):
-            raise RuntimeError(f"Isaac Sim 中未找到机器人 Prim: {ROBOT_PRIM_PATH}")
+            raise RuntimeError(
+                f"Isaac Sim 中未找到机器人 Prim: {ROBOT_PRIM_PATH} / "
+                f"robot prim not found in Isaac Sim: {ROBOT_PRIM_PATH}"
+            )
 
         self.articulation = SingleArticulation(prim_path=ROBOT_PRIM_PATH, name="rebotarm_live")
         self.world.scene.add(self.articulation)
@@ -106,8 +135,13 @@ class IsaacJointMirror:
         dof_names = list(self.articulation.dof_names)
         expected_names = [f"joint{i}" for i in range(1, ARM_JOINT_COUNT + 1)]
         if dof_names[:ARM_JOINT_COUNT] != expected_names:
-            print(f"[warn] Isaac Sim DOF 顺序为: {dof_names}")
-            print(f"[warn] 将按前 {ARM_JOINT_COUNT} 个自由度直接同步")
+            print(
+                f"[warn] Isaac Sim DOF 顺序为: {dof_names} / Isaac Sim DOF order is: {dof_names}"
+            )
+            print(
+                f"[warn] 将按前 {ARM_JOINT_COUNT} 个自由度直接同步 / "
+                f"will mirror the first {ARM_JOINT_COUNT} DoFs directly"
+            )
 
         self._setup_gripper_mapping(dof_names)
 
@@ -121,7 +155,10 @@ class IsaacJointMirror:
     def _setup_gripper_mapping(self, dof_names: list[str]) -> None:
         missing_joints = [name for name in GRIPPER_JOINT_NAMES if name not in dof_names]
         if missing_joints:
-            print(f"[warn] 未找到夹爪 DOF: {missing_joints}，将跳过夹爪联动")
+            print(
+                f"[warn] 未找到夹爪 DOF: {missing_joints}，将跳过夹爪联动 / "
+                f"gripper DoFs not found: {missing_joints}; skipping gripper mirroring"
+            )
             return
 
         self.gripper_joint_indices = np.array(
@@ -133,18 +170,18 @@ class IsaacJointMirror:
         self.gripper_limits = upper_limits[self.gripper_joint_indices]
         self.gripper_target_position = 0.0
         print(
-            "[夹爪] DOF 映射 = "
+            "[夹爪/gripper] DOF 映射 = "
             + "  ".join(
                 f"{name}:index={index}, lower={lower_limits[index]:+.4f}m, upper={upper_limits[index]:+.4f}m"
                 for name, index in zip(GRIPPER_JOINT_NAMES, self.gripper_joint_indices)
             )
         )
         print(
-            "[夹爪] 位置控制已启用: "
-            + "  ".join(f"{name} 显式接收位置目标" for name in GRIPPER_JOINT_NAMES)
+            "[夹爪/gripper] 位置控制已启用: "
+            + "  ".join(f"{name} 显式接收位置目标 / {name} receives explicit position target" for name in GRIPPER_JOINT_NAMES)
         )
         print(
-            "[夹爪] 行程上限 = "
+            "[夹爪/gripper] 行程上限 = "
             + "  ".join(f"{name}:{limit:.4f}m" for name, limit in zip(GRIPPER_JOINT_NAMES, self.gripper_limits))
         )
 
@@ -166,7 +203,7 @@ class IsaacJointMirror:
         )
         if command_signature != self._last_gripper_command_signature:
             print(
-                f"[夹爪] command_position={self.gripper_target_position:+.4f}m "
+                f"[夹爪/gripper] command_position={self.gripper_target_position:+.4f}m "
                 + "  ".join(
                     f"{name}_target={position:+.4f}m"
                     for name, position in zip(GRIPPER_JOINT_NAMES, target_positions)
@@ -190,7 +227,8 @@ class IsaacJointMirror:
             joint_positions = np.asarray(payload["joint_positions"], dtype=np.float64)
             if joint_positions.shape != (ARM_JOINT_COUNT,):
                 raise RuntimeError(
-                    f"收到的关节角维度错误: {joint_positions.shape}，期望 {(ARM_JOINT_COUNT,)}"
+                    f"收到的关节角维度错误: {joint_positions.shape}，期望 {(ARM_JOINT_COUNT,)} / "
+                    f"received joint angle has wrong shape: {joint_positions.shape}, expected {(ARM_JOINT_COUNT,)}"
                 )
             gripper_value = payload.get("gripper_position")
             latest_packet = (joint_positions, int(payload["sequence"]), None if gripper_value is None else float(gripper_value))
@@ -198,7 +236,7 @@ class IsaacJointMirror:
 
     def run(self, render_hz: float = DEFAULT_RENDER_HZ) -> None:
         if render_hz <= 0:
-            raise ValueError("render_hz 必须为正数")
+            raise ValueError("render_hz 必须为正数 / render_hz must be a positive number")
 
         assert self.sim_app is not None
         assert self.world is not None
@@ -239,7 +277,10 @@ class IsaacJointMirror:
             step += 1
 
             if self.last_packet_time > 0 and time.time() - self.last_packet_time > 2.0 and step % max(int(render_hz), 1) == 0:
-                print("[warn] 超过 2 秒未收到新的关节角数据")
+                print(
+                    "[warn] 超过 2 秒未收到新的关节角数据 / "
+                    "no new joint-angle data received for more than 2 seconds"
+                )
 
             time.sleep(render_period * 0.25)
 
@@ -260,15 +301,29 @@ def main() -> None:
     print(f"[接收] udp://{DEFAULT_HOST}:{DEFAULT_PORT}")
     print(f"[资产] {ASSET_RELATIVE_PATH}")
 
+    print()
+    print("=" * 72)
+    print("  Isaac Sim arm + ground + UDP joint-angle receiver")
+    print("  Expected behavior: receive physical arm joint angles and")
+    print("  drive the simulated arm in lockstep")
+    print("  Gripper behavior: position targets directly control the gripper slide")
+    print("  To stop: close the Isaac Sim window or press Ctrl+C")
+    print("=" * 72)
+    print(f"[receiver] udp://{DEFAULT_HOST}:{DEFAULT_PORT}")
+    print(f"[asset] {ASSET_RELATIVE_PATH}")
+
     mirror = IsaacJointMirror()
     try:
         mirror.setup_isaac_sim()
         print("[仿真] Isaac Sim 已启动，地面和机械臂资产已加载")
+        print("[sim] Isaac Sim started, ground plane and robot asset loaded")
         mirror.run()
     finally:
         print("[停止] 正在关闭接收与仿真...")
+        print("[stopping] shutting down receiver and simulation...")
         mirror.shutdown()
         print("[完成] 已安全退出")
+        print("[done] exited safely")
 
 
 if __name__ == "__main__":

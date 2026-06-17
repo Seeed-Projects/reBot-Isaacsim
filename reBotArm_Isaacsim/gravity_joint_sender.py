@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""reBotArm 重力补偿 + 关节角 UDP 发送端。
+"""reBotArm 重力补偿 + 关节角 UDP 发送端 / Gravity compensation + joint-angle UDP sender.
 
 功能概述：
 1. 在当前工程 `uv` 环境中连接真实机械臂。
@@ -9,6 +9,18 @@
 推荐运行方式：
 - 直接使用当前工程的 `uv` 环境运行本脚本。
 - 再单独使用 Isaac 官方 `python.sh` 启动 `isaacsim_joint_receiver.py`。
+
+Overview:
+1. Connect to the physical robot arm using the current project's `uv` environment.
+2. Enable MIT control with gravity feed-forward compensation so the arm can be
+   moved freely by hand.
+3. Continuously send the first 6 joint angles to the Isaac Sim receiver over
+   UDP as JSON packets.
+
+Recommended usage:
+- Run this script inside the current project's `uv` environment.
+- Separately start `isaacsim_joint_receiver.py` with the official Isaac
+  `python.sh` launcher.
 """
 
 from __future__ import annotations
@@ -43,7 +55,7 @@ _running = True
 def _sigint_handler(signum, frame) -> None:
     del signum, frame
     global _running
-    print("\n[sender] 收到 Ctrl+C，准备退出...")
+    print("\n[sender] 收到 Ctrl+C，准备退出... / received Ctrl+C, preparing to exit...")
     _running = False
 
 
@@ -51,7 +63,10 @@ signal.signal(signal.SIGINT, _sigint_handler)
 
 
 class GravityCompensationSender:
-    """真实机械臂重力补偿与关节角发送。"""
+    """真实机械臂重力补偿与关节角发送。
+
+    Gravity compensation and joint-angle sender for the physical robot arm.
+    """
 
     def __init__(self, host: str = DEFAULT_HOST, port: int = DEFAULT_PORT) -> None:
         self.host = host
@@ -87,7 +102,8 @@ class GravityCompensationSender:
         q0 = self.rebotarm.arm.get_positions(request_feedback=True)
         if q0.shape[0] < ARM_JOINT_COUNT:
             raise RuntimeError(
-                f"arm 组关节数不足 {ARM_JOINT_COUNT}，当前仅 {q0.shape[0]} 个"
+                f"arm 组关节数不足 {ARM_JOINT_COUNT}，当前仅 {q0.shape[0]} 个 / "
+                f"arm joint count is less than {ARM_JOINT_COUNT}, only {q0.shape[0]} available"
             )
         self.latest_q[:] = q0[:ARM_JOINT_COUNT]
         self.latest_q_raw[:] = q0[:ARM_JOINT_COUNT]
@@ -105,8 +121,9 @@ class GravityCompensationSender:
         q = robot.arm.get_positions(request_feedback=True)
         q_arm = q[:ARM_JOINT_COUNT]
         tau_g = compute_generalized_gravity(q=q_arm)
-        tau_g[1] *= 1.45  # joint2 额外补偿
-        tau_g[2] *= 1.7  # joint3 额外补偿
+
+        tau_g[1] *= 1.45  # joint2 额外补偿 / additional compensation for joint 2
+        tau_g[2] *= 1.6  # joint3 额外补偿 / additional compensation for joint 3
 
         pad_len = max(robot.arm.num_joints - ARM_JOINT_COUNT, 0)
         tau_cmd = np.concatenate([tau_g, np.zeros(pad_len, dtype=np.float64)])
@@ -114,8 +131,8 @@ class GravityCompensationSender:
         robot.arm.send_mit(
             pos=q,
             vel=np.zeros(robot.arm.num_joints, dtype=np.float64),
-            kp=np.full(robot.arm.num_joints, 2.0, dtype=np.float64),
-            kd=np.full(robot.arm.num_joints, 1.0, dtype=np.float64),
+            kp=np.full(robot.arm.num_joints, 1.0, dtype=np.float64),
+            kd=np.full(robot.arm.num_joints, 0.5, dtype=np.float64),
             tau=tau_cmd,
         )
         if robot.has_gripper:
@@ -137,7 +154,7 @@ class GravityCompensationSender:
 
     def run(self, send_hz: float = DEFAULT_SEND_HZ) -> None:
         if send_hz <= 0:
-            raise ValueError("send_hz 必须为正数")
+            raise ValueError("send_hz 必须为正数 / send_hz must be a positive number")
 
         send_period = 1.0 / send_hz
         report_every = DEFAULT_REPORT_EVERY
@@ -185,18 +202,31 @@ def main() -> None:
     print(f"[发送] udp://{DEFAULT_HOST}:{DEFAULT_PORT}")
     print(f"[关节] arm 前 {ARM_JOINT_COUNT} 个关节")
 
+    print()
+    print("=" * 72)
+    print("  reBotArm gravity compensation + joint-angle UDP sender")
+    print("  Expected behavior: the user can freely move the physical arm;")
+    print("  joint angles are continuously sent to Isaac Sim.")
+    print("  To stop: press Ctrl+C")
+    print("=" * 72)
+    print(f"[sender] udp://{DEFAULT_HOST}:{DEFAULT_PORT}")
+    print(f"[joints] first {ARM_JOINT_COUNT} arm joints")
+
     sender = GravityCompensationSender()
     try:
         sender.setup_hardware()
         print(f"[硬件] 已连接，控制频率 {sender.rebotarm.rate:.1f} Hz")
+        print(f"[hardware] connected, control rate {sender.rebotarm.rate:.1f} Hz")
         sender.start()
         print("[控制] 已启动重力补偿")
+        print("[control] gravity compensation started")
         sender.run()
     finally:
         print("[停止] 正在关闭控制与发送...")
+        print("[stopping] shutting down control loop and sender...")
         sender.shutdown()
         print("[完成] 已安全退出")
-
+        print("[done] exited safely")
 
 if __name__ == "__main__":
     main()

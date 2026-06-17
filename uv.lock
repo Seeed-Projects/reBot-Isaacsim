@@ -719,17 +719,11 @@ wheels = [
 name = "rebot-isaacsim"
 version = "0.1.0"
 source = { virtual = "." }
-dependencies = [
-    { name = "rebotarm-control-py" },
-]
-
-[package.metadata]
-requires-dist = [{ name = "rebotarm-control-py", editable = "third_party/rebotarm_control_py" }]
 
 [[package]]
 name = "rebotarm-control-py"
 version = "0.1.0"
-source = { editable = "third_party/rebotarm_control_py" }
+source = { virtual = "third_party/reBotArm_control_py" }
 dependencies = [
     { name = "matplotlib" },
     { name = "meshcat" },
