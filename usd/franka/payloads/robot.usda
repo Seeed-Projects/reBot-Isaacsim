@@ -1,0 +1,372 @@
+#usda 1.0
+(
+    customLayerData = {
+        dictionary cameraSettings = {
+            dictionary Front = {
+                double3 position = (5, 0, 0)
+                double radius = 5
+            }
+            dictionary Perspective = {
+                double3 position = (1.2128915659439643, 1.3126864351369776, 1.837066573724774)
+                double3 target = (-0.241323300848455, -0.14152843165544127, 0.38285174164188995)
+            }
+            dictionary Right = {
+                double3 position = (0, -5, 0)
+                double radius = 5
+            }
+            dictionary Top = {
+                double3 position = (0, 0, 5)
+                double radius = 5
+            }
+            string boundCamera = "/OmniverseKit_Persp"
+        }
+        dictionary omni_layer = {
+            string authoring_layer = "./franka.usd"
+            dictionary locked = {
+            }
+            dictionary muteness = {
+            }
+        }
+        dictionary renderSettings = {
+        }
+    }
+    defaultPrim = "World"
+    doc = """Generated from Composed Stage of root layer /home/seeed/Downloads/franka.usd
+"""
+    endTimeCode = 1000000
+    metersPerUnit = 1
+    startTimeCode = 0
+    timeCodesPerSecond = 60
+    upAxis = "Z"
+)
+
+over "Franka" (
+    prepend apiSchemas = ["IsaacRobotAPI"]
+)
+{
+    string[] isaac:changelog (
+        displayName = "Changelog"
+    )
+    string isaac:description (
+        displayName = "Description"
+    )
+    token isaac:license (
+        displayName = "License"
+    )
+    string isaac:namespace (
+        displayName = "Namespace"
+        doc = "Namespace of the prim in Isaac Sim"
+    )
+    rel isaac:physics:robotJoints (
+        displayName = "Robot Joints"
+    )
+    rel isaac:physics:robotLinks (
+        displayName = "Robot Links"
+    )
+    token isaac:robotType (
+        displayName = "Robot Type"
+    )
+    string isaac:source (
+        displayName = "Source"
+    )
+    string isaac:version (
+        displayName = "Version"
+    )
+
+    over "panda_hand" (
+        prepend apiSchemas = ["IsaacLinkAPI"]
+    )
+    {
+        string isaac:nameOverride (
+            displayName = "Name Override"
+            doc = "Name override for prim lookup in base name search"
+        )
+
+        over "panda_finger_joint1" (
+            prepend apiSchemas = ["IsaacJointAPI"]
+        )
+        {
+            custom string isaac:nameOverride (
+                displayName = "Name Override"
+                doc = "Name override for prim lookup in base name search"
+            )
+            float[] isaac:physics:AccelerationLimit
+            float[] isaac:physics:JerkLimit
+            custom int isaac:physics:Rot_X:DofOffset
+            custom int isaac:physics:Rot_Y:DofOffset
+            custom int isaac:physics:Rot_Z:DofOffset
+            custom int isaac:physics:Tr_X:DofOffset
+            custom int isaac:physics:Tr_Y:DofOffset
+            custom int isaac:physics:Tr_Z:DofOffset
+        }
+
+        over "panda_finger_joint2" (
+            prepend apiSchemas = ["IsaacJointAPI"]
+        )
+        {
+            custom string isaac:nameOverride (
+                displayName = "Name Override"
+                doc = "Name override for prim lookup in base name search"
+            )
+            float[] isaac:physics:AccelerationLimit
+            float[] isaac:physics:JerkLimit
+            custom int isaac:physics:Rot_X:DofOffset
+            custom int isaac:physics:Rot_Y:DofOffset
+            custom int isaac:physics:Rot_Z:DofOffset
+            custom int isaac:physics:Tr_X:DofOffset
+            custom int isaac:physics:Tr_Y:DofOffset
+            custom int isaac:physics:Tr_Z:DofOffset
+        }
+    }
+
+    over "panda_rightfinger" (
+        prepend apiSchemas = ["IsaacLinkAPI"]
+    )
+    {
+        string isaac:nameOverride (
+            displayName = "Name Override"
+            doc = "Name override for prim lookup in base name search"
+        )
+    }
+
+    over "panda_leftfinger" (
+        prepend apiSchemas = ["IsaacLinkAPI"]
+    )
+    {
+        string isaac:nameOverride (
+            displayName = "Name Override"
+            doc = "Name override for prim lookup in base name search"
+        )
+    }
+
+    over "panda_link0" (
+        prepend apiSchemas = ["IsaacLinkAPI"]
+    )
+    {
+        string isaac:nameOverride (
+            displayName = "Name Override"
+            doc = "Name override for prim lookup in base name search"
+        )
+
+        over "panda_joint1" (
+            prepend apiSchemas = ["IsaacJointAPI"]
+        )
+        {
+            custom string isaac:nameOverride (
+                displayName = "Name Override"
+                doc = "Name override for prim lookup in base name search"
+            )
+            float[] isaac:physics:AccelerationLimit
+            float[] isaac:physics:JerkLimit
+            custom int isaac:physics:Rot_X:DofOffset
+            custom int isaac:physics:Rot_Y:DofOffset
+            custom int isaac:physics:Rot_Z:DofOffset
+            custom int isaac:physics:Tr_X:DofOffset
+            custom int isaac:physics:Tr_Y:DofOffset
+            custom int isaac:physics:Tr_Z:DofOffset
+        }
+    }
+
+    over "panda_link1" (
+        prepend apiSchemas = ["IsaacLinkAPI"]
+    )
+    {
+        string isaac:nameOverride (
+            displayName = "Name Override"
+            doc = "Name override for prim lookup in base name search"
+        )
+
+        over "panda_joint2" (
+            prepend apiSchemas = ["IsaacJointAPI"]
+        )
+        {
+            custom string isaac:nameOverride (
+                displayName = "Name Override"
+                doc = "Name override for prim lookup in base name search"
+            )
+            float[] isaac:physics:AccelerationLimit
+            float[] isaac:physics:JerkLimit
+            custom int isaac:physics:Rot_X:DofOffset
+            custom int isaac:physics:Rot_Y:DofOffset
+            custom int isaac:physics:Rot_Z:DofOffset
+            custom int isaac:physics:Tr_X:DofOffset
+            custom int isaac:physics:Tr_Y:DofOffset
+            custom int isaac:physics:Tr_Z:DofOffset
+        }
+    }
+
+    over "panda_link2" (
+        prepend apiSchemas = ["IsaacLinkAPI"]
+    )
+    {
+        string isaac:nameOverride (
+            displayName = "Name Override"
+            doc = "Name override for prim lookup in base name search"
+        )
+
+        over "panda_joint3" (
+            prepend apiSchemas = ["IsaacJointAPI"]
+        )
+        {
+            custom string isaac:nameOverride (
+                displayName = "Name Override"
+                doc = "Name override for prim lookup in base name search"
+            )
+            float[] isaac:physics:AccelerationLimit
+            float[] isaac:physics:JerkLimit
+            custom int isaac:physics:Rot_X:DofOffset
+            custom int isaac:physics:Rot_Y:DofOffset
+            custom int isaac:physics:Rot_Z:DofOffset
+            custom int isaac:physics:Tr_X:DofOffset
+            custom int isaac:physics:Tr_Y:DofOffset
+            custom int isaac:physics:Tr_Z:DofOffset
+        }
+    }
+
+    over "panda_link3" (
+        prepend apiSchemas = ["IsaacLinkAPI"]
+    )
+    {
+        string isaac:nameOverride (
+            displayName = "Name Override"
+            doc = "Name override for prim lookup in base name search"
+        )
+
+        over "panda_joint4" (
+            prepend apiSchemas = ["IsaacJointAPI"]
+        )
+        {
+            custom string isaac:nameOverride (
+                displayName = "Name Override"
+                doc = "Name override for prim lookup in base name search"
+            )
+            float[] isaac:physics:AccelerationLimit
+            float[] isaac:physics:JerkLimit
+            custom int isaac:physics:Rot_X:DofOffset
+            custom int isaac:physics:Rot_Y:DofOffset
+            custom int isaac:physics:Rot_Z:DofOffset
+            custom int isaac:physics:Tr_X:DofOffset
+            custom int isaac:physics:Tr_Y:DofOffset
+            custom int isaac:physics:Tr_Z:DofOffset
+        }
+    }
+
+    over "panda_link4" (
+        prepend apiSchemas = ["IsaacLinkAPI"]
+    )
+    {
+        string isaac:nameOverride (
+            displayName = "Name Override"
+            doc = "Name override for prim lookup in base name search"
+        )
+
+        over "panda_joint5" (
+            prepend apiSchemas = ["IsaacJointAPI"]
+        )
+        {
+            custom string isaac:nameOverride (
+                displayName = "Name Override"
+                doc = "Name override for prim lookup in base name search"
+            )
+            float[] isaac:physics:AccelerationLimit
+            float[] isaac:physics:JerkLimit
+            custom int isaac:physics:Rot_X:DofOffset
+            custom int isaac:physics:Rot_Y:DofOffset
+            custom int isaac:physics:Rot_Z:DofOffset
+            custom int isaac:physics:Tr_X:DofOffset
+            custom int isaac:physics:Tr_Y:DofOffset
+            custom int isaac:physics:Tr_Z:DofOffset
+        }
+    }
+
+    over "panda_link5" (
+        prepend apiSchemas = ["IsaacLinkAPI"]
+    )
+    {
+        string isaac:nameOverride (
+            displayName = "Name Override"
+            doc = "Name override for prim lookup in base name search"
+        )
+
+        over "panda_joint6" (
+            prepend apiSchemas = ["IsaacJointAPI"]
+        )
+        {
+            custom string isaac:nameOverride (
+                displayName = "Name Override"
+                doc = "Name override for prim lookup in base name search"
+            )
+            float[] isaac:physics:AccelerationLimit
+            float[] isaac:physics:JerkLimit
+            custom int isaac:physics:Rot_X:DofOffset
+            custom int isaac:physics:Rot_Y:DofOffset
+            custom int isaac:physics:Rot_Z:DofOffset
+            custom int isaac:physics:Tr_X:DofOffset
+            custom int isaac:physics:Tr_Y:DofOffset
+            custom int isaac:physics:Tr_Z:DofOffset
+        }
+    }
+
+    over "panda_link6" (
+        prepend apiSchemas = ["IsaacLinkAPI"]
+    )
+    {
+        string isaac:nameOverride (
+            displayName = "Name Override"
+            doc = "Name override for prim lookup in base name search"
+        )
+
+        over "panda_joint7" (
+            prepend apiSchemas = ["IsaacJointAPI"]
+        )
+        {
+            custom string isaac:nameOverride (
+                displayName = "Name Override"
+                doc = "Name override for prim lookup in base name search"
+            )
+            float[] isaac:physics:AccelerationLimit
+            float[] isaac:physics:JerkLimit
+            custom int isaac:physics:Rot_X:DofOffset
+            custom int isaac:physics:Rot_Y:DofOffset
+            custom int isaac:physics:Rot_Z:DofOffset
+            custom int isaac:physics:Tr_X:DofOffset
+            custom int isaac:physics:Tr_Y:DofOffset
+            custom int isaac:physics:Tr_Z:DofOffset
+        }
+    }
+
+    over "panda_link7" (
+        prepend apiSchemas = ["IsaacLinkAPI"]
+    )
+    {
+        string isaac:nameOverride (
+            displayName = "Name Override"
+            doc = "Name override for prim lookup in base name search"
+        )
+    }
+
+    over "rootJoint" (
+        prepend apiSchemas = ["IsaacJointAPI"]
+    )
+    {
+        custom string isaac:nameOverride (
+            displayName = "Name Override"
+            doc = "Name override for prim lookup in base name search"
+        )
+        float[] isaac:physics:AccelerationLimit
+        float[] isaac:physics:JerkLimit
+        custom int isaac:physics:Rot_X:DofOffset
+        custom int isaac:physics:Rot_Y:DofOffset
+        custom int isaac:physics:Rot_Z:DofOffset
+        custom int isaac:physics:Tr_X:DofOffset
+        custom int isaac:physics:Tr_Y:DofOffset
+        custom int isaac:physics:Tr_Z:DofOffset
+    }
+}
+
+over "World" (
+    prepend apiSchemas = ["IsaacRobotAPI"]
+)
+{
+}
+

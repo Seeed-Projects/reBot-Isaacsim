@@ -1,0 +1,243 @@
+#usda 1.0
+(
+    customLayerData = {
+        dictionary cameraSettings = {
+            dictionary Front = {
+                double3 position = (5, 0, 0)
+                double radius = 5
+            }
+            dictionary Perspective = {
+                double3 position = (1.2128915659439643, 1.3126864351369776, 1.837066573724774)
+                double3 target = (-0.241323300848455, -0.14152843165544127, 0.38285174164188995)
+            }
+            dictionary Right = {
+                double3 position = (0, -5, 0)
+                double radius = 5
+            }
+            dictionary Top = {
+                double3 position = (0, 0, 5)
+                double radius = 5
+            }
+            string boundCamera = "/OmniverseKit_Persp"
+        }
+        dictionary omni_layer = {
+            string authoring_layer = "./franka.usd"
+            dictionary locked = {
+            }
+            dictionary muteness = {
+            }
+        }
+        dictionary renderSettings = {
+        }
+    }
+    doc = """Generated from Composed Stage of root layer /home/seeed/Downloads/franka.usd
+
+
+Generated from Composed Stage of root layer /home/seeed/Downloads/franka/payloads/base.usd
+"""
+    endTimeCode = 1000000
+    metersPerUnit = 1
+    startTimeCode = 0
+    timeCodesPerSecond = 60
+    upAxis = "Z"
+)
+
+over "World"
+{
+    over "VisualMaterials"
+    {
+    }
+}
+
+over "Environment"
+{
+    over "defaultLight"
+    {
+    }
+}
+
+over "Render"
+{
+    over "OmniverseKit"
+    {
+        over "HydraTextures"
+        {
+            over "omni_kit_widget_viewport_ViewportTexture_0"
+            {
+            }
+        }
+    }
+
+    over "OmniverseGlobalRenderSettings"
+    {
+    }
+
+    over "Vars"
+    {
+        over "LdrColor"
+        {
+        }
+    }
+}
+
+over "Franka"
+{
+    over "panda_hand"
+    {
+        over "geometry"
+        {
+            over "panda_hand"
+            {
+            }
+
+            over "Looks"
+            {
+            }
+        }
+
+        over "tool_center"
+        {
+        }
+    }
+
+    over "panda_rightfinger"
+    {
+        over "geometry"
+        {
+            over "panda_rightfinger"
+            {
+            }
+
+            over "Looks"
+            {
+            }
+        }
+    }
+
+    over "panda_leftfinger"
+    {
+        over "geometry"
+        {
+            over "panda_leftfinger"
+            {
+            }
+
+            over "Looks"
+            {
+            }
+        }
+    }
+
+    over "panda_link0"
+    {
+        over "geometry"
+        {
+            over "panda_link0"
+            {
+            }
+
+            over "Looks"
+            {
+            }
+        }
+    }
+
+    over "panda_link1"
+    {
+        over "geometry"
+        {
+            over "panda_link1"
+            {
+            }
+
+            over "Looks"
+            {
+            }
+        }
+    }
+
+    over "panda_link2"
+    {
+        over "geometry"
+        {
+            over "panda_link2"
+            {
+            }
+
+            over "Looks"
+            {
+            }
+        }
+    }
+
+    over "panda_link3"
+    {
+        over "geometry"
+        {
+            over "panda_link3"
+            {
+            }
+
+            over "Looks"
+            {
+            }
+        }
+    }
+
+    over "panda_link4"
+    {
+        over "geometry"
+        {
+            over "panda_link4"
+            {
+            }
+
+            over "Looks"
+            {
+            }
+        }
+    }
+
+    over "panda_link5"
+    {
+        over "geometry"
+        {
+            over "panda_link5"
+            {
+            }
+
+            over "Looks"
+            {
+            }
+        }
+    }
+
+    over "panda_link6"
+    {
+        over "geometry"
+        {
+            over "panda_link6"
+            {
+            }
+
+            over "Looks"
+            {
+            }
+        }
+    }
+
+    over "panda_link7"
+    {
+        over "geometry"
+        {
+            over "panda_link7"
+            {
+            }
+
+            over "Looks"
+            {
+            }
+        }
+    }
+}
+

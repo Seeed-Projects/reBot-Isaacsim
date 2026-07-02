@@ -320,9 +320,13 @@ over "tn__00armrs_asmv3_hJ6D"
             prepend apiSchemas = ["PhysicsDriveAPI:linear", "PhysicsJointStateAPI:linear"]
         )
         {
-            float drive:linear:physics:damping = 50
+            float drive:linear:physics:damping = 10
             float drive:linear:physics:maxForce = 500
-            float drive:linear:physics:stiffness = 50
+            float drive:linear:physics:stiffness = 100
+            float drive:linear:physics:targetPosition = 0
+            float drive:linear:physics:targetVelocity = 0
+            uniform token drive:linear:physics:type = "force"
+            float jointFriction = 0
             uniform token physics:axis = "Z"
             custom rel physics:body0 = </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end>
             custom rel physics:body1 = </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_left>
@@ -332,7 +336,7 @@ over "tn__00armrs_asmv3_hJ6D"
             quatf physics:localRot1 = (1, 0, 0, 0)
             float physics:lowerLimit = 0
             float physics:upperLimit = 0.045
-            float state:linear:physics:position = 0.00005259377
+            float state:linear:physics:position = 0
             float state:linear:physics:velocity = 0
             custom float urdf:limit:effort = 500
             custom float urdf:limit:velocity = 10
@@ -342,9 +346,13 @@ over "tn__00armrs_asmv3_hJ6D"
             prepend apiSchemas = ["PhysicsDriveAPI:linear", "PhysicsJointStateAPI:linear"]
         )
         {
-            float drive:linear:physics:damping = 50
+            float drive:linear:physics:damping = 10
             float drive:linear:physics:maxForce = 500
-            float drive:linear:physics:stiffness = 50
+            float drive:linear:physics:stiffness = 100
+            float drive:linear:physics:targetPosition = 0
+            float drive:linear:physics:targetVelocity = 0
+            uniform token drive:linear:physics:type = "force"
+            float jointFriction = 0
             uniform token physics:axis = "Z"
             custom rel physics:body0 = </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end>
             custom rel physics:body1 = </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_right>
@@ -354,7 +362,7 @@ over "tn__00armrs_asmv3_hJ6D"
             quatf physics:localRot1 = (1, 0, 0, 0)
             float physics:lowerLimit = 0
             float physics:upperLimit = 0.045
-            float state:linear:physics:position = 0.000026604852
+            float state:linear:physics:position = 0
             float state:linear:physics:velocity = 0
             custom float urdf:limit:effort = 500
             custom float urdf:limit:velocity = 10

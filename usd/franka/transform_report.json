@@ -1,0 +1,1605 @@
+{
+  "profile": {
+    "profile_name": "Isaac Sim Structure",
+    "version": "1.0",
+    "rules": [
+      {
+        "name": "Route Variants",
+        "type": "isaacsim.asset.transformer.rules.structure.variants.VariantRoutingRule",
+        "destination": "payloads",
+        "params": {
+          "excluded_variants": [
+            "none",
+            "default",
+            "physx"
+          ]
+        },
+        "enabled": true
+      },
+      {
+        "name": "Flatten Base",
+        "type": "isaacsim.asset.transformer.rules.structure.flatten.FlattenRule",
+        "destination": "payloads",
+        "params": {
+          "output_path": "base.usd",
+          "selected_variants": {
+            "Physics": "PhysX",
+            "Robot": "Robot",
+            "Gripper": "None",
+            "Left_Hand": "None",
+            "Right_Hand": "None"
+          },
+          "clear_variants": false,
+          "case_insensitive": true
+        },
+        "enabled": true
+      },
+      {
+        "name": "Route Isaac Robot Schemas",
+        "type": "isaacsim.asset.transformer.rules.core.schemas.SchemaRoutingRule",
+        "destination": "payloads",
+        "params": {
+          "stage_name": "robot.usda",
+          "schemas": [
+            "IsaacRobotAPI",
+            "IsaacLinkAPI",
+            "IsaacReferencePointAPI",
+            "IsaacJointAPI",
+            "IsaacSurfaceGripper",
+            "IsaacAttachmentPointAPI",
+            "IsaacSiteAPI"
+          ]
+        },
+        "enabled": true
+      },
+      {
+        "name": "Route Isaac Robot Properties",
+        "type": "isaacsim.asset.transformer.rules.core.properties.PropertyRoutingRule",
+        "destination": "payloads",
+        "params": {
+          "stage_name": "robot.usda",
+          "prim_types": [
+            "Isaac.*",
+            "isaac.*"
+          ]
+        },
+        "enabled": true
+      },
+      {
+        "name": "Route Geometries",
+        "type": "isaacsim.asset.transformer.rules.perf.geometries.GeometriesRoutingRule",
+        "destination": "payloads",
+        "params": {
+          "geometries_layer": "geometries.usd",
+          "instance_layer": "instances.usda",
+          "deduplicate": true
+        },
+        "enabled": true
+      },
+      {
+        "name": "Fix Physics Joint Poses",
+        "type": "isaacsim.asset.transformer.rules.isaac_sim.physics_joint_pose_fix.PhysicsJointPoseFixRule",
+        "destination": "payloads",
+        "params": {},
+        "enabled": true
+      },
+      {
+        "name": "Route Materials",
+        "type": "isaacsim.asset.transformer.rules.perf.materials.MaterialsRoutingRule",
+        "destination": "payloads",
+        "params": {
+          "materials_layer": "materials.usda",
+          "assets_folder": "Textures",
+          "download_textures": true
+        },
+        "enabled": true
+      },
+      {
+        "name": "Route PhysX Schemas",
+        "type": "isaacsim.asset.transformer.rules.core.schemas.SchemaRoutingRule",
+        "destination": "payloads/Physics",
+        "params": {
+          "stage_name": "physx.usda",
+          "schemas": [
+            "Physx.*",
+            "physx.*"
+          ]
+        },
+        "enabled": true
+      },
+      {
+        "name": "Route PhysX Prims",
+        "type": "isaacsim.asset.transformer.rules.core.prims.PrimRoutingRule",
+        "destination": "payloads/Physics",
+        "params": {
+          "stage_name": "physx.usda",
+          "prim_types": [
+            "Physx.*",
+            "physx.*"
+          ]
+        },
+        "enabled": true
+      },
+      {
+        "name": "Route PhysX Properties",
+        "type": "isaacsim.asset.transformer.rules.core.properties.PropertyRoutingRule",
+        "destination": "payloads/Physics",
+        "params": {
+          "stage_name": "physx.usda",
+          "properties": [
+            "Physx.*",
+            "physx.*"
+          ]
+        },
+        "enabled": true
+      },
+      {
+        "name": "Route MuJoCo Schemas",
+        "type": "isaacsim.asset.transformer.rules.core.schemas.SchemaRoutingRule",
+        "destination": "payloads/Physics",
+        "params": {
+          "stage_name": "mujoco.usda",
+          "schemas": [
+            "Mjc.*",
+            "mjc.*"
+          ]
+        },
+        "enabled": true
+      },
+      {
+        "name": "Route MuJoCo Prims",
+        "type": "isaacsim.asset.transformer.rules.core.prims.PrimRoutingRule",
+        "destination": "payloads/Physics",
+        "params": {
+          "stage_name": "mujoco.usda",
+          "prim_types": [
+            "Mjc.*",
+            "mjc.*"
+          ]
+        },
+        "enabled": true
+      },
+      {
+        "name": "Route MuJoCo Properties",
+        "type": "isaacsim.asset.transformer.rules.core.properties.PropertyRoutingRule",
+        "destination": "payloads/Physics",
+        "params": {
+          "stage_name": "mujoco.usda",
+          "properties": [
+            "Mjc.*",
+            "mjc.*"
+          ]
+        },
+        "enabled": true
+      },
+      {
+        "name": "Route Physics Schemas",
+        "type": "isaacsim.asset.transformer.rules.core.schemas.SchemaRoutingRule",
+        "destination": "payloads/Physics",
+        "params": {
+          "stage_name": "physics.usda",
+          "schemas": [
+            "Physics.*",
+            "Newton.*"
+          ],
+          "ignore_schemas": [
+            "PhysicsCollisionAPI"
+          ],
+          "prim_names": [
+            ".*"
+          ],
+          "ignore_prim_names": []
+        },
+        "enabled": true
+      },
+      {
+        "name": "Route Physics Prims",
+        "type": "isaacsim.asset.transformer.rules.core.prims.PrimRoutingRule",
+        "destination": "payloads/Physics",
+        "params": {
+          "stage_name": "physics.usda",
+          "prim_types": [
+            "Physics.*",
+            "Newton.*"
+          ]
+        },
+        "enabled": true
+      },
+      {
+        "name": "Make Robot Schema",
+        "type": "isaacsim.asset.transformer.rules.isaac_sim.robot_schema.RobotSchemaRule",
+        "destination": "payloads",
+        "params": {
+          "prim_path": "",
+          "stage_name": "robot.usda",
+          "add_sites": true,
+          "sites_last": false,
+          "sublayer": "Physics/physics.usda"
+        },
+        "enabled": true
+      },
+      {
+        "name": "Make API Schemas Non-Explicit",
+        "type": "isaacsim.asset.transformer.rules.isaac_sim.make_lists_non_explicit.MakeListsNonExplicitRule",
+        "destination": "payloads",
+        "params": {
+          "metadata_names": [
+            "apiSchemas"
+          ],
+          "property_names": [],
+          "list_op_type": "prepend"
+        },
+        "enabled": true
+      },
+      {
+        "name": "Generate Interface",
+        "type": "isaacsim.asset.transformer.rules.structure.interface.InterfaceConnectionRule",
+        "destination": "",
+        "params": {
+          "base_layer": "payloads/base.usda",
+          "base_connection_type": "Reference",
+          "generate_folder_variants": true,
+          "payloads_folder": "payloads",
+          "connections": [
+            {
+              "asset_path": "payloads/Physics/physx.usda",
+              "target_path": "payloads/Physics/physics.usda",
+              "connection_type": "Sublayer"
+            },
+            {
+              "asset_path": "payloads/Physics/mujoco.usda",
+              "target_path": "payloads/Physics/physics.usda",
+              "connection_type": "Sublayer"
+            },
+            {
+              "asset_path": "payloads/base.usda",
+              "target_path": "payloads/robot.usda",
+              "connection_type": "Sublayer"
+            }
+          ],
+          "default_variant_selections": {
+            "Physics": "physx",
+            "Gripper": "None",
+            "Left_Hand": "None",
+            "Right_Hand": "None"
+          }
+        },
+        "enabled": true
+      },
+      {
+        "name": "Delete Physics Drive and Joint State APIs",
+        "type": "isaacsim.asset.transformer.rules.core.remove_schema.RemoveSchemaRule",
+        "destination": "payloads/Physics",
+        "params": {
+          "stage_name": "mujoco.usda",
+          "schema_patterns": [
+            "PhysicsDriveAPI.*",
+            "PhysicsJointStateAPI.*"
+          ],
+          "prim_path_patterns": [
+            ".*"
+          ],
+          "clear_properties": false
+        },
+        "enabled": true
+      },
+      {
+        "name": "Delete Newton Redundant APIs",
+        "type": "isaacsim.asset.transformer.rules.core.remove_schema.RemoveSchemaRule",
+        "destination": "payloads/Physics",
+        "params": {
+          "stage_name": "physx.usda",
+          "schema_patterns": [
+            "NewtonMimicAPI.*",
+            "NewtonArticulationRootAPI.*"
+          ],
+          "prim_path_patterns": [
+            ".*"
+          ],
+          "clear_properties": false
+        },
+        "enabled": true
+      }
+    ],
+    "interface_asset_name": null,
+    "output_package_root": "/home/seeed/Downloads/franka",
+    "flatten_source": false,
+    "base_name": "base.usd"
+  },
+  "input_stage_path": "/home/seeed/Downloads/franka.usd",
+  "package_root": "/home/seeed/Downloads/franka",
+  "started_at": "2026-06-30T06:34:31.605Z",
+  "finished_at": "2026-06-30T06:34:33.074Z",
+  "results": [
+    {
+      "rule": {
+        "name": "Route Variants",
+        "type": "isaacsim.asset.transformer.rules.structure.variants.VariantRoutingRule",
+        "destination": "payloads",
+        "params": {
+          "excluded_variants": [
+            "none",
+            "default",
+            "physx"
+          ]
+        },
+        "enabled": true
+      },
+      "success": true,
+      "log": [
+        {
+          "message": "VariantRoutingRule start destination=payloads, case_insensitive=True, collect_dependencies=True, excluded_variants={'default', 'none', 'physx'}"
+        },
+        {
+          "message": "Processing default prim: /World"
+        },
+        {
+          "message": "No variant sets found on default prim"
+        }
+      ],
+      "affected_stages": [],
+      "error": null,
+      "started_at": "2026-06-30T06:34:31.648Z",
+      "finished_at": "2026-06-30T06:34:31.648Z"
+    },
+    {
+      "rule": {
+        "name": "Flatten Base",
+        "type": "isaacsim.asset.transformer.rules.structure.flatten.FlattenRule",
+        "destination": "payloads",
+        "params": {
+          "output_path": "base.usd",
+          "selected_variants": {
+            "Physics": "PhysX",
+            "Robot": "Robot",
+            "Gripper": "None",
+            "Left_Hand": "None",
+            "Right_Hand": "None"
+          },
+          "clear_variants": false,
+          "case_insensitive": true
+        },
+        "enabled": true
+      },
+      "success": true,
+      "log": [
+        {
+          "message": "FlattenRule start input=/home/seeed/Downloads/franka.usd output=base.usd clear_variants=False selected_variants={'Physics': 'PhysX', 'Robot': 'Robot', 'Gripper': 'None', 'Left_Hand': 'None', 'Right_Hand': 'None'} case_insensitive=True"
+        },
+        {
+          "message": "Variant set 'Physics' not found on default prim, skipping"
+        },
+        {
+          "message": "Variant set 'Robot' not found on default prim, skipping"
+        },
+        {
+          "message": "Variant set 'Gripper' not found on default prim, skipping"
+        },
+        {
+          "message": "Variant set 'Left_Hand' not found on default prim, skipping"
+        },
+        {
+          "message": "Variant set 'Right_Hand' not found on default prim, skipping"
+        },
+        {
+          "message": "No variant selections applied"
+        },
+        {
+          "message": "Layer cached in USD registry, transferring content: /home/seeed/Downloads/franka/payloads/base.usd"
+        },
+        {
+          "message": "Exported flattened layer to: /home/seeed/Downloads/franka/payloads/base.usd"
+        },
+        {
+          "message": "FlattenRule completed"
+        }
+      ],
+      "affected_stages": [
+        "base.usd"
+      ],
+      "error": null,
+      "started_at": "2026-06-30T06:34:31.648Z",
+      "finished_at": "2026-06-30T06:34:31.744Z"
+    },
+    {
+      "rule": {
+        "name": "Route Isaac Robot Schemas",
+        "type": "isaacsim.asset.transformer.rules.core.schemas.SchemaRoutingRule",
+        "destination": "payloads",
+        "params": {
+          "stage_name": "robot.usda",
+          "schemas": [
+            "IsaacRobotAPI",
+            "IsaacLinkAPI",
+            "IsaacReferencePointAPI",
+            "IsaacJointAPI",
+            "IsaacSurfaceGripper",
+            "IsaacAttachmentPointAPI",
+            "IsaacSiteAPI"
+          ]
+        },
+        "enabled": true
+      },
+      "success": true,
+      "log": [
+        {
+          "message": "SchemaRoutingRule start destination=payloads/robot.usda"
+        },
+        {
+          "message": "Schema patterns: IsaacRobotAPI, IsaacLinkAPI, IsaacReferencePointAPI, IsaacJointAPI, IsaacSurfaceGripper, IsaacAttachmentPointAPI, IsaacSiteAPI"
+        },
+        {
+          "message": "Prim name patterns: .*"
+        },
+        {
+          "message": "Using schemas layer: /home/seeed/Downloads/franka/payloads/robot.usda"
+        },
+        {
+          "message": "Moved 1 schema(s) from /Franka: IsaacRobotAPI"
+        },
+        {
+          "message": "Moved 1 schema(s) from /Franka/panda_hand: IsaacLinkAPI"
+        },
+        {
+          "message": "Moved 1 schema(s) from /Franka/panda_hand/panda_finger_joint1: IsaacJointAPI"
+        },
+        {
+          "message": "Moved 1 schema(s) from /Franka/panda_hand/panda_finger_joint2: IsaacJointAPI"
+        },
+        {
+          "message": "Moved 1 schema(s) from /Franka/panda_rightfinger: IsaacLinkAPI"
+        },
+        {
+          "message": "Moved 1 schema(s) from /Franka/panda_leftfinger: IsaacLinkAPI"
+        },
+        {
+          "message": "Moved 1 schema(s) from /Franka/panda_link0: IsaacLinkAPI"
+        },
+        {
+          "message": "Moved 1 schema(s) from /Franka/panda_link0/panda_joint1: IsaacJointAPI"
+        },
+        {
+          "message": "Moved 1 schema(s) from /Franka/panda_link1: IsaacLinkAPI"
+        },
+        {
+          "message": "Moved 1 schema(s) from /Franka/panda_link1/panda_joint2: IsaacJointAPI"
+        },
+        {
+          "message": "Moved 1 schema(s) from /Franka/panda_link2: IsaacLinkAPI"
+        },
+        {
+          "message": "Moved 1 schema(s) from /Franka/panda_link2/panda_joint3: IsaacJointAPI"
+        },
+        {
+          "message": "Moved 1 schema(s) from /Franka/panda_link3: IsaacLinkAPI"
+        },
+        {
+          "message": "Moved 1 schema(s) from /Franka/panda_link3/panda_joint4: IsaacJointAPI"
+        },
+        {
+          "message": "Moved 1 schema(s) from /Franka/panda_link4: IsaacLinkAPI"
+        },
+        {
+          "message": "Moved 1 schema(s) from /Franka/panda_link4/panda_joint5: IsaacJointAPI"
+        },
+        {
+          "message": "Moved 1 schema(s) from /Franka/panda_link5: IsaacLinkAPI"
+        },
+        {
+          "message": "Moved 1 schema(s) from /Franka/panda_link5/panda_joint6: IsaacJointAPI"
+        },
+        {
+          "message": "Moved 1 schema(s) from /Franka/panda_link6: IsaacLinkAPI"
+        },
+        {
+          "message": "Moved 1 schema(s) from /Franka/panda_link6/panda_joint7: IsaacJointAPI"
+        },
+        {
+          "message": "Moved 1 schema(s) from /Franka/panda_link7: IsaacLinkAPI"
+        },
+        {
+          "message": "Moved 1 schema(s) from /Franka/rootJoint: IsaacJointAPI"
+        },
+        {
+          "message": "Processed 22 prim(s), moved 22 schema instance(s)"
+        },
+        {
+          "message": "SchemaRoutingRule completed"
+        }
+      ],
+      "affected_stages": [
+        "payloads/robot.usda"
+      ],
+      "error": null,
+      "started_at": "2026-06-30T06:34:31.744Z",
+      "finished_at": "2026-06-30T06:34:31.764Z"
+    },
+    {
+      "rule": {
+        "name": "Route Isaac Robot Properties",
+        "type": "isaacsim.asset.transformer.rules.core.properties.PropertyRoutingRule",
+        "destination": "payloads",
+        "params": {
+          "stage_name": "robot.usda",
+          "prim_types": [
+            "Isaac.*",
+            "isaac.*"
+          ]
+        },
+        "enabled": true
+      },
+      "success": true,
+      "log": [
+        {
+          "message": "No property patterns specified, skipping"
+        }
+      ],
+      "affected_stages": [],
+      "error": null,
+      "started_at": "2026-06-30T06:34:31.764Z",
+      "finished_at": "2026-06-30T06:34:31.764Z"
+    },
+    {
+      "rule": {
+        "name": "Route Geometries",
+        "type": "isaacsim.asset.transformer.rules.perf.geometries.GeometriesRoutingRule",
+        "destination": "payloads",
+        "params": {
+          "geometries_layer": "geometries.usd",
+          "instance_layer": "instances.usda",
+          "deduplicate": true
+        },
+        "enabled": true
+      },
+      "success": true,
+      "log": [
+        {
+          "message": "Pre-processing: making all instanceable references non-instanceable"
+        },
+        {
+          "message": "Clearing instanceable flag on /Franka/panda_hand/geometry"
+        },
+        {
+          "message": "Clearing instanceable flag on /Franka/panda_rightfinger/geometry"
+        },
+        {
+          "message": "Clearing instanceable flag on /Franka/panda_leftfinger/geometry"
+        },
+        {
+          "message": "Clearing instanceable flag on /Franka/panda_link0/geometry"
+        },
+        {
+          "message": "Clearing instanceable flag on /Franka/panda_link1/geometry"
+        },
+        {
+          "message": "Clearing instanceable flag on /Franka/panda_link2/geometry"
+        },
+        {
+          "message": "Clearing instanceable flag on /Franka/panda_link3/geometry"
+        },
+        {
+          "message": "Clearing instanceable flag on /Franka/panda_link4/geometry"
+        },
+        {
+          "message": "Clearing instanceable flag on /Franka/panda_link5/geometry"
+        },
+        {
+          "message": "Clearing instanceable flag on /Franka/panda_link6/geometry"
+        },
+        {
+          "message": "Clearing instanceable flag on /Franka/panda_link7/geometry"
+        },
+        {
+          "message": "Pre-processing: cleared instanceable on 12 prims, deleted 0 child override specs"
+        },
+        {
+          "message": "Pre-processing: done"
+        },
+        {
+          "message": "GeometriesRoutingRule start scope=/ deduplicate=True geometries_layer=payloads/geometries.usd instance_layer=payloads/instances.usda"
+        },
+        {
+          "message": "Found 11 geometry prim usages"
+        },
+        {
+          "message": "Geometry sources: ['/Franka/panda_hand/geometry/panda_hand', '/Franka/panda_rightfinger/geometry/panda_rightfinger', '/Franka/panda_leftfinger/geometry/panda_leftfinger', '/Franka/panda_link0/geometry/panda_link0', '/Franka/panda_link1/geometry/panda_link1', '/Franka/panda_link2/geometry/panda_link2', '/Franka/panda_link3/geometry/panda_link3', '/Franka/panda_link4/geometry/panda_link4', '/Franka/panda_link5/geometry/panda_link5', '/Franka/panda_link6/geometry/panda_link6', '/Franka/panda_link7/geometry/panda_link7']"
+        },
+        {
+          "message": "Created new geometries layer: /home/seeed/Downloads/franka/payloads/geometries.usd"
+        },
+        {
+          "message": "Created new instances layer: /home/seeed/Downloads/franka/payloads/instances.usda"
+        },
+        {
+          "message": "Copied geometry /Franka/panda_hand/geometry/panda_hand to /Geometries/panda_hand/panda_hand"
+        },
+        {
+          "message": "Copied geometry /Franka/panda_rightfinger/geometry/panda_rightfinger to /Geometries/panda_rightfinger/panda_rightfinger"
+        },
+        {
+          "message": "Copied geometry /Franka/panda_leftfinger/geometry/panda_leftfinger to /Geometries/panda_leftfinger/panda_leftfinger"
+        },
+        {
+          "message": "Copied geometry /Franka/panda_link0/geometry/panda_link0 to /Geometries/panda_link0/panda_link0"
+        },
+        {
+          "message": "Copied geometry /Franka/panda_link1/geometry/panda_link1 to /Geometries/panda_link1/panda_link1"
+        },
+        {
+          "message": "Copied geometry /Franka/panda_link2/geometry/panda_link2 to /Geometries/panda_link2/panda_link2"
+        },
+        {
+          "message": "Copied geometry /Franka/panda_link3/geometry/panda_link3 to /Geometries/panda_link3/panda_link3"
+        },
+        {
+          "message": "Copied geometry /Franka/panda_link4/geometry/panda_link4 to /Geometries/panda_link4/panda_link4"
+        },
+        {
+          "message": "Copied geometry /Franka/panda_link5/geometry/panda_link5 to /Geometries/panda_link5/panda_link5"
+        },
+        {
+          "message": "Copied geometry /Franka/panda_link6/geometry/panda_link6 to /Geometries/panda_link6/panda_link6"
+        },
+        {
+          "message": "Copied geometry /Franka/panda_link7/geometry/panda_link7 to /Geometries/panda_link7/panda_link7"
+        },
+        {
+          "message": "Processed 11 geometry usages: 11 new, 0 reused from existing layer, 0 deduplicated within batch"
+        },
+        {
+          "message": "Materials: 4 copied, 0 deduplicated to /World/VisualMaterials"
+        },
+        {
+          "message": "Materials: 0 copied, 2 deduplicated to /World/VisualMaterials"
+        },
+        {
+          "message": "Materials: 0 copied, 2 deduplicated to /World/VisualMaterials"
+        },
+        {
+          "message": "Materials: 2 copied, 3 deduplicated to /World/VisualMaterials"
+        },
+        {
+          "message": "Materials: 0 copied, 1 deduplicated to /World/VisualMaterials"
+        },
+        {
+          "message": "Materials: 0 copied, 1 deduplicated to /World/VisualMaterials"
+        },
+        {
+          "message": "Materials: 0 copied, 2 deduplicated to /World/VisualMaterials"
+        },
+        {
+          "message": "Materials: 0 copied, 2 deduplicated to /World/VisualMaterials"
+        },
+        {
+          "message": "Materials: 0 copied, 2 deduplicated to /World/VisualMaterials"
+        },
+        {
+          "message": "Materials: 4 copied, 4 deduplicated to /World/VisualMaterials"
+        },
+        {
+          "message": "Materials: 0 copied, 3 deduplicated to /World/VisualMaterials"
+        },
+        {
+          "message": "Created 11 unique instance definitions (0 deduplicated from 11 sources)"
+        },
+        {
+          "message": "Reference path: /home/seeed/Downloads/franka/payloads/base.usd -> ./instances.usda"
+        },
+        {
+          "message": "Updated 11 prims in source stage with instanceable references"
+        },
+        {
+          "message": "Cleaned up flattened prototypes: removed 1 references, deleted 13 prototype prims"
+        },
+        {
+          "message": "Deleted 32 relocated material sources, skipped 0 (from references/sublayers)"
+        },
+        {
+          "message": "Updated 32 references in instances layer: ./base.usd -> ./base.usda"
+        },
+        {
+          "message": "GeometriesRoutingRule completed: 11 unique geometries (11 new, 0 pre-existing), 11 unique instances (0 deduplicated)"
+        }
+      ],
+      "affected_stages": [
+        "/home/seeed/Downloads/franka/payloads/base.usda",
+        "payloads/geometries.usd",
+        "payloads/instances.usda"
+      ],
+      "error": null,
+      "started_at": "2026-06-30T06:34:31.764Z",
+      "finished_at": "2026-06-30T06:34:32.826Z"
+    },
+    {
+      "rule": {
+        "name": "Fix Physics Joint Poses",
+        "type": "isaacsim.asset.transformer.rules.isaac_sim.physics_joint_pose_fix.PhysicsJointPoseFixRule",
+        "destination": "payloads",
+        "params": {},
+        "enabled": true
+      },
+      "success": true,
+      "log": [
+        {
+          "message": "PhysicsJointPoseFixRule start original=/home/seeed/Downloads/franka.usd joints=11 tol_pos=1e-06 tol_orient=1e-06"
+        },
+        {
+          "message": "PhysicsJointPoseFixRule completed: 0 joint body pose(s) corrected"
+        }
+      ],
+      "affected_stages": [],
+      "error": null,
+      "started_at": "2026-06-30T06:34:32.826Z",
+      "finished_at": "2026-06-30T06:34:32.833Z"
+    },
+    {
+      "rule": {
+        "name": "Route Materials",
+        "type": "isaacsim.asset.transformer.rules.perf.materials.MaterialsRoutingRule",
+        "destination": "payloads",
+        "params": {
+          "materials_layer": "materials.usda",
+          "assets_folder": "Textures",
+          "download_textures": true
+        },
+        "enabled": true
+      },
+      "success": true,
+      "log": [
+        {
+          "message": "MaterialsRoutingRule start scope=/ deduplicate=True materials_layer=payloads/materials.usda textures_folder=Textures download_textures=True"
+        },
+        {
+          "message": "Found 142 material prims"
+        },
+        {
+          "message": "Transferred 0 unique assets"
+        },
+        {
+          "message": "Using materials layer: /home/seeed/Downloads/franka/payloads/materials.usda"
+        },
+        {
+          "message": "Copied material /World/VisualMaterials/Aluminum to /Materials/Aluminum"
+        },
+        {
+          "message": "Copied material /World/VisualMaterials/PlasticWhite to /Materials/PlasticWhite"
+        },
+        {
+          "message": "Copied material /World/VisualMaterials/PlasticGray to /Materials/PlasticGray"
+        },
+        {
+          "message": "Copied material /World/VisualMaterials/RubberGray to /Materials/RubberGray"
+        },
+        {
+          "message": "Copied material /World/VisualMaterials/PlasticBlack to /Materials/PlasticBlack"
+        },
+        {
+          "message": "Copied material /World/VisualMaterials/EmissiveBlue to /Materials/EmissiveBlue"
+        },
+        {
+          "message": "Copied material /World/VisualMaterials/RubberWhite to /Materials/RubberWhite"
+        },
+        {
+          "message": "Copied material /World/VisualMaterials/RubberRed to /Materials/RubberRed"
+        },
+        {
+          "message": "Copied material /World/VisualMaterials/RubberGreen to /Materials/RubberGreen"
+        },
+        {
+          "message": "Copied material /World/VisualMaterials/RubberLightGray to /Materials/RubberLightGray"
+        },
+        {
+          "message": "Copied material /Franka/panda_hand/geometry/Looks/AluminumRough to /Materials/AluminumRough"
+        },
+        {
+          "message": "Copied material /Franka/panda_hand/geometry/Looks/rubber_cable to /Materials/rubber_cable"
+        },
+        {
+          "message": "Processed 142 materials: 12 new, 0 reused from existing layer, 130 deduplicated within batch"
+        },
+        {
+          "message": "Found 44 material bindings"
+        },
+        {
+          "message": "Saved modified layer: /home/seeed/Downloads/franka/payloads/instances.usda"
+        },
+        {
+          "message": "Updated 142 materials in their defining layers"
+        },
+        {
+          "message": "Removed 110 unused material references"
+        },
+        {
+          "message": "MaterialsRoutingRule completed: 12 unique materials in layer (12 new, 0 pre-existing), 44 bindings updated"
+        }
+      ],
+      "affected_stages": [
+        "/home/seeed/Downloads/franka/payloads/instances.usda",
+        "payloads/materials.usda"
+      ],
+      "error": null,
+      "started_at": "2026-06-30T06:34:32.833Z",
+      "finished_at": "2026-06-30T06:34:33.011Z"
+    },
+    {
+      "rule": {
+        "name": "Route PhysX Schemas",
+        "type": "isaacsim.asset.transformer.rules.core.schemas.SchemaRoutingRule",
+        "destination": "payloads/Physics",
+        "params": {
+          "stage_name": "physx.usda",
+          "schemas": [
+            "Physx.*",
+            "physx.*"
+          ]
+        },
+        "enabled": true
+      },
+      "success": true,
+      "log": [
+        {
+          "message": "SchemaRoutingRule start destination=payloads/Physics/physx.usda"
+        },
+        {
+          "message": "Schema patterns: Physx.*, physx.*"
+        },
+        {
+          "message": "Prim name patterns: .*"
+        },
+        {
+          "message": "Using schemas layer: /home/seeed/Downloads/franka/payloads/Physics/physx.usda"
+        },
+        {
+          "message": "Moved 1 schema(s) from /Franka: PhysxArticulationAPI"
+        },
+        {
+          "message": "Moved 1 schema(s) from /Franka/panda_hand/panda_finger_joint1: PhysxJointAPI"
+        },
+        {
+          "message": "Moved 2 schema(s) from /Franka/panda_hand/panda_finger_joint2: PhysxJointAPI, PhysxMimicJointAPI:rotX"
+        },
+        {
+          "message": "Moved 1 schema(s) from /Franka/panda_link0: PhysxRigidBodyAPI"
+        },
+        {
+          "message": "Moved 1 schema(s) from /Franka/panda_link0/panda_joint1: PhysxJointAPI"
+        },
+        {
+          "message": "Moved 1 schema(s) from /Franka/panda_link1/panda_joint2: PhysxJointAPI"
+        },
+        {
+          "message": "Moved 1 schema(s) from /Franka/panda_link2: PhysxRigidBodyAPI"
+        },
+        {
+          "message": "Moved 1 schema(s) from /Franka/panda_link2/panda_joint3: PhysxJointAPI"
+        },
+        {
+          "message": "Moved 1 schema(s) from /Franka/panda_link3/panda_joint4: PhysxJointAPI"
+        },
+        {
+          "message": "Moved 1 schema(s) from /Franka/panda_link4/panda_joint5: PhysxJointAPI"
+        },
+        {
+          "message": "Moved 1 schema(s) from /Franka/panda_link5/panda_joint6: PhysxJointAPI"
+        },
+        {
+          "message": "Moved 1 schema(s) from /Franka/panda_link6/panda_joint7: PhysxJointAPI"
+        },
+        {
+          "message": "Moved 1 schema(s) from /Franka/panda_link7: PhysxRigidBodyAPI"
+        },
+        {
+          "message": "Moved 1 schema(s) from /PhysicsScene: PhysxSceneAPI"
+        },
+        {
+          "message": "Processed 14 prim(s), moved 15 schema instance(s)"
+        },
+        {
+          "message": "SchemaRoutingRule completed"
+        }
+      ],
+      "affected_stages": [
+        "payloads/Physics/physx.usda"
+      ],
+      "error": null,
+      "started_at": "2026-06-30T06:34:33.011Z",
+      "finished_at": "2026-06-30T06:34:33.017Z"
+    },
+    {
+      "rule": {
+        "name": "Route PhysX Prims",
+        "type": "isaacsim.asset.transformer.rules.core.prims.PrimRoutingRule",
+        "destination": "payloads/Physics",
+        "params": {
+          "stage_name": "physx.usda",
+          "prim_types": [
+            "Physx.*",
+            "physx.*"
+          ]
+        },
+        "enabled": true
+      },
+      "success": true,
+      "log": [
+        {
+          "message": "PrimRoutingRule start destination=payloads/Physics/physx.usda"
+        },
+        {
+          "message": "Prim type patterns: Physx.*, physx.*"
+        },
+        {
+          "message": "Search scope: /"
+        },
+        {
+          "message": "Prim name patterns: .*"
+        },
+        {
+          "message": "No matching prims found, skipping output file creation"
+        }
+      ],
+      "affected_stages": [],
+      "error": null,
+      "started_at": "2026-06-30T06:34:33.017Z",
+      "finished_at": "2026-06-30T06:34:33.017Z"
+    },
+    {
+      "rule": {
+        "name": "Route PhysX Properties",
+        "type": "isaacsim.asset.transformer.rules.core.properties.PropertyRoutingRule",
+        "destination": "payloads/Physics",
+        "params": {
+          "stage_name": "physx.usda",
+          "properties": [
+            "Physx.*",
+            "physx.*"
+          ]
+        },
+        "enabled": true
+      },
+      "success": true,
+      "log": [
+        {
+          "message": "PropertyRoutingRule start destination=payloads/Physics/physx.usda"
+        },
+        {
+          "message": "Property patterns: Physx.*, physx.*"
+        },
+        {
+          "message": "Search scope: /"
+        },
+        {
+          "message": "Prim name patterns: .*"
+        },
+        {
+          "message": "No matching properties found, skipping output file creation"
+        }
+      ],
+      "affected_stages": [],
+      "error": null,
+      "started_at": "2026-06-30T06:34:33.017Z",
+      "finished_at": "2026-06-30T06:34:33.023Z"
+    },
+    {
+      "rule": {
+        "name": "Route MuJoCo Schemas",
+        "type": "isaacsim.asset.transformer.rules.core.schemas.SchemaRoutingRule",
+        "destination": "payloads/Physics",
+        "params": {
+          "stage_name": "mujoco.usda",
+          "schemas": [
+            "Mjc.*",
+            "mjc.*"
+          ]
+        },
+        "enabled": true
+      },
+      "success": true,
+      "log": [
+        {
+          "message": "SchemaRoutingRule start destination=payloads/Physics/mujoco.usda"
+        },
+        {
+          "message": "Schema patterns: Mjc.*, mjc.*"
+        },
+        {
+          "message": "Prim name patterns: .*"
+        },
+        {
+          "message": "No matching schemas found, skipping output file creation"
+        }
+      ],
+      "affected_stages": [],
+      "error": null,
+      "started_at": "2026-06-30T06:34:33.023Z",
+      "finished_at": "2026-06-30T06:34:33.024Z"
+    },
+    {
+      "rule": {
+        "name": "Route MuJoCo Prims",
+        "type": "isaacsim.asset.transformer.rules.core.prims.PrimRoutingRule",
+        "destination": "payloads/Physics",
+        "params": {
+          "stage_name": "mujoco.usda",
+          "prim_types": [
+            "Mjc.*",
+            "mjc.*"
+          ]
+        },
+        "enabled": true
+      },
+      "success": true,
+      "log": [
+        {
+          "message": "PrimRoutingRule start destination=payloads/Physics/mujoco.usda"
+        },
+        {
+          "message": "Prim type patterns: Mjc.*, mjc.*"
+        },
+        {
+          "message": "Search scope: /"
+        },
+        {
+          "message": "Prim name patterns: .*"
+        },
+        {
+          "message": "No matching prims found, skipping output file creation"
+        }
+      ],
+      "affected_stages": [],
+      "error": null,
+      "started_at": "2026-06-30T06:34:33.024Z",
+      "finished_at": "2026-06-30T06:34:33.024Z"
+    },
+    {
+      "rule": {
+        "name": "Route MuJoCo Properties",
+        "type": "isaacsim.asset.transformer.rules.core.properties.PropertyRoutingRule",
+        "destination": "payloads/Physics",
+        "params": {
+          "stage_name": "mujoco.usda",
+          "properties": [
+            "Mjc.*",
+            "mjc.*"
+          ]
+        },
+        "enabled": true
+      },
+      "success": true,
+      "log": [
+        {
+          "message": "PropertyRoutingRule start destination=payloads/Physics/mujoco.usda"
+        },
+        {
+          "message": "Property patterns: Mjc.*, mjc.*"
+        },
+        {
+          "message": "Search scope: /"
+        },
+        {
+          "message": "Prim name patterns: .*"
+        },
+        {
+          "message": "No matching properties found, skipping output file creation"
+        }
+      ],
+      "affected_stages": [],
+      "error": null,
+      "started_at": "2026-06-30T06:34:33.024Z",
+      "finished_at": "2026-06-30T06:34:33.030Z"
+    },
+    {
+      "rule": {
+        "name": "Route Physics Schemas",
+        "type": "isaacsim.asset.transformer.rules.core.schemas.SchemaRoutingRule",
+        "destination": "payloads/Physics",
+        "params": {
+          "stage_name": "physics.usda",
+          "schemas": [
+            "Physics.*",
+            "Newton.*"
+          ],
+          "ignore_schemas": [
+            "PhysicsCollisionAPI"
+          ],
+          "prim_names": [
+            ".*"
+          ],
+          "ignore_prim_names": []
+        },
+        "enabled": true
+      },
+      "success": true,
+      "log": [
+        {
+          "message": "SchemaRoutingRule start destination=payloads/Physics/physics.usda"
+        },
+        {
+          "message": "Schema patterns: Physics.*, Newton.*"
+        },
+        {
+          "message": "Ignoring schemas: PhysicsCollisionAPI"
+        },
+        {
+          "message": "Prim name patterns: .*"
+        },
+        {
+          "message": "Using schemas layer: /home/seeed/Downloads/franka/payloads/Physics/physics.usda"
+        },
+        {
+          "message": "Moved 1 schema(s) from /Franka: PhysicsArticulationRootAPI"
+        },
+        {
+          "message": "Moved 2 schema(s) from /Franka/panda_hand: PhysicsRigidBodyAPI, PhysicsMassAPI"
+        },
+        {
+          "message": "Moved 2 schema(s) from /Franka/panda_hand/panda_finger_joint1: PhysicsDriveAPI:linear, PhysicsJointStateAPI:linear"
+        },
+        {
+          "message": "Moved 1 schema(s) from /Franka/panda_hand/panda_finger_joint2: PhysicsJointStateAPI:linear"
+        },
+        {
+          "message": "Moved 2 schema(s) from /Franka/panda_rightfinger: PhysicsRigidBodyAPI, PhysicsMassAPI"
+        },
+        {
+          "message": "Moved 2 schema(s) from /Franka/panda_leftfinger: PhysicsRigidBodyAPI, PhysicsMassAPI"
+        },
+        {
+          "message": "Moved 2 schema(s) from /Franka/panda_link0: PhysicsRigidBodyAPI, PhysicsMassAPI"
+        },
+        {
+          "message": "Moved 2 schema(s) from /Franka/panda_link0/panda_joint1: PhysicsDriveAPI:angular, PhysicsJointStateAPI:angular"
+        },
+        {
+          "message": "Moved 2 schema(s) from /Franka/panda_link1: PhysicsRigidBodyAPI, PhysicsMassAPI"
+        },
+        {
+          "message": "Moved 2 schema(s) from /Franka/panda_link1/panda_joint2: PhysicsDriveAPI:angular, PhysicsJointStateAPI:angular"
+        },
+        {
+          "message": "Moved 2 schema(s) from /Franka/panda_link2: PhysicsRigidBodyAPI, PhysicsMassAPI"
+        },
+        {
+          "message": "Moved 2 schema(s) from /Franka/panda_link2/panda_joint3: PhysicsDriveAPI:angular, PhysicsJointStateAPI:angular"
+        },
+        {
+          "message": "Moved 2 schema(s) from /Franka/panda_link3: PhysicsRigidBodyAPI, PhysicsMassAPI"
+        },
+        {
+          "message": "Moved 2 schema(s) from /Franka/panda_link3/panda_joint4: PhysicsDriveAPI:angular, PhysicsJointStateAPI:angular"
+        },
+        {
+          "message": "Moved 2 schema(s) from /Franka/panda_link4: PhysicsRigidBodyAPI, PhysicsMassAPI"
+        },
+        {
+          "message": "Moved 2 schema(s) from /Franka/panda_link4/panda_joint5: PhysicsDriveAPI:angular, PhysicsJointStateAPI:angular"
+        },
+        {
+          "message": "Moved 2 schema(s) from /Franka/panda_link5: PhysicsRigidBodyAPI, PhysicsMassAPI"
+        },
+        {
+          "message": "Moved 2 schema(s) from /Franka/panda_link5/panda_joint6: PhysicsDriveAPI:angular, PhysicsJointStateAPI:angular"
+        },
+        {
+          "message": "Moved 2 schema(s) from /Franka/panda_link6: PhysicsRigidBodyAPI, PhysicsMassAPI"
+        },
+        {
+          "message": "Moved 2 schema(s) from /Franka/panda_link6/panda_joint7: PhysicsDriveAPI:angular, PhysicsJointStateAPI:angular"
+        },
+        {
+          "message": "Moved 2 schema(s) from /Franka/panda_link7: PhysicsRigidBodyAPI, PhysicsMassAPI"
+        },
+        {
+          "message": "Moved 1 schema(s) from /PhysicsScene: NewtonSceneAPI"
+        },
+        {
+          "message": "Processed 22 prim(s), moved 41 schema instance(s)"
+        },
+        {
+          "message": "SchemaRoutingRule completed"
+        }
+      ],
+      "affected_stages": [
+        "payloads/Physics/physics.usda"
+      ],
+      "error": null,
+      "started_at": "2026-06-30T06:34:33.030Z",
+      "finished_at": "2026-06-30T06:34:33.038Z"
+    },
+    {
+      "rule": {
+        "name": "Route Physics Prims",
+        "type": "isaacsim.asset.transformer.rules.core.prims.PrimRoutingRule",
+        "destination": "payloads/Physics",
+        "params": {
+          "stage_name": "physics.usda",
+          "prim_types": [
+            "Physics.*",
+            "Newton.*"
+          ]
+        },
+        "enabled": true
+      },
+      "success": true,
+      "log": [
+        {
+          "message": "PrimRoutingRule start destination=payloads/Physics/physics.usda"
+        },
+        {
+          "message": "Prim type patterns: Physics.*, Newton.*"
+        },
+        {
+          "message": "Search scope: /"
+        },
+        {
+          "message": "Prim name patterns: .*"
+        },
+        {
+          "message": "Using prims layer: /home/seeed/Downloads/franka/payloads/Physics/physics.usda"
+        },
+        {
+          "message": "Processing prim: /Franka/panda_hand/panda_finger_joint1 (type: PhysicsPrismaticJoint)"
+        },
+        {
+          "message": "Copied composed prim: /Franka/panda_hand/panda_finger_joint1"
+        },
+        {
+          "message": "Removed 1 prim spec(s) from source layers"
+        },
+        {
+          "message": "Processing prim: /Franka/panda_hand/panda_finger_joint2 (type: PhysicsPrismaticJoint)"
+        },
+        {
+          "message": "Copied composed prim: /Franka/panda_hand/panda_finger_joint2"
+        },
+        {
+          "message": "Removed 1 prim spec(s) from source layers"
+        },
+        {
+          "message": "Processing prim: /Franka/panda_link0/panda_joint1 (type: PhysicsRevoluteJoint)"
+        },
+        {
+          "message": "Copied composed prim: /Franka/panda_link0/panda_joint1"
+        },
+        {
+          "message": "Removed 1 prim spec(s) from source layers"
+        },
+        {
+          "message": "Processing prim: /Franka/panda_link1/panda_joint2 (type: PhysicsRevoluteJoint)"
+        },
+        {
+          "message": "Copied composed prim: /Franka/panda_link1/panda_joint2"
+        },
+        {
+          "message": "Removed 1 prim spec(s) from source layers"
+        },
+        {
+          "message": "Processing prim: /Franka/panda_link2/panda_joint3 (type: PhysicsRevoluteJoint)"
+        },
+        {
+          "message": "Copied composed prim: /Franka/panda_link2/panda_joint3"
+        },
+        {
+          "message": "Removed 1 prim spec(s) from source layers"
+        },
+        {
+          "message": "Processing prim: /Franka/panda_link3/panda_joint4 (type: PhysicsRevoluteJoint)"
+        },
+        {
+          "message": "Copied composed prim: /Franka/panda_link3/panda_joint4"
+        },
+        {
+          "message": "Removed 1 prim spec(s) from source layers"
+        },
+        {
+          "message": "Processing prim: /Franka/panda_link4/panda_joint5 (type: PhysicsRevoluteJoint)"
+        },
+        {
+          "message": "Copied composed prim: /Franka/panda_link4/panda_joint5"
+        },
+        {
+          "message": "Removed 1 prim spec(s) from source layers"
+        },
+        {
+          "message": "Processing prim: /Franka/panda_link5/panda_joint6 (type: PhysicsRevoluteJoint)"
+        },
+        {
+          "message": "Copied composed prim: /Franka/panda_link5/panda_joint6"
+        },
+        {
+          "message": "Removed 1 prim spec(s) from source layers"
+        },
+        {
+          "message": "Processing prim: /Franka/panda_link6/panda_joint7 (type: PhysicsRevoluteJoint)"
+        },
+        {
+          "message": "Copied composed prim: /Franka/panda_link6/panda_joint7"
+        },
+        {
+          "message": "Removed 1 prim spec(s) from source layers"
+        },
+        {
+          "message": "Processing prim: /Franka/panda_link7/panda_hand_joint (type: PhysicsFixedJoint)"
+        },
+        {
+          "message": "Copied composed prim: /Franka/panda_link7/panda_hand_joint"
+        },
+        {
+          "message": "Removed 1 prim spec(s) from source layers"
+        },
+        {
+          "message": "Processing prim: /Franka/rootJoint (type: PhysicsJoint)"
+        },
+        {
+          "message": "Copied composed prim: /Franka/rootJoint"
+        },
+        {
+          "message": "Removed 1 prim spec(s) from source layers"
+        },
+        {
+          "message": "Processing prim: /PhysicsScene (type: PhysicsScene)"
+        },
+        {
+          "message": "Copied composed prim: /PhysicsScene"
+        },
+        {
+          "message": "Removed 1 prim spec(s) from source layers"
+        },
+        {
+          "message": "Saved modified layer: /home/seeed/Downloads/franka/payloads/base.usda"
+        },
+        {
+          "message": "Processed 12 prim(s), removed 12 prim spec(s) from source"
+        },
+        {
+          "message": "PrimRoutingRule completed"
+        }
+      ],
+      "affected_stages": [
+        "payloads/Physics/physics.usda"
+      ],
+      "error": null,
+      "started_at": "2026-06-30T06:34:33.038Z",
+      "finished_at": "2026-06-30T06:34:33.050Z"
+    },
+    {
+      "rule": {
+        "name": "Make Robot Schema",
+        "type": "isaacsim.asset.transformer.rules.isaac_sim.robot_schema.RobotSchemaRule",
+        "destination": "payloads",
+        "params": {
+          "prim_path": "",
+          "stage_name": "robot.usda",
+          "add_sites": true,
+          "sites_last": false,
+          "sublayer": "Physics/physics.usda"
+        },
+        "enabled": true
+      },
+      "success": true,
+      "log": [
+        {
+          "message": "RobotSchemaRule start prim=/World destination=payloads/robot.usda add_sites=True sites_last=False"
+        },
+        {
+          "message": "Sublayer not found: /home/seeed/Downloads/franka/payloads/payloads"
+        },
+        {
+          "message": "Inserted sublayer: ./Physics/physics.usda"
+        },
+        {
+          "message": "Added robot schema layer as sublayer: ./robot.usda"
+        },
+        {
+          "message": "Applied RobotAPI to target prim"
+        },
+        {
+          "message": "No articulation root link detected"
+        },
+        {
+          "message": "No articulation root joint detected"
+        },
+        {
+          "message": "Discarded root layer changes (editing separate layer)"
+        },
+        {
+          "message": "RobotSchemaRule completed"
+        }
+      ],
+      "affected_stages": [
+        "/home/seeed/Downloads/franka/payloads/robot.usda"
+      ],
+      "error": null,
+      "started_at": "2026-06-30T06:34:33.050Z",
+      "finished_at": "2026-06-30T06:34:33.058Z"
+    },
+    {
+      "rule": {
+        "name": "Make API Schemas Non-Explicit",
+        "type": "isaacsim.asset.transformer.rules.isaac_sim.make_lists_non_explicit.MakeListsNonExplicitRule",
+        "destination": "payloads",
+        "params": {
+          "metadata_names": [
+            "apiSchemas"
+          ],
+          "property_names": [],
+          "list_op_type": "prepend"
+        },
+        "enabled": true
+      },
+      "success": true,
+      "log": [
+        {
+          "message": "MakeListsNonExplicitRule start metadata=['apiSchemas'] properties=[] list_op_type=prepend"
+        },
+        {
+          "message": "Converted metadata 'apiSchemas' on /Environment/defaultLight (1 item(s))"
+        },
+        {
+          "message": "Converted metadata 'apiSchemas' on /Render/OmniverseKit/HydraTextures/omni_kit_widget_viewport_ViewportTexture_0 (14 item(s))"
+        },
+        {
+          "message": "Converted metadata 'apiSchemas' on /Render/OmniverseGlobalRenderSettings (2 item(s))"
+        },
+        {
+          "message": "Converted metadata 'apiSchemas' on /Franka/panda_link6/geometry (1 item(s))"
+        },
+        {
+          "message": "Saved modified layer: /home/seeed/Downloads/franka/payloads/base.usda"
+        },
+        {
+          "message": "MakeListsNonExplicitRule completed: metadata=4, properties=0"
+        }
+      ],
+      "affected_stages": [
+        "/home/seeed/Downloads/franka/payloads/base.usda"
+      ],
+      "error": null,
+      "started_at": "2026-06-30T06:34:33.058Z",
+      "finished_at": "2026-06-30T06:34:33.060Z"
+    },
+    {
+      "rule": {
+        "name": "Generate Interface",
+        "type": "isaacsim.asset.transformer.rules.structure.interface.InterfaceConnectionRule",
+        "destination": "",
+        "params": {
+          "base_layer": "payloads/base.usda",
+          "base_connection_type": "Reference",
+          "generate_folder_variants": true,
+          "payloads_folder": "payloads",
+          "connections": [
+            {
+              "asset_path": "payloads/Physics/physx.usda",
+              "target_path": "payloads/Physics/physics.usda",
+              "connection_type": "Sublayer"
+            },
+            {
+              "asset_path": "payloads/Physics/mujoco.usda",
+              "target_path": "payloads/Physics/physics.usda",
+              "connection_type": "Sublayer"
+            },
+            {
+              "asset_path": "payloads/base.usda",
+              "target_path": "payloads/robot.usda",
+              "connection_type": "Sublayer"
+            }
+          ],
+          "default_variant_selections": {
+            "Physics": "physx",
+            "Gripper": "None",
+            "Left_Hand": "None",
+            "Right_Hand": "None"
+          }
+        },
+        "enabled": true
+      },
+      "success": true,
+      "log": [
+        {
+          "message": "InterfaceConnectionRule start interface=franka.usda base_connection=Reference folder_variants=True"
+        },
+        {
+          "message": "Created/opened interface layer with stage metadata"
+        },
+        {
+          "message": "Connected base layer via Reference: ./payloads/base.usda"
+        },
+        {
+          "message": "Created variant set 'Physics' with 2 variants + None"
+        },
+        {
+          "message": "Added connection: payloads/Physics/physics.usda -> payloads/Physics/physx.usda via Sublayer"
+        },
+        {
+          "message": "Asset layer not found: payloads/Physics/mujoco.usda, skipping connection"
+        },
+        {
+          "message": "Added connection: payloads/robot.usda -> payloads/base.usda via Sublayer"
+        },
+        {
+          "message": "Recovered 7 root-level prim(s) from base layer into interface: ['Environment', 'Render', 'OmniverseKit_Persp', 'Franka', 'OmniverseKit_Front', 'OmniverseKit_Right', 'OmniverseKit_Top']"
+        },
+        {
+          "message": "InterfaceConnectionRule completed: /home/seeed/Downloads/franka/franka.usda"
+        }
+      ],
+      "affected_stages": [
+        "/home/seeed/Downloads/franka/payloads/Physics/physx.usda",
+        "/home/seeed/Downloads/franka/payloads/base.usda",
+        "/home/seeed/Downloads/franka/franka.usda"
+      ],
+      "error": null,
+      "started_at": "2026-06-30T06:34:33.060Z",
+      "finished_at": "2026-06-30T06:34:33.070Z"
+    },
+    {
+      "rule": {
+        "name": "Delete Physics Drive and Joint State APIs",
+        "type": "isaacsim.asset.transformer.rules.core.remove_schema.RemoveSchemaRule",
+        "destination": "payloads/Physics",
+        "params": {
+          "stage_name": "mujoco.usda",
+          "schema_patterns": [
+            "PhysicsDriveAPI.*",
+            "PhysicsJointStateAPI.*"
+          ],
+          "prim_path_patterns": [
+            ".*"
+          ],
+          "clear_properties": false
+        },
+        "enabled": true
+      },
+      "success": true,
+      "log": [
+        {
+          "message": "RemoveSchemaRule start destination=payloads/Physics/mujoco.usda schemas=2 properties=0"
+        },
+        {
+          "message": "RemoveSchemaRule completed"
+        }
+      ],
+      "affected_stages": [
+        "payloads/Physics/mujoco.usda"
+      ],
+      "error": null,
+      "started_at": "2026-06-30T06:34:33.070Z",
+      "finished_at": "2026-06-30T06:34:33.072Z"
+    },
+    {
+      "rule": {
+        "name": "Delete Newton Redundant APIs",
+        "type": "isaacsim.asset.transformer.rules.core.remove_schema.RemoveSchemaRule",
+        "destination": "payloads/Physics",
+        "params": {
+          "stage_name": "physx.usda",
+          "schema_patterns": [
+            "NewtonMimicAPI.*",
+            "NewtonArticulationRootAPI.*"
+          ],
+          "prim_path_patterns": [
+            ".*"
+          ],
+          "clear_properties": false
+        },
+        "enabled": true
+      },
+      "success": true,
+      "log": [
+        {
+          "message": "RemoveSchemaRule start destination=payloads/Physics/physx.usda schemas=2 properties=0"
+        },
+        {
+          "message": "RemoveSchemaRule completed"
+        }
+      ],
+      "affected_stages": [
+        "payloads/Physics/physx.usda"
+      ],
+      "error": null,
+      "started_at": "2026-06-30T06:34:33.072Z",
+      "finished_at": "2026-06-30T06:34:33.074Z"
+    }
+  ],
+  "output_stage_path": "/home/seeed/Downloads/franka/franka.usda"
+}

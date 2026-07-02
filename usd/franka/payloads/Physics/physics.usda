@@ -1,0 +1,474 @@
+#usda 1.0
+(
+    customLayerData = {
+        dictionary cameraSettings = {
+            dictionary Front = {
+                double3 position = (5, 0, 0)
+                double radius = 5
+            }
+            dictionary Perspective = {
+                double3 position = (1.2128915659439643, 1.3126864351369776, 1.837066573724774)
+                double3 target = (-0.241323300848455, -0.14152843165544127, 0.38285174164188995)
+            }
+            dictionary Right = {
+                double3 position = (0, -5, 0)
+                double radius = 5
+            }
+            dictionary Top = {
+                double3 position = (0, 0, 5)
+                double radius = 5
+            }
+            string boundCamera = "/OmniverseKit_Persp"
+        }
+        dictionary omni_layer = {
+            string authoring_layer = "./franka.usd"
+            dictionary locked = {
+            }
+            dictionary muteness = {
+            }
+        }
+        dictionary renderSettings = {
+        }
+    }
+    defaultPrim = "World"
+    doc = """Generated from Composed Stage of root layer /home/seeed/Downloads/franka.usd
+
+
+Generated from Composed Stage of root layer /home/seeed/Downloads/franka/payloads/base.usd
+"""
+    endTimeCode = 1000000
+    metersPerUnit = 1
+    startTimeCode = 0
+    timeCodesPerSecond = 60
+    upAxis = "Z"
+)
+
+over "Franka" (
+    prepend apiSchemas = ["PhysicsArticulationRootAPI"]
+)
+{
+    over "panda_hand" (
+        prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
+    )
+    {
+        vector3f physics:angularVelocity = (0, 0, 0)
+        point3f physics:centerOfMass = (0, 0, 0)
+        float3 physics:diagonalInertia = (2.3394448e-7, 5.7827858e-8, 2.1310294e-7)
+        float physics:mass = 0.5583305
+        rel physics:simulationOwner
+        vector3f physics:velocity = (0, 0, 0)
+
+        def PhysicsPrismaticJoint "panda_finger_joint1" (
+            prepend apiSchemas = ["PhysicsDriveAPI:linear", "PhysicsJointStateAPI:linear"]
+        )
+        {
+            uniform token articulationType = "articulatedJoint"
+            float drive:linear:physics:damping = 0.04
+            float drive:linear:physics:maxForce = 7.2
+            float drive:linear:physics:stiffness = 0
+            float drive:linear:physics:targetPosition = 0
+            float drive:linear:physics:targetVelocity = 0
+            uniform token drive:linear:physics:type = "force"
+            float jointFriction = 0
+            uniform token physics:axis = "X"
+            custom rel physics:body0
+            prepend rel physics:body0 = </Franka/panda_hand>
+            custom rel physics:body1
+            prepend rel physics:body1 = </Franka/panda_leftfinger>
+            float physics:breakForce = 3.4028233e36
+            float physics:breakTorque = 3.4028233e34
+            point3f physics:localPos0 = (0, 0, 0.05839997)
+            point3f physics:localPos1 = (0, 0, 0)
+            quatf physics:localRot0 = (0.70710653, 0, 0, 0.7071066)
+            quatf physics:localRot1 = (0.70710653, 0, 0, 0.7071066)
+            float physics:lowerLimit = 0
+            float physics:upperLimit = 0.04
+            float state:linear:physics:position = 0
+            float state:linear:physics:velocity = 0
+        }
+
+        def PhysicsPrismaticJoint "panda_finger_joint2" (
+            prepend apiSchemas = ["PhysicsJointStateAPI:linear"]
+        )
+        {
+            uniform token articulationType = "articulatedJoint"
+            float jointFriction = 0
+            uniform token physics:axis = "X"
+            custom rel physics:body0
+            prepend rel physics:body0 = </Franka/panda_hand>
+            custom rel physics:body1
+            prepend rel physics:body1 = </Franka/panda_rightfinger>
+            float physics:breakForce = 3.4028233e36
+            float physics:breakTorque = 3.4028233e34
+            uniform bool physics:excludeFromArticulation = 0
+            point3f physics:localPos0 = (0, 0, 0.05839997)
+            point3f physics:localPos1 = (0, 0, 0)
+            quatf physics:localRot0 = (0.7071066, 0, 0, -0.70710653)
+            quatf physics:localRot1 = (0.7071066, 0, 0, -0.70710653)
+            float physics:lowerLimit = 0
+            float physics:upperLimit = 0.04
+            float state:linear:physics:position = 0
+            float state:linear:physics:velocity = 0
+        }
+    }
+
+    over "panda_rightfinger" (
+        prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
+    )
+    {
+        vector3f physics:angularVelocity = (0, 0, 0)
+        point3f physics:centerOfMass = (0, 0, 0)
+        float3 physics:diagonalInertia = (4.2041304e-10, 3.9026365e-10, 1.3347495e-10)
+        float physics:mass = 0.014055223
+        rel physics:simulationOwner
+        vector3f physics:velocity = (0, 0, 0)
+    }
+
+    over "panda_leftfinger" (
+        prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
+    )
+    {
+        vector3f physics:angularVelocity = (0, 0, 0)
+        point3f physics:centerOfMass = (0, 0, 0)
+        float3 physics:diagonalInertia = (4.2041304e-10, 3.9026365e-10, 1.3347495e-10)
+        float physics:mass = 0.014055223
+        rel physics:simulationOwner
+        vector3f physics:velocity = (0, 0, 0)
+    }
+
+    over "panda_link0" (
+        prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
+    )
+    {
+        vector3f physics:angularVelocity = (0, 0, 0)
+        point3f physics:centerOfMass = (0, 0, 0)
+        float3 physics:diagonalInertia = (0.0000012988697, 0.0000016535528, 0.0000020331163)
+        bool physics:kinematicEnabled = 0
+        float physics:mass = 2.8142028
+        bool physics:rigidBodyEnabled = 1
+        rel physics:simulationOwner
+        uniform bool physics:startsAsleep = 0
+        vector3f physics:velocity = (0, 0, 0)
+
+        def PhysicsRevoluteJoint "panda_joint1" (
+            prepend apiSchemas = ["PhysicsDriveAPI:angular", "PhysicsJointStateAPI:angular"]
+        )
+        {
+            uniform token articulationType = "articulatedJoint"
+            float drive:angular:physics:damping = 80
+            float drive:angular:physics:maxForce = 87
+            float drive:angular:physics:stiffness = 400
+            float drive:angular:physics:targetPosition = 0.68754935
+            uniform token drive:angular:physics:type = "force"
+            float jointFriction = 0
+            uniform token physics:axis = "X"
+            custom rel physics:body0
+            prepend rel physics:body0 = </Franka/panda_link0>
+            custom rel physics:body1
+            prepend rel physics:body1 = </Franka/panda_link1>
+            float physics:breakForce = 3.4028233e36
+            float physics:breakTorque = 3.4028233e34
+            point3f physics:localPos0 = (0, 0, 0.33299997)
+            point3f physics:localPos1 = (0, 0, 0)
+            quatf physics:localRot0 = (0.70710677, 0, -0.70710677, 0)
+            quatf physics:localRot1 = (0.70710677, 0, -0.70710677, 0)
+            float physics:lowerLimit = -166.00307
+            float physics:upperLimit = 166.00307
+            float state:angular:physics:position = 0
+            float state:angular:physics:velocity = 0
+        }
+    }
+
+    over "panda_link1" (
+        prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
+    )
+    {
+        vector3f physics:angularVelocity = (0, 0, 0)
+        point3f physics:centerOfMass = (0, 0, 0)
+        float3 physics:diagonalInertia = (0.0000018686388, 0.0000014378986, 9.06812e-7)
+        float physics:mass = 2.3599997
+        rel physics:simulationOwner
+        vector3f physics:velocity = (0, 0, 0)
+
+        def PhysicsRevoluteJoint "panda_joint2" (
+            prepend apiSchemas = ["PhysicsDriveAPI:angular", "PhysicsJointStateAPI:angular"]
+        )
+        {
+            uniform token articulationType = "articulatedJoint"
+            float drive:angular:physics:damping = 80
+            float drive:angular:physics:maxForce = 87
+            float drive:angular:physics:stiffness = 400
+            float drive:angular:physics:targetPosition = -32.658596
+            uniform token drive:angular:physics:type = "force"
+            float jointFriction = 0
+            uniform token physics:axis = "X"
+            custom rel physics:body0
+            prepend rel physics:body0 = </Franka/panda_link1>
+            custom rel physics:body1
+            prepend rel physics:body1 = </Franka/panda_link2>
+            float physics:breakForce = 3.4028233e36
+            float physics:breakTorque = 3.4028233e34
+            point3f physics:localPos0 = (0, 0, 0)
+            point3f physics:localPos1 = (0, 0, 0)
+            quatf physics:localRot0 = (0.49999997, -0.49999997, -0.49999997, 0.49999997)
+            quatf physics:localRot1 = (0.7071067, 0, -0.7071067, 0)
+            float physics:lowerLimit = -101.001
+            float physics:upperLimit = 101.001
+            float state:angular:physics:position = 0
+            float state:angular:physics:velocity = 0
+        }
+    }
+
+    over "panda_link2" (
+        prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
+    )
+    {
+        vector3f physics:angularVelocity = (0, 0, 0)
+        point3f physics:centerOfMass = (0, 0, 0)
+        float3 physics:diagonalInertia = (0.0000019038872, 9.1429115e-7, 0.0000014697537)
+        bool physics:kinematicEnabled = 0
+        float physics:mass = 2.3795187
+        bool physics:rigidBodyEnabled = 1
+        rel physics:simulationOwner
+        uniform bool physics:startsAsleep = 0
+        vector3f physics:velocity = (0, 0, 0)
+
+        def PhysicsRevoluteJoint "panda_joint3" (
+            prepend apiSchemas = ["PhysicsDriveAPI:angular", "PhysicsJointStateAPI:angular"]
+        )
+        {
+            uniform token articulationType = "articulatedJoint"
+            float drive:angular:physics:damping = 80
+            float drive:angular:physics:maxForce = 87
+            float drive:angular:physics:stiffness = 400
+            float drive:angular:physics:targetPosition = 0
+            uniform token drive:angular:physics:type = "force"
+            float jointFriction = 0
+            uniform token physics:axis = "X"
+            custom rel physics:body0
+            prepend rel physics:body0 = </Franka/panda_link2>
+            custom rel physics:body1
+            prepend rel physics:body1 = </Franka/panda_link3>
+            float physics:breakForce = 3.4028233e36
+            float physics:breakTorque = 3.4028233e34
+            point3f physics:localPos0 = (0, -0.31599998, 0)
+            point3f physics:localPos1 = (0, 0, 0)
+            quatf physics:localRot0 = (0.49999994, 0.49999994, -0.49999994, -0.49999994)
+            quatf physics:localRot1 = (0.70710665, 0, -0.70710665, 0)
+            float physics:lowerLimit = -166.00307
+            float physics:upperLimit = 166.00307
+            float state:angular:physics:position = 0
+            float state:angular:physics:velocity = 0
+        }
+    }
+
+    over "panda_link3" (
+        prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
+    )
+    {
+        vector3f physics:angularVelocity = (0, 0, 0)
+        point3f physics:centerOfMass = (0, 0, 0)
+        float3 physics:diagonalInertia = (0.0000012930018, 0.0000015024211, 0.000001427346)
+        float physics:mass = 2.6498823
+        rel physics:simulationOwner
+        vector3f physics:velocity = (0, 0, 0)
+
+        def PhysicsRevoluteJoint "panda_joint4" (
+            prepend apiSchemas = ["PhysicsDriveAPI:angular", "PhysicsJointStateAPI:angular"]
+        )
+        {
+            uniform token articulationType = "articulatedJoint"
+            float drive:angular:physics:damping = 80
+            float drive:angular:physics:maxForce = 87
+            float drive:angular:physics:stiffness = 400
+            float drive:angular:physics:targetPosition = -161.00114
+            uniform token drive:angular:physics:type = "force"
+            float jointFriction = 0
+            uniform token physics:axis = "X"
+            custom rel physics:body0
+            prepend rel physics:body0 = </Franka/panda_link3>
+            custom rel physics:body1
+            prepend rel physics:body1 = </Franka/panda_link4>
+            float physics:breakForce = 3.4028233e36
+            float physics:breakTorque = 3.4028233e34
+            point3f physics:localPos0 = (0.08249996, 0, 0)
+            point3f physics:localPos1 = (0, 0, 0)
+            quatf physics:localRot0 = (0.4999999, 0.4999999, -0.4999999, -0.4999999)
+            quatf physics:localRot1 = (0.70710665, 0, -0.70710665, 0)
+            float physics:lowerLimit = -176.00117
+            float physics:upperLimit = -3.9992452
+            float state:angular:physics:position = 0
+            float state:angular:physics:velocity = 0
+        }
+    }
+
+    over "panda_link4" (
+        prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
+    )
+    {
+        vector3f physics:angularVelocity = (0, 0, 0)
+        point3f physics:centerOfMass = (0, 0, 0)
+        float3 physics:diagonalInertia = (0.0000013387461, 0.0000014514325, 0.0000015517554)
+        float physics:mass = 2.6948018
+        rel physics:simulationOwner
+        vector3f physics:velocity = (0, 0, 0)
+
+        def PhysicsRevoluteJoint "panda_joint5" (
+            prepend apiSchemas = ["PhysicsDriveAPI:angular", "PhysicsJointStateAPI:angular"]
+        )
+        {
+            uniform token articulationType = "articulatedJoint"
+            float drive:angular:physics:damping = 80
+            float drive:angular:physics:maxForce = 12
+            float drive:angular:physics:stiffness = 400
+            float drive:angular:physics:targetPosition = 0
+            uniform token drive:angular:physics:type = "force"
+            float jointFriction = 0
+            uniform token physics:axis = "X"
+            custom rel physics:body0
+            prepend rel physics:body0 = </Franka/panda_link4>
+            custom rel physics:body1
+            prepend rel physics:body1 = </Franka/panda_link5>
+            float physics:breakForce = 3.4028233e36
+            float physics:breakTorque = 3.4028233e34
+            point3f physics:localPos0 = (-0.08249994, 0.38399988, -1.4210855e-14)
+            point3f physics:localPos1 = (0, 0, 0)
+            quatf physics:localRot0 = (0.4999999, -0.4999999, -0.4999999, 0.4999999)
+            quatf physics:localRot1 = (0.70710665, 0, -0.70710665, 0)
+            float physics:lowerLimit = -166.00307
+            float physics:upperLimit = 166.00307
+            float state:angular:physics:position = 0
+            float state:angular:physics:velocity = 0
+        }
+    }
+
+    over "panda_link5" (
+        prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
+    )
+    {
+        vector3f physics:angularVelocity = (0, 0, 0)
+        point3f physics:centerOfMass = (0, 0, 0)
+        float3 physics:diagonalInertia = (0.000003255657, 0.0000027066046, 0.0000011502337)
+        float physics:mass = 2.9812818
+        rel physics:simulationOwner
+        vector3f physics:velocity = (0, 0, 0)
+
+        def PhysicsRevoluteJoint "panda_joint6" (
+            prepend apiSchemas = ["PhysicsDriveAPI:angular", "PhysicsJointStateAPI:angular"]
+        )
+        {
+            uniform token articulationType = "articulatedJoint"
+            float drive:angular:physics:damping = 80
+            float drive:angular:physics:maxForce = 12
+            float drive:angular:physics:stiffness = 400
+            float drive:angular:physics:targetPosition = 174.00728
+            uniform token drive:angular:physics:type = "force"
+            float jointFriction = 0
+            uniform token physics:axis = "X"
+            custom rel physics:body0
+            prepend rel physics:body0 = </Franka/panda_link5>
+            custom rel physics:body1
+            prepend rel physics:body1 = </Franka/panda_link6>
+            float physics:breakForce = 3.4028233e36
+            float physics:breakTorque = 3.4028233e34
+            point3f physics:localPos0 = (0, 0, 0)
+            point3f physics:localPos1 = (0, 0, 0)
+            quatf physics:localRot0 = (0.49999988, 0.49999988, -0.49999988, -0.49999988)
+            quatf physics:localRot1 = (0.70710665, 0, -0.70710665, 0)
+            float physics:lowerLimit = -1.0026761
+            float physics:upperLimit = 215.00241
+            float state:angular:physics:position = 0
+            float state:angular:physics:velocity = 0
+        }
+    }
+
+    over "panda_link6" (
+        prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
+    )
+    {
+        vector3f physics:angularVelocity = (0, 0, 0)
+        point3f physics:centerOfMass = (0, 0, 0)
+        float3 physics:diagonalInertia = (2.6052564e-7, 3.9897228e-7, 4.704859e-7)
+        float physics:mass = 1.1285807
+        rel physics:simulationOwner
+        vector3f physics:velocity = (0, 0, 0)
+
+        def PhysicsRevoluteJoint "panda_joint7" (
+            prepend apiSchemas = ["PhysicsDriveAPI:angular", "PhysicsJointStateAPI:angular"]
+        )
+        {
+            uniform token articulationType = "articulatedJoint"
+            float drive:angular:physics:damping = 80
+            float drive:angular:physics:maxForce = 12
+            float drive:angular:physics:stiffness = 400
+            float drive:angular:physics:targetPosition = 42.456173
+            uniform token drive:angular:physics:type = "force"
+            float jointFriction = 0
+            uniform token physics:axis = "X"
+            custom rel physics:body0
+            prepend rel physics:body0 = </Franka/panda_link6>
+            custom rel physics:body1
+            prepend rel physics:body1 = </Franka/panda_link7>
+            float physics:breakForce = 3.4028233e36
+            float physics:breakTorque = 3.4028233e34
+            point3f physics:localPos0 = (0.08799993, 0, 0)
+            point3f physics:localPos1 = (0, 0, 0)
+            quatf physics:localRot0 = (0.4999999, 0.4999999, -0.4999999, -0.4999999)
+            quatf physics:localRot1 = (0.70710665, 0, -0.70710665, 0)
+            float physics:lowerLimit = -166.00307
+            float physics:upperLimit = 166.00307
+            float state:angular:physics:position = 0
+            float state:angular:physics:velocity = 0
+        }
+    }
+
+    over "panda_link7" (
+        prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
+    )
+    {
+        vector3f physics:angularVelocity = (0, 0, 0)
+        point3f physics:centerOfMass = (0, 0, 0)
+        float3 physics:diagonalInertia = (6.316591e-8, 6.319639e-8, 1.0607721e-7)
+        bool physics:kinematicEnabled = 0
+        float physics:mass = 0.40529126
+        bool physics:rigidBodyEnabled = 1
+        rel physics:simulationOwner
+        uniform bool physics:startsAsleep = 0
+        vector3f physics:velocity = (0, 0, 0)
+
+        def PhysicsFixedJoint "panda_hand_joint"
+        {
+            custom string isaac:nameOverride (
+                doc = "Name override for prim lookup in base name search"
+            )
+            custom rel physics:body0
+            prepend rel physics:body0 = </Franka/panda_link7>
+            custom rel physics:body1
+            prepend rel physics:body1 = </Franka/panda_hand>
+            float physics:breakForce = 3.4028233e36
+            float physics:breakTorque = 3.4028233e34
+            point3f physics:localPos0 = (0, 0, 0.10699999)
+            point3f physics:localPos1 = (-3.809022e-8, 3.8090203e-8, -5.9604645e-8)
+            quatf physics:localRot0 = (0.70710677, 0, 0.70710677, 0)
+            quatf physics:localRot1 = (0.6532815, -0.2705981, 0.6532814, 0.27059814)
+        }
+    }
+
+    def PhysicsJoint "rootJoint"
+    {
+        uniform token articulationType = "articulatedRoot"
+        custom rel physics:body0
+        prepend rel physics:body0 = </Franka/panda_link0>
+        float physics:breakForce = inf
+        float physics:breakTorque = inf
+        point3f physics:localPos0 = (0, 0, 0)
+        point3f physics:localPos1 = (0, 0, 0)
+    }
+}
+
+def PhysicsScene "PhysicsScene" (
+    prepend apiSchemas = ["NewtonSceneAPI"]
+)
+{
+}
+

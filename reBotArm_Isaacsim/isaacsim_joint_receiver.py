@@ -61,6 +61,7 @@ if not callable(SimulationApp):
 ARM_JOINT_COUNT = 6
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 5005
+DEFAULT_FEEDBACK_PORT = 5006
 DEFAULT_RENDER_HZ = 120.0
 ASSET_RELATIVE_PATH = Path("usd/RS-rebot-dev-arm/00-arm-rs_asm-v3.usda")
 GRID_TEXTURE_RELATIVE_PATH = Path("reBotArm_Isaacsim/assets/grid_ground.png")
@@ -104,9 +105,11 @@ class IsaacJointMirror:
 
         self.host = host
         self.port = port
+        self.feedback_port = DEFAULT_FEEDBACK_PORT
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.socket.bind((self.host, self.port))
         self.socket.setblocking(False)
+        self.feedback_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
         self.sim_app = None
         self.world = None
@@ -355,10 +358,24 @@ class IsaacJointMirror:
         latest_packet = None
         while True:
             try:
-                packet, _ = self.socket.recvfrom(65535)
+                packet, addr = self.socket.recvfrom(65535)
             except BlockingIOError:
                 break
             payload = json.loads(packet.decode("utf-8"))
+
+            # ── feedback_request：把当前关节角回传给发送端 ──
+            if payload.get("type") == "feedback_request":
+                feedback = {
+                    "type": "feedback",
+                    "joint_positions": self.latest_q.tolist(),
+                    "timestamp": time.time(),
+                }
+                self.feedback_socket.sendto(
+                    json.dumps(feedback, separators=(",", ":")).encode("utf-8"),
+                    (addr[0], self.feedback_port),
+                )
+                continue
+
             joint_positions = np.asarray(payload["joint_positions"], dtype=np.float64)
             if joint_positions.shape != (ARM_JOINT_COUNT,):
                 raise RuntimeError(
@@ -421,6 +438,7 @@ class IsaacJointMirror:
 
     def shutdown(self) -> None:
         self.socket.close()
+        self.feedback_socket.close()
         if self.sim_app is not None:
             self.sim_app.close()
             self.sim_app = None
