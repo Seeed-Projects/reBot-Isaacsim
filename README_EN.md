@@ -1,6 +1,6 @@
 # reBot-Isaacsim
 
-A real-time mirror system that synchronizes a reBotArm physical robot arm with an NVIDIA Isaac Sim simulation. The system streams joint angles (including gravity-compensated, hand-guided motion) and gripper state from the real arm to Isaac Sim over a UDP JSON channel.
+reBot-Isaacsim is an NVIDIA Isaac Sim simulation project designed specifically for the reBotArm. It leverages Isaac Sim's high-fidelity physics engine to accurately replicate the kinematic characteristics and gripper coordination logic of the robot arm in a virtual environment, providing an independent simulation-only environment for control algorithm development, trajectory planning verification, and communication protocol testing.
 
 ## Component Overview
 
@@ -73,13 +73,13 @@ reBot-Isaacsim/
 ### Check the CAN interface
 
 ```bash
+# View CAN interface status
 ip link show can0
 # Make sure the state is UP and bitrate is 1000000
 
-# If you need to restart CAN:
-can_restart can0
-# or
-sudo ip link set can0 down && sudo ip link set can0 up type can bitrate 1000000 restart-ms 100
+# If you need to configure or restart CAN:
+sudo ip link set can0 down
+sudo ip link set can0 up type can bitrate 1000000 restart-ms 100
 ```
 
 ## Environment Setup

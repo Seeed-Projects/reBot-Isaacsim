@@ -73,13 +73,13 @@ reBot-Isaacsim/
 ### 检查 CAN 接口
 
 ```bash
+# 查看 CAN 接口状态
 ip link show can0
-# 确保状态为 UP，bitrate 1000000
+# 确保状态为 UP，bitrate 为 1000000
 
-# 如需重启 CAN：
-can_restart can0
-# 或
-sudo ip link set can0 down && sudo ip link set can0 up type can bitrate 1000000 restart-ms 100
+# 如需配置或重启 CAN：
+sudo ip link set can0 down
+sudo ip link set can0 up type can bitrate 1000000 restart-ms 100
 ```
 
 ## 环境准备
