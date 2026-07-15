@@ -1,0 +1,41 @@
+config,joint,status,lower_pos_error_rad,upper_pos_error_rad
+base selfcol=ON stock limits,joint1,pass,2.61e-05,2.61e-05
+base selfcol=ON stock limits,joint2,blocked,3.24e-05,0.10534
+base selfcol=ON stock limits,joint3,pass,0.000185,3.92e-05
+base selfcol=ON stock limits,joint4,blocked,0.58589,0.000148
+base selfcol=ON stock limits,joint5,pass,2.43e-05,2.44e-05
+base selfcol=ON stock limits,joint6,pass,4.07e-05,4.05e-05
+base selfcol=ON stock limits,joint_left,pass,0.000232,0.000169
+base selfcol=ON stock limits,joint_right,pass,0.000232,0.00015
+base selfcol=ON GT-checkbox-disable (no-op on Newton),joint1,pass,3e-05,3e-05
+base selfcol=ON GT-checkbox-disable (no-op on Newton),joint2,blocked,3e-05,0.10577
+base selfcol=ON GT-checkbox-disable (no-op on Newton),joint3,pass,0.00018,4e-05
+base selfcol=ON GT-checkbox-disable (no-op on Newton),joint4,blocked,0.58589,0.00015
+base selfcol=ON GT-checkbox-disable (no-op on Newton),joint5,pass,2e-05,2e-05
+base selfcol=ON GT-checkbox-disable (no-op on Newton),joint6,pass,4e-05,4e-05
+base selfcol=ON GT-checkbox-disable (no-op on Newton),joint_left,pass,0.00023,0.00017
+base selfcol=ON GT-checkbox-disable (no-op on Newton),joint_right,pass,0.00023,0.00015
+base selfcol=OFF (user fix) FINAL,joint1,pass,3e-05,3e-05
+base selfcol=OFF (user fix) FINAL,joint2,pass,2e-05,1e-05
+base selfcol=OFF (user fix) FINAL,joint3,pass,0.00012,0.0001
+base selfcol=OFF (user fix) FINAL,joint4,pass,4e-05,2e-05
+base selfcol=OFF (user fix) FINAL,joint5,pass,2e-05,2e-05
+base selfcol=OFF (user fix) FINAL,joint6,pass,4e-05,4e-05
+base selfcol=OFF (user fix) FINAL,joint_left,pass,0.0,0.0
+base selfcol=OFF (user fix) FINAL,joint_right,pass,0.0,1e-05
+base selfcol=ON limits j2<=173 j4>=-55,joint2,blocked,2e-05,0.06398
+base selfcol=ON limits j2<=173 j4>=-55,joint4,blocked,0.24083,2e-05
+base selfcol=ON limits j2<=168 j4>=-40,joint2,blocked,2e-05,0.05032
+base selfcol=ON limits j2<=168 j4>=-40,joint4,blocked,0.27036,2e-05
+plus filteredPairs selfcol=ON stock limits,joint1,pass,3e-05,3e-05
+plus filteredPairs selfcol=ON stock limits,joint2,fail,2e-05,0.10531
+plus filteredPairs selfcol=ON stock limits,joint3,pass,0.00012,0.0001
+plus filteredPairs selfcol=ON stock limits,joint4,blocked,0.55554,2e-05
+plus filteredPairs selfcol=ON stock limits,joint5,pass,2e-05,2e-05
+plus filteredPairs selfcol=ON stock limits,joint6,pass,4e-05,4e-05
+plus filteredPairs selfcol=ON stock limits,joint_left,pass,0.0,0.0
+plus filteredPairs selfcol=ON stock limits,joint_right,pass,0.0,1e-05
+plus filteredPairs limits j2<=172 j4>=-56,joint2,blocked,2e-05,0.06428
+plus filteredPairs limits j2<=172 j4>=-56,joint4,blocked,0.24353,2e-05
+plus filteredPairs limits j2<=166 j4>=-40,joint2,blocked,2e-05,0.02343
+plus filteredPairs limits j2<=166 j4>=-40,joint4,blocked,0.27036,2e-05

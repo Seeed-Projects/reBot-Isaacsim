@@ -1,0 +1,9 @@
+joint,stiffness,damping,lower_limit,upper_limit,unit,max_force
+joint1,500.0,60.0,-160.43,160.43,deg,inf
+joint2,1500.0,96.0,0.0,179.91,deg,inf
+joint3,1000.0,76.0,0.0,179.91,deg,inf
+joint4,150.0,18.0,-89.95,89.95,deg,inf
+joint5,80.0,10.0,-89.95,89.95,deg,inf
+joint6,50.0,7.0,-179.91,179.91,deg,inf
+joint_left,100.0,4.0,0.0,0.05,m,inf
+joint_right,100.0,4.0,0.0,0.0715,m,inf

@@ -1,0 +1,5 @@
+joint,config,target_deg,reached_deg,stalling_contact
+joint2,selfcol ON unfiltered,173.0,169.33,garbage contacts everywhere
+joint4,selfcol ON unfiltered,-55.0,-41.2,garbage contacts everywhere
+joint2,plus filtered,179.9,173.88,base_link<->gripper_left/right (real)
+joint4,plus filtered,-89.9,-58.11,base_link<->gripper_left/right (real)

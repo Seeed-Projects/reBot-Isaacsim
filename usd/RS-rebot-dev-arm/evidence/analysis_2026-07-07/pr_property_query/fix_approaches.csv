@@ -1,0 +1,5 @@
+approach,author,mechanism,size,membership_filter,ur10e_joints,flat_scene_joints,issues
+develop (baseline),-,common-prefix of body paths only,-,no,0,-,Gain Tuner empty pre-play (issue #681)
+BFS traversal,Alexandra (GitLab MR 8977),manual body0/body1 connectivity BFS,~230 lines,no,6,4 (sibling leak),leaks sibling articulations; IndexError in status bar
+Root widening,Milad (idea),loop widening root_path until parse succeeds,small,no,6,4 (sibling leak),same sibling leak on flat scenes
+Parser descriptor (Fix C),PR #696/#697,UsdPhysics.LoadUsdPhysicsFromRange -> articulatedBodies/Joints,+84/-2,yes (exact membership),6,2 (correct),none found

@@ -1,0 +1,351 @@
+#usda 1.0
+(
+    customLayerData = {
+        string creator = "URDF USD Converter v0.2.0"
+    }
+    defaultPrim = "tn__00armrs_asmv3_hJ6D"
+    kilogramsPerUnit = 1
+    metersPerUnit = 1
+    upAxis = "Z"
+)
+
+def Xform "tn__00armrs_asmv3_hJ6D" (
+    displayName = "00-arm-rs_asm-v3"
+)
+{
+    def Scope "Materials"
+    {
+        def Material "material_1" (
+            prepend references = @./MaterialsLibrary.usdc@</Materials/material_1>
+        )
+        {
+        }
+
+        def Material "material_2" (
+            prepend references = @./MaterialsLibrary.usdc@</Materials/material_2>
+        )
+        {
+        }
+
+        def Material "material_3" (
+            prepend references = @./MaterialsLibrary.usdc@</Materials/material_3>
+        )
+        {
+        }
+
+        def Material "material_4" (
+            prepend references = @./MaterialsLibrary.usdc@</Materials/material_4>
+        )
+        {
+        }
+
+        def Material "material_5" (
+            prepend references = @./MaterialsLibrary.usdc@</Materials/material_5>
+        )
+        {
+        }
+
+        def Material "material_6" (
+            prepend references = @./MaterialsLibrary.usdc@</Materials/material_6>
+        )
+        {
+        }
+
+        def Material "material_7" (
+            prepend references = @./MaterialsLibrary.usdc@</Materials/material_7>
+        )
+        {
+        }
+
+        def Material "material_8" (
+            prepend references = @./MaterialsLibrary.usdc@</Materials/material_8>
+        )
+        {
+        }
+
+        def Material "material_9" (
+            prepend references = @./MaterialsLibrary.usdc@</Materials/material_9>
+        )
+        {
+        }
+
+        def Material "material_10" (
+            prepend references = @./MaterialsLibrary.usdc@</Materials/material_10>
+        )
+        {
+        }
+
+        def Material "material_11" (
+            prepend references = @./MaterialsLibrary.usdc@</Materials/material_11>
+        )
+        {
+        }
+
+        def Material "material_12" (
+            prepend references = @./MaterialsLibrary.usdc@</Materials/material_12>
+        )
+        {
+        }
+
+        def Material "material_13" (
+            prepend references = @./MaterialsLibrary.usdc@</Materials/material_13>
+        )
+        {
+        }
+
+        def Material "material_14" (
+            prepend references = @./MaterialsLibrary.usdc@</Materials/material_14>
+        )
+        {
+        }
+
+        def Material "material_15" (
+            prepend references = @./MaterialsLibrary.usdc@</Materials/material_15>
+        )
+        {
+        }
+
+        def Material "material_16" (
+            prepend references = @./MaterialsLibrary.usdc@</Materials/material_16>
+        )
+        {
+        }
+
+        def Material "material_17" (
+            prepend references = @./MaterialsLibrary.usdc@</Materials/material_17>
+        )
+        {
+        }
+
+        def Material "material_18" (
+            prepend references = @./MaterialsLibrary.usdc@</Materials/material_18>
+        )
+        {
+        }
+
+        def Material "material_19" (
+            prepend references = @./MaterialsLibrary.usdc@</Materials/material_19>
+        )
+        {
+        }
+
+        def Material "material_20" (
+            prepend references = @./MaterialsLibrary.usdc@</Materials/material_20>
+        )
+        {
+        }
+
+        def Material "material_21" (
+            prepend references = @./MaterialsLibrary.usdc@</Materials/material_21>
+        )
+        {
+        }
+
+        def Material "material_22" (
+            prepend references = @./MaterialsLibrary.usdc@</Materials/material_22>
+        )
+        {
+        }
+
+        def Material "material_23" (
+            prepend references = @./MaterialsLibrary.usdc@</Materials/material_23>
+        )
+        {
+        }
+    }
+
+    over "Geometry"
+    {
+        over "base_link"
+        {
+            over "base_link" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                rel material:binding = </tn__00armrs_asmv3_hJ6D/Materials/material_1>
+            }
+
+            over "link1"
+            {
+                over "link1" (
+                    prepend apiSchemas = ["MaterialBindingAPI"]
+                )
+                {
+                    rel material:binding = </tn__00armrs_asmv3_hJ6D/Materials/material_2>
+                }
+
+                over "link2"
+                {
+                    over "motor_2_3" (
+                        prepend apiSchemas = ["MaterialBindingAPI"]
+                    )
+                    {
+                        rel material:binding = </tn__00armrs_asmv3_hJ6D/Materials/material_3>
+                    }
+
+                    over "cnc2" (
+                        prepend apiSchemas = ["MaterialBindingAPI"]
+                    )
+                    {
+                        rel material:binding = </tn__00armrs_asmv3_hJ6D/Materials/material_4>
+                    }
+
+                    over "pla2_black" (
+                        prepend apiSchemas = ["MaterialBindingAPI"]
+                    )
+                    {
+                        rel material:binding = </tn__00armrs_asmv3_hJ6D/Materials/material_5>
+                    }
+
+                    over "pla2_green" (
+                        prepend apiSchemas = ["MaterialBindingAPI"]
+                    )
+                    {
+                        rel material:binding = </tn__00armrs_asmv3_hJ6D/Materials/material_6>
+                    }
+
+                    over "link3"
+                    {
+                        over "cnc3" (
+                            prepend apiSchemas = ["MaterialBindingAPI"]
+                        )
+                        {
+                            rel material:binding = </tn__00armrs_asmv3_hJ6D/Materials/material_7>
+                        }
+
+                        over "motor_4" (
+                            prepend apiSchemas = ["MaterialBindingAPI"]
+                        )
+                        {
+                            rel material:binding = </tn__00armrs_asmv3_hJ6D/Materials/material_8>
+                        }
+
+                        over "pla3_black" (
+                            prepend apiSchemas = ["MaterialBindingAPI"]
+                        )
+                        {
+                            rel material:binding = </tn__00armrs_asmv3_hJ6D/Materials/material_9>
+                        }
+
+                        over "pla3_green" (
+                            prepend apiSchemas = ["MaterialBindingAPI"]
+                        )
+                        {
+                            rel material:binding = </tn__00armrs_asmv3_hJ6D/Materials/material_10>
+                        }
+
+                        over "link4"
+                        {
+                            over "motor_5" (
+                                prepend apiSchemas = ["MaterialBindingAPI"]
+                            )
+                            {
+                                rel material:binding = </tn__00armrs_asmv3_hJ6D/Materials/material_11>
+                            }
+
+                            over "cnc4" (
+                                prepend apiSchemas = ["MaterialBindingAPI"]
+                            )
+                            {
+                                rel material:binding = </tn__00armrs_asmv3_hJ6D/Materials/material_12>
+                            }
+
+                            over "link5"
+                            {
+                                over "motor_6" (
+                                    prepend apiSchemas = ["MaterialBindingAPI"]
+                                )
+                                {
+                                    rel material:binding = </tn__00armrs_asmv3_hJ6D/Materials/material_13>
+                                }
+
+                                over "cnc5" (
+                                    prepend apiSchemas = ["MaterialBindingAPI"]
+                                )
+                                {
+                                    rel material:binding = </tn__00armrs_asmv3_hJ6D/Materials/material_14>
+                                }
+
+                                over "pla5_green" (
+                                    prepend apiSchemas = ["MaterialBindingAPI"]
+                                )
+                                {
+                                    rel material:binding = </tn__00armrs_asmv3_hJ6D/Materials/material_15>
+                                }
+
+                                over "link6"
+                                {
+                                    over "link6" (
+                                        prepend apiSchemas = ["MaterialBindingAPI"]
+                                    )
+                                    {
+                                        rel material:binding = </tn__00armrs_asmv3_hJ6D/Materials/material_16>
+                                    }
+
+                                    over "gripper_end"
+                                    {
+                                        over "pla7_green" (
+                                            prepend apiSchemas = ["MaterialBindingAPI"]
+                                        )
+                                        {
+                                            rel material:binding = </tn__00armrs_asmv3_hJ6D/Materials/material_17>
+                                        }
+
+                                        over "cnc7" (
+                                            prepend apiSchemas = ["MaterialBindingAPI"]
+                                        )
+                                        {
+                                            rel material:binding = </tn__00armrs_asmv3_hJ6D/Materials/material_18>
+                                        }
+
+                                        over "motor_7" (
+                                            prepend apiSchemas = ["MaterialBindingAPI"]
+                                        )
+                                        {
+                                            rel material:binding = </tn__00armrs_asmv3_hJ6D/Materials/material_19>
+                                        }
+
+                                        over "gripper_left"
+                                        {
+                                            over "pla_left" (
+                                                prepend apiSchemas = ["MaterialBindingAPI"]
+                                            )
+                                            {
+                                                rel material:binding = </tn__00armrs_asmv3_hJ6D/Materials/material_20>
+                                            }
+
+                                            over "cnc_left" (
+                                                prepend apiSchemas = ["MaterialBindingAPI"]
+                                            )
+                                            {
+                                                rel material:binding = </tn__00armrs_asmv3_hJ6D/Materials/material_21>
+                                            }
+                                        }
+
+                                        over "gripper_right"
+                                        {
+                                            over "pla_right" (
+                                                prepend apiSchemas = ["MaterialBindingAPI"]
+                                            )
+                                            {
+                                                rel material:binding = </tn__00armrs_asmv3_hJ6D/Materials/material_22>
+                                            }
+
+                                            over "cnc_right" (
+                                                prepend apiSchemas = ["MaterialBindingAPI"]
+                                            )
+                                            {
+                                                rel material:binding = </tn__00armrs_asmv3_hJ6D/Materials/material_23>
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+

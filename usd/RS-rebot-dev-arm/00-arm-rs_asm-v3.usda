@@ -7,8 +7,8 @@
                 double radius = 5
             }
             dictionary Perspective = {
-                double3 position = (0.4356033029490003, 0.16284862348620355, 0.48020347490730153)
-                double3 target = (-0.12858530638159416, -0.18129585034011153, -0.12597081167443225)
+                double3 position = (0.7885044355558, 0.9048379007451595, 0.7772645693030278)
+                double3 target = (-4.152087981578106, -4.9606446243000235, -3.2460004376469884)
             }
             dictionary Right = {
                 double3 position = (0, -5, 0)
@@ -20,233 +20,422 @@
             }
             string boundCamera = "/OmniverseKit_Persp"
         }
-        string creator = "URDF USD Converter v0.1.0"
+        string creator = "URDF USD Converter v0.2.0"
         dictionary omni_layer = {
             string authoring_layer = "./00-arm-rs_asm-v3.usda"
-        }
-        dictionary physicsSettings = {
         }
         dictionary renderSettings = {
         }
     }
     defaultPrim = "tn__00armrs_asmv3_hJ6D"
-    doc = """Generated from Composed Stage of root layer /tmp/tmp3m7m4nnq/00-arm-rs_asm-v3.usdc
-
-
-Generated from Composed Stage of root layer /home/seeed/reBotArm/asset/usdex/00-arm-rs_asm-v3.usdc
-
-
-Generated from Composed Stage of root layer /home/seeed/reBotArm/asset/temp/00-arm-rs_asm-v3.usd
-
-
-Generated from Composed Stage of root layer /home/seeed/reBotArm/asset/00-arm-rs_asm-v3/payloads/base.usd
-
-
-Generated from Composed Stage of root layer /home/johnny/Projects/00-arm-rs_asm-v3/00-arm-rs_asm-v3.usda
-
-
-Generated from Composed Stage of root layer /home/johnny/Projects/00-arm-rs_asm-v3/RS-rebot-dev-arm/payloads/base.usd
-"""
     kilogramsPerUnit = 1
     metersPerUnit = 1
     upAxis = "Z"
 )
 
 def Xform "tn__00armrs_asmv3_hJ6D" (
-    prepend references = @./payloads/base.usda@
-    variants = {
-        string Physics = "physx"
+    prepend apiSchemas = ["GeomModelAPI", "IsaacRobotAPI"]
+    assetInfo = {
+        string name = "00-arm-rs_asm-v3"
     }
-    append variantSets = "Physics"
+    displayName = "00-arm-rs_asm-v3"
+    kind = "component"
+    prepend payload = @./Payload/Contents.usda@
 )
 {
+    float3[] extentsHint = [(-0.2596303, -0.1, -1.0949644e-11), (0.30171034, 0.1, 0.3207462), (3.4028235e38, 3.4028235e38, 3.4028235e38), (-3.4028235e38, -3.4028235e38, -3.4028235e38), (3.4028235e38, 3.4028235e38, 3.4028235e38), (-3.4028235e38, -3.4028235e38, -3.4028235e38), (-0.2596303, -0.1, -1.0949644e-11), (0.30171034, 0.1, 0.32074627)]
+    rel isaac:physics:robotJoints = [
+        </tn__00armrs_asmv3_hJ6D/Physics/root_joint>,
+        </tn__00armrs_asmv3_hJ6D/Physics/joint1>,
+        </tn__00armrs_asmv3_hJ6D/Physics/joint2>,
+        </tn__00armrs_asmv3_hJ6D/Physics/joint3>,
+        </tn__00armrs_asmv3_hJ6D/Physics/joint4>,
+        </tn__00armrs_asmv3_hJ6D/Physics/joint5>,
+        </tn__00armrs_asmv3_hJ6D/Physics/joint6>,
+        </tn__00armrs_asmv3_hJ6D/Physics/j_gripper_end>,
+        </tn__00armrs_asmv3_hJ6D/Physics/joint_left>,
+        </tn__00armrs_asmv3_hJ6D/Physics/joint_right>,
+    ]
+    rel isaac:physics:robotLinks = [
+        </tn__00armrs_asmv3_hJ6D/Geometry/base_link>,
+        </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1>,
+        </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1/link2>,
+        </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1/link2/link3>,
+        </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1/link2/link3/link4>,
+        </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1/link2/link3/link4/link5>,
+        </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1/link2/link3/link4/link5/link6>,
+        </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end>,
+        </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_left>,
+        </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_right>,
+    ]
+    double3 xformOp:translate = (0, 0, 3)
+    uniform token[] xformOpOrder = ["xformOp:translate"]
+
+    over "MDLMaterials" (
+        prepend references = @./Payload/MDLMaterials.usda@</Materials>
+    )
+    {
+    }
+
     over "Geometry"
     {
-        over "base_link"
+        over "base_link" (
+            prepend apiSchemas = ["IsaacLinkAPI"]
+        )
         {
-            vector3f physics:angularVelocity = (0, 0, 0)
-            rel physics:simulationOwner
-            vector3f physics:velocity = (0, 0, 0)
-            quatf xformOp:orient = (1, 0, 0, 0)
-            float3 xformOp:translate = (8.731149e-11, 5.820766e-11, 0)
+            bool newton:selfCollisionEnabled = 0
+            custom int newton:solver:nconmax = 8192
+            custom int newton:solver:njmax = 32768
 
-            over "link1"
+            over "base_link" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
             {
-                vector3f physics:angularVelocity = (0, 0, 0)
-                rel physics:simulationOwner
-                vector3f physics:velocity = (0, 0, 0)
-                quatf xformOp:orient = (1, 2.9894732e-8, -8.96842e-8, -1.6442102e-7)
-                double3 xformOp:translate = (-0.00034282272099517286, -0.0009868328925222158, 0.07500000298023224)
+                rel material:binding = </tn__00armrs_asmv3_hJ6D/MDLMaterials/ABS_Hard_Leather>
+            }
 
-                over "link2"
+            over "link1" (
+                prepend apiSchemas = ["IsaacLinkAPI"]
+            )
+            {
+                over "link1" (
+                    prepend apiSchemas = ["MaterialBindingAPI"]
+                )
                 {
-                    vector3f physics:angularVelocity = (0, 0, 0)
-                    rel physics:simulationOwner
-                    vector3f physics:velocity = (0, 0, 0)
-                    quatf xformOp:orient = (-0.7071056, 0.70710796, -9.8138116e-8, 1.7634409e-7)
-                    double3 xformOp:translate = (0.020342983305454254, 0.027236972004175186, 0.06999996304512024)
+                    rel material:binding = </tn__00armrs_asmv3_hJ6D/MDLMaterials/Aluminum_Anodized>
+                }
 
-                    over "link3"
+                over "link2" (
+                    prepend apiSchemas = ["IsaacLinkAPI"]
+                )
+                {
+                    over "motor_2_3" (
+                        prepend apiSchemas = ["MaterialBindingAPI"]
+                    )
                     {
-                        vector3f physics:angularVelocity = (0, 0, 0)
-                        rel physics:simulationOwner
-                        vector3f physics:velocity = (0, 0, 0)
-                        quatf xformOp:orient = (1, -2.1839813e-7, -5.3883187e-9, 3.5793795e-9)
-                        double3 xformOp:translate = (-0.2359999120235443, -1.1200564919988665e-8, -2.493677708770292e-9)
+                        rel material:binding = </tn__00armrs_asmv3_hJ6D/MDLMaterials/Aluminum_Anodized_Black>
+                    }
 
-                        over "link4"
+                    over "cnc2" (
+                        prepend apiSchemas = ["MaterialBindingAPI"]
+                    )
+                    {
+                        rel material:binding = </tn__00armrs_asmv3_hJ6D/MDLMaterials/Aluminum_Anodized>
+                    }
+
+                    over "pla2_black" (
+                        prepend apiSchemas = ["MaterialBindingAPI"]
+                    )
+                    {
+                        rel material:binding = </tn__00armrs_asmv3_hJ6D/MDLMaterials/ABS_Hard_Leather>
+                    }
+
+                    over "pla2_green" (
+                        prepend apiSchemas = ["MaterialBindingAPI"]
+                    )
+                    {
+                        rel material:binding = </tn__00armrs_asmv3_hJ6D/MDLMaterials/ABS_Hard_Leather_Pop_Lime>
+                    }
+
+                    over "link3" (
+                        prepend apiSchemas = ["IsaacLinkAPI"]
+                    )
+                    {
+                        over "cnc3" (
+                            prepend apiSchemas = ["MaterialBindingAPI"]
+                        )
                         {
-                            vector3f physics:angularVelocity = (0, 0, 0)
-                            rel physics:simulationOwner
-                            vector3f physics:velocity = (0, 0, 0)
-                            quatf xformOp:orient = (1, -1.3467358e-7, -8.306869e-8, 7.32532e-9)
-                            double3 xformOp:translate = (0.22799994051456451, -0.07274600118398666, 0.004500010050833225)
+                            rel material:binding = </tn__00armrs_asmv3_hJ6D/MDLMaterials/Aluminum_Anodized>
+                        }
 
-                            over "link5"
+                        over "motor_4" (
+                            prepend apiSchemas = ["MaterialBindingAPI"]
+                        )
+                        {
+                            rel material:binding = </tn__00armrs_asmv3_hJ6D/MDLMaterials/Aluminum_Anodized_Black>
+                        }
+
+                        over "pla3_black" (
+                            prepend apiSchemas = ["MaterialBindingAPI"]
+                        )
+                        {
+                            rel material:binding = </tn__00armrs_asmv3_hJ6D/MDLMaterials/ABS_Hard_Leather>
+                        }
+
+                        over "pla3_green" (
+                            prepend apiSchemas = ["MaterialBindingAPI"]
+                        )
+                        {
+                            rel material:binding = </tn__00armrs_asmv3_hJ6D/MDLMaterials/ABS_Hard_Leather_Pop_Lime>
+                        }
+
+                        over "link4" (
+                            prepend apiSchemas = ["IsaacLinkAPI"]
+                        )
+                        {
+                            over "motor_5" (
+                                prepend apiSchemas = ["MaterialBindingAPI"]
+                            )
                             {
-                                vector3f physics:angularVelocity = (0, 0, 0)
-                                rel physics:simulationOwner
-                                vector3f physics:velocity = (0, 0, 0)
-                                quatf xformOp:orient = (-0.7071054, 0.70710814, -0.0000017399728, -0.0000017861697)
-                                double3 xformOp:translate = (0.08699999004602432, -0.04800001159310341, -0.030749976634979248)
+                                rel material:binding = </tn__00armrs_asmv3_hJ6D/MDLMaterials/Aluminum_Anodized_Black>
+                            }
 
-                                over "link6"
+                            over "cnc4" (
+                                prepend apiSchemas = ["MaterialBindingAPI"]
+                            )
+                            {
+                                rel material:binding = </tn__00armrs_asmv3_hJ6D/MDLMaterials/Aluminum_Anodized>
+                            }
+
+                            over "link5" (
+                                prepend apiSchemas = ["IsaacLinkAPI"]
+                            )
+                            {
+                                over "motor_6" (
+                                    prepend apiSchemas = ["MaterialBindingAPI"]
+                                )
                                 {
-                                    vector3f physics:angularVelocity = (0, 0, 0)
-                                    rel physics:simulationOwner
-                                    vector3f physics:velocity = (0, 0, 0)
-                                    quatf xformOp:orient = (0.7071055, 9.047983e-8, 0.707108, 1.369891e-7)
-                                    double3 xformOp:translate = (0.0364999882876873, 3.990490160532545e-9, 0.04800001159310341)
+                                    rel material:binding = </tn__00armrs_asmv3_hJ6D/MDLMaterials/Aluminum_Anodized_Black>
+                                }
 
-                                    over "gripper_end"
+                                over "cnc5" (
+                                    prepend apiSchemas = ["MaterialBindingAPI"]
+                                )
+                                {
+                                    rel material:binding = </tn__00armrs_asmv3_hJ6D/MDLMaterials/Aluminum_Anodized>
+                                }
+
+                                over "pla5_green" (
+                                    prepend apiSchemas = ["MaterialBindingAPI"]
+                                )
+                                {
+                                    rel material:binding = </tn__00armrs_asmv3_hJ6D/MDLMaterials/ABS_Hard_Leather_Pop_Lime>
+                                }
+
+                                over "link6" (
+                                    prepend apiSchemas = ["IsaacLinkAPI"]
+                                )
+                                {
+                                    over "link6" (
+                                        prepend apiSchemas = ["MaterialBindingAPI"]
+                                    )
                                     {
-                                        vector3f physics:angularVelocity = (0, 0, 0)
-                                        rel physics:simulationOwner
-                                        vector3f physics:velocity = (0, 0, 0)
-                                        quatf xformOp:orient = (-0.0000025847119, 0.70710546, 0.000002530803, 0.7071081)
-                                        double3 xformOp:translate = (-4.849873391776782e-9, 2.8898135440158512e-8, 0.16620998084545135)
+                                        rel material:binding = </tn__00armrs_asmv3_hJ6D/MDLMaterials/Aluminum_Anodized>
+                                    }
 
-                                        over "gripper_left" (
-                                            prepend apiSchemas = ["PhysicsFilteredPairsAPI"]
+                                    over "gripper_end" (
+                                        prepend apiSchemas = ["IsaacLinkAPI"]
+                                    )
+                                    {
+                                        over "pla7_green" (
+                                            prepend apiSchemas = ["MaterialBindingAPI"]
                                         )
                                         {
-                                            vector3f physics:angularVelocity = (0, 0, 0)
-                                            delete rel physics:filteredPairs = </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_right>
-                                            prepend rel physics:filteredPairs = </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_right>
-                                            rel physics:simulationOwner
-                                            vector3f physics:velocity = (0, 0, 0)
-                                            quatf xformOp:orient = (0.4999982, 0.49999997, -0.5, 0.5000018)
-                                            double3 xformOp:translate = (-0.041938986629247665, -0.00007470303535228595, 1.118360604124291e-8)
+                                            rel material:binding = </tn__00armrs_asmv3_hJ6D/MDLMaterials/ABS_Hard_Leather_Pop_Lime>
                                         }
 
-                                        over "gripper_right"
+                                        over "cnc7" (
+                                            prepend apiSchemas = ["MaterialBindingAPI"]
+                                        )
                                         {
-                                            vector3f physics:angularVelocity = (0, 0, 0)
-                                            rel physics:simulationOwner
-                                            vector3f physics:velocity = (0, 0, 0)
-                                            quatf xformOp:orient = (-0.4999981, 0.5, 0.50000006, 0.5000019)
-                                            double3 xformOp:translate = (-0.04193902015686035, 0.0005016189534217119, -3.8549639036489225e-9)
+                                            rel material:binding = </tn__00armrs_asmv3_hJ6D/MDLMaterials/Aluminum_Anodized>
+                                        }
+
+                                        over "motor_7" (
+                                            prepend apiSchemas = ["MaterialBindingAPI"]
+                                        )
+                                        {
+                                            rel material:binding = </tn__00armrs_asmv3_hJ6D/MDLMaterials/Aluminum_Anodized_Black>
+                                        }
+
+                                        over "gripper_left" (
+                                            prepend apiSchemas = ["IsaacLinkAPI"]
+                                        )
+                                        {
+                                            over "pla_left" (
+                                                prepend apiSchemas = ["MaterialBindingAPI"]
+                                            )
+                                            {
+                                                rel material:binding = </tn__00armrs_asmv3_hJ6D/MDLMaterials/ABS_Hard_Leather>
+                                            }
+
+                                            over "cnc_left" (
+                                                prepend apiSchemas = ["MaterialBindingAPI"]
+                                            )
+                                            {
+                                                rel material:binding = </tn__00armrs_asmv3_hJ6D/MDLMaterials/Aluminum_Anodized>
+                                            }
+
+                                            over "gripper_left" (
+                                                prepend apiSchemas = ["MaterialBindingAPI"]
+                                            )
+                                            {
+                                                rel material:binding = </tn__00armrs_asmv3_hJ6D/MDLMaterials/ABS_Hard_Leather>
+                                            }
+                                        }
+
+                                        over "gripper_right" (
+                                            prepend apiSchemas = ["IsaacLinkAPI"]
+                                        )
+                                        {
+                                            over "pla_right" (
+                                                prepend apiSchemas = ["MaterialBindingAPI"]
+                                            )
+                                            {
+                                                rel material:binding = </tn__00armrs_asmv3_hJ6D/MDLMaterials/ABS_Hard_Leather>
+                                            }
+
+                                            over "cnc_right" (
+                                                prepend apiSchemas = ["MaterialBindingAPI"]
+                                            )
+                                            {
+                                                rel material:binding = </tn__00armrs_asmv3_hJ6D/MDLMaterials/Aluminum_Anodized>
+                                            }
+
+                                            over "gripper_right" (
+                                                prepend apiSchemas = ["MaterialBindingAPI"]
+                                            )
+                                            {
+                                                rel material:binding = </tn__00armrs_asmv3_hJ6D/MDLMaterials/ABS_Hard_Leather>
+                                            }
+                                        }
+
+                                        over "gripper_end" (
+                                            prepend apiSchemas = ["MaterialBindingAPI"]
+                                        )
+                                        {
+                                            rel material:binding = </tn__00armrs_asmv3_hJ6D/MDLMaterials/Aluminum_Anodized_Black>
                                         }
                                     }
+
+                                    over "link6_1" (
+                                        prepend apiSchemas = ["MaterialBindingAPI"]
+                                    )
+                                    {
+                                        rel material:binding = </tn__00armrs_asmv3_hJ6D/MDLMaterials/Aluminum_Anodized>
+                                    }
+                                }
+
+                                over "link5" (
+                                    prepend apiSchemas = ["MaterialBindingAPI"]
+                                )
+                                {
+                                    rel material:binding = </tn__00armrs_asmv3_hJ6D/MDLMaterials/Aluminum_Anodized>
                                 }
                             }
+
+                            over "link4" (
+                                prepend apiSchemas = ["MaterialBindingAPI"]
+                            )
+                            {
+                                rel material:binding = </tn__00armrs_asmv3_hJ6D/MDLMaterials/Aluminum_Anodized>
+                            }
+                        }
+
+                        over "link3" (
+                            prepend apiSchemas = ["MaterialBindingAPI"]
+                        )
+                        {
+                            rel material:binding = </tn__00armrs_asmv3_hJ6D/MDLMaterials/Aluminum_Anodized>
                         }
                     }
+
+                    over "link2" (
+                        prepend apiSchemas = ["MaterialBindingAPI"]
+                    )
+                    {
+                        rel material:binding = </tn__00armrs_asmv3_hJ6D/MDLMaterials/Aluminum_Anodized>
+                    }
                 }
+
+                over "link1_1" (
+                    prepend apiSchemas = ["MaterialBindingAPI"]
+                )
+                {
+                    rel material:binding = </tn__00armrs_asmv3_hJ6D/MDLMaterials/Aluminum_Anodized>
+                }
+            }
+
+            over "base_link_1" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                rel material:binding = </tn__00armrs_asmv3_hJ6D/MDLMaterials/ABS_Hard_Leather>
             }
         }
     }
 
     over "Physics"
     {
-        over "joint1"
+        over "root_joint" (
+            prepend apiSchemas = ["IsaacJointAPI"]
+        )
         {
-            float physics:lowerLimit = -160.42818
-            float physics:upperLimit = 160.42818
-            float state:angular:physics:position = -0.000034275967
-            float state:angular:physics:velocity = 0
         }
 
-        over "joint2"
+        over "joint1" (
+            prepend apiSchemas = ["IsaacJointAPI"]
+        )
         {
-            float physics:lowerLimit = -179.90875
-            float physics:upperLimit = 0
-            float state:angular:physics:position = 3.6069497e-10
-            float state:angular:physics:velocity = 0
         }
 
-        over "joint3"
+        over "joint2" (
+            prepend apiSchemas = ["IsaacJointAPI"]
+        )
         {
-            float physics:lowerLimit = -179.90875
-            float physics:upperLimit = 0
-            float state:angular:physics:position = -6.105723e-8
-            float state:angular:physics:velocity = 0
+            float physics:upperLimit = 179.90875
         }
 
-        over "joint4"
+        over "joint3" (
+            prepend apiSchemas = ["IsaacJointAPI"]
+        )
         {
-            float physics:lowerLimit = -102.55945
-            float physics:upperLimit = 96.829865
-            float state:angular:physics:position = 1.9103857e-7
-            float state:angular:physics:velocity = 0
         }
 
-        over "joint5"
+        over "joint4" (
+            prepend apiSchemas = ["IsaacJointAPI"]
+        )
         {
             float physics:lowerLimit = -89.95438
-            float physics:upperLimit = 89.95438
-            float state:angular:physics:position = 0.00031791747
-            float state:angular:physics:velocity = 0
         }
 
-        over "joint6"
+        over "joint5" (
+            prepend apiSchemas = ["IsaacJointAPI"]
+        )
         {
-            float physics:lowerLimit = -179.90875
-            float physics:upperLimit = 179.90875
-            float state:angular:physics:position = 0.00002401483
-            float state:angular:physics:velocity = 0
         }
 
-        over "joint_left"
+        over "joint6" (
+            prepend apiSchemas = ["IsaacJointAPI"]
+        )
         {
-            float drive:linear:physics:targetPosition = 0
-            float physics:lowerLimit = 0
-            float physics:upperLimit = 0.045
-            float state:linear:physics:position = 0.0000013445025
-            float state:linear:physics:velocity = 0
         }
 
-        over "joint_right"
+        over "j_gripper_end" (
+            prepend apiSchemas = ["IsaacJointAPI"]
+        )
         {
-            float drive:linear:physics:targetPosition = 0
-            float physics:lowerLimit = 0
-            float physics:upperLimit = 0.045
-            float state:linear:physics:position = 0.00042822163
-            float state:linear:physics:velocity = 0
+        }
+
+        over "joint_left" (
+            prepend apiSchemas = ["IsaacJointAPI"]
+        )
+        {
+        }
+
+        over "joint_right" (
+            prepend apiSchemas = ["IsaacJointAPI"]
+        )
+        {
         }
     }
-    variantSet "Physics" = {
-        "mujoco" (
-            prepend payload = @./payloads/Physics/mujoco.usda@
-        ) {
+}
 
-        }
-        "none" (
-            prepend payload = @./payloads/Physics/none.usda@
-        ) {
-
-        }
-        "physics" (
-            prepend payload = @./payloads/Physics/physics.usda@
-        ) {
-
-        }
-        "physx" (
-            prepend payload = @./payloads/Physics/physx.usda@
-        ) {
-
-        }
-    }
+def PhysicsScene "PhysicsScene" (
+    prepend apiSchemas = ["MjcSceneAPI"]
+    prepend payload = @./Payload/Contents.usda@</PhysicsScene>
+)
+{
 }
 
 def "Render" (
@@ -274,8 +463,9 @@ def "Render" (
                 bool omni:rtx:debug:view:pixelDebug:enableFixedTextPos = 1
                 token omni:rtx:directLighting:sampledLighting:denoisingTechnique = "None"
                 bool omni:rtx:dlss:frameGeneration = 0
+                float3 omni:rtx:domeLight:rotationAxis = (0, 0, 1)
                 bool omni:rtx:indirectDiffuse:denoiser:enabled = 0
-                bool omni:rtx:material:db:syncLoads
+                bool omni:rtx:material:db:syncLoads = 1
                 token omni:rtx:post:dlss:execMode = "performance"
                 bool omni:rtx:post:registeredCompositing:invertColorCorrection = 1
                 bool omni:rtx:post:registeredCompositing:invertToneMap = 1
@@ -292,7 +482,7 @@ def "Render" (
                 int omni:rtx:rt:sss:samples = 1
                 uint omni:rtx:rtpt:maxVolumeBounces = 15
                 float omni:rtx:rtpt:modulatingRoughnessThreshold = 0.08
-                bool omni:rtx:scene:hydra:materialSyncLoads
+                bool omni:rtx:scene:hydra:materialSyncLoads = 1
                 bool omni:rtx:scene:hydra:mdlMaterialWarmup = 1
                 rel orderedVars = </Render/Vars/LdrColor>
                 custom bool overrideClipRange = 0
@@ -317,12 +507,13 @@ def "Render" (
         )
         {
             uniform string sourceName = "LdrColor"
+            uniform token sourceType = "raw"
         }
     }
 }
 
 over "OmniverseKit_Persp" (
-    apiSchemas = ["OmniRtxCameraAutoExposureAPI_1", "OmniRtxCameraExposureAPI_1"]
+    prepend apiSchemas = ["OmniRtxCameraAutoExposureAPI_1", "OmniRtxCameraExposureAPI_1"]
     customData = {
         dictionary omni = {
             dictionary kit = {
@@ -342,10 +533,10 @@ over "OmniverseKit_Persp" (
     float exposure:time = 0.02
     float focalLength = 18.147562
     float focusDistance = 400
-    custom uniform vector3d omni:kit:centerOfInterest = (0, 0, -0.8967672337214688)
-    float3 xformOp:rotateXYZ = (47.471645, -2.0673605e-13, 121.38241)
+    custom uniform vector3d omni:kit:centerOfInterest = (0, 5.551115123125783e-17, -8.660254037844386)
+    float3 xformOp:rotateXYZ = (62.31782, -1.6845878e-14, 139.89201)
     float3 xformOp:scale = (1, 1, 1)
-    double3 xformOp:translate = (0.4356033029490003, 0.16284862348620355, 0.48020347490730153)
+    double3 xformOp:translate = (0.7885044355558, 0.9048379007451595, 0.7772645693030278)
     uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
 }
 
@@ -393,7 +584,7 @@ over "OmniverseKit_Right" (
     custom uniform vector3d omni:kit:centerOfInterest = (0, 0, -5)
     token projection = "orthographic"
     float verticalAperture = 50
-    float3 xformOp:rotateXYZ = (90, -1.41245e-30, 1.2722219e-14)
+    float3 xformOp:rotateXYZ = (90, -1.2833635e-30, 1.2722219e-14)
     float3 xformOp:scale = (1, 1, 1)
     double3 xformOp:translate = (0, -5, 0)
     uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
@@ -422,11 +613,5 @@ over "OmniverseKit_Top" (
     float3 xformOp:scale = (1, 1, 1)
     double3 xformOp:translate = (0, 0, 5)
     uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
-}
-
-def PhysicsScene "PhysicsScene" (
-    prepend apiSchemas = ["PhysxSceneAPI", "NewtonSceneAPI"]
-)
-{
 }
 
