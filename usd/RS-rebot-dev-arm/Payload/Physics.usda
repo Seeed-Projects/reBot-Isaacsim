@@ -1,7 +1,8 @@
 #usda 1.0
 (
+    "re-export 2026-07-17b: urdf-usd-converter 0.3.0 @554f3dc, masses PR#3 + inertia rescale"
     customLayerData = {
-        string creator = "URDF USD Converter v0.2.0"
+        string creator = "URDF USD Converter v0.3.0"
     }
     defaultPrim = "tn__00armrs_asmv3_hJ6D"
     kilogramsPerUnit = 1
@@ -26,170 +27,171 @@ def Xform "tn__00armrs_asmv3_hJ6D" (
         }
 
         def PhysicsRevoluteJoint "joint1" (
-            prepend apiSchemas = ["PhysicsDriveAPI:angular"]
+            prepend apiSchemas = ["NewtonJointAPI", "PhysicsDriveAPI:angular"]
         )
         {
             float drive:angular:physics:damping = 60
             float drive:angular:physics:stiffness = 500
             float drive:angular:physics:targetPosition = 0
             uniform token drive:angular:physics:type = "force"
+            float newton:velocityLimit = 2864.789
             uniform token physics:axis = "Z"
             rel physics:body0 = </tn__00armrs_asmv3_hJ6D/Geometry/base_link>
             rel physics:body1 = </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1>
             point3f physics:localPos0 = (-0.00034283, -0.00098683, 0.075)
             point3f physics:localPos1 = (0, 0, 0)
-            quatf physics:localRot0 = (0, -1, 0, 0)
-            quatf physics:localRot1 = (0, -1, 0, 0)
+            quatf physics:localRot0 = (1, 0, 0, 0)
+            quatf physics:localRot1 = (1, 0, 0, 0)
             float physics:lowerLimit = -160.42818
             float physics:upperLimit = 160.42818
             custom float urdf:limit:effort = 36
-            custom float urdf:limit:velocity = 50
         }
 
         def PhysicsRevoluteJoint "joint2" (
-            prepend apiSchemas = ["PhysicsDriveAPI:angular"]
+            prepend apiSchemas = ["NewtonJointAPI", "PhysicsDriveAPI:angular"]
         )
         {
             float drive:angular:physics:damping = 96
             float drive:angular:physics:stiffness = 1500
             float drive:angular:physics:targetPosition = 0
             uniform token drive:angular:physics:type = "force"
+            float newton:velocityLimit = 2864.789
             uniform token physics:axis = "Z"
             rel physics:body0 = </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1>
             rel physics:body1 = </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1/link2>
             point3f physics:localPos0 = (0.020343, 0.027237, 0.07)
             point3f physics:localPos1 = (0, 0, 0)
-            quatf physics:localRot0 = (-0.70710546, 0.7071081, 0, 0)
-            quatf physics:localRot1 = (1, 0, 0, 0)
-            float physics:lowerLimit = 0
-            float physics:upperLimit = 179.90875
+            quatf physics:localRot0 = (0.7071081, 0.70710546, 0, 0)
+            quatf physics:localRot1 = (0, -1, 0, 0)
+            float physics:lowerLimit = -179.90875
+            float physics:upperLimit = 0
             custom float urdf:limit:effort = 36
-            custom float urdf:limit:velocity = 50
         }
 
         def PhysicsRevoluteJoint "joint3" (
-            prepend apiSchemas = ["PhysicsDriveAPI:angular"]
+            prepend apiSchemas = ["NewtonJointAPI", "PhysicsDriveAPI:angular"]
         )
         {
             float drive:angular:physics:damping = 76
             float drive:angular:physics:stiffness = 1000
             float drive:angular:physics:targetPosition = 0
             uniform token drive:angular:physics:type = "force"
+            float newton:velocityLimit = 2864.789
             uniform token physics:axis = "Z"
             rel physics:body0 = </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1/link2>
             rel physics:body1 = </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1/link2/link3>
             point3f physics:localPos0 = (-0.236, 2.7755576e-17, 0)
             point3f physics:localPos1 = (0, 0, 0)
-            quatf physics:localRot0 = (0, -1, 0, 0)
-            quatf physics:localRot1 = (0, -1, 0, 0)
-            float physics:lowerLimit = 0
-            float physics:upperLimit = 179.90875
+            quatf physics:localRot0 = (1, 1.048176e-17, 0, 0)
+            quatf physics:localRot1 = (1, 0, 0, 0)
+            float physics:lowerLimit = -179.90875
+            float physics:upperLimit = 0
             custom float urdf:limit:effort = 36
-            custom float urdf:limit:velocity = 50
         }
 
         def PhysicsRevoluteJoint "joint4" (
-            prepend apiSchemas = ["PhysicsDriveAPI:angular"]
+            prepend apiSchemas = ["NewtonJointAPI", "PhysicsDriveAPI:angular"]
         )
         {
             float drive:angular:physics:damping = 18
             float drive:angular:physics:stiffness = 150
             float drive:angular:physics:targetPosition = 0
             uniform token drive:angular:physics:type = "force"
+            float newton:velocityLimit = 2291.8313
             uniform token physics:axis = "Z"
             rel physics:body0 = </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1/link2/link3>
             rel physics:body1 = </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1/link2/link3/link4>
             point3f physics:localPos0 = (0.228, -0.072746, 0.0045)
             point3f physics:localPos1 = (0, 0, 0)
-            quatf physics:localRot0 = (0, -1, 0, 0)
-            quatf physics:localRot1 = (0, -1, 0, 0)
-            float physics:lowerLimit = -89.95438
-            float physics:upperLimit = 89.95438
+            quatf physics:localRot0 = (1, 1.048176e-17, 0, 0)
+            quatf physics:localRot1 = (1, 0, 0, 0)
+            float physics:lowerLimit = -102.55945
+            float physics:upperLimit = 96.829865
             custom float urdf:limit:effort = 14
-            custom float urdf:limit:velocity = 40
         }
 
         def PhysicsRevoluteJoint "joint5" (
-            prepend apiSchemas = ["PhysicsDriveAPI:angular"]
+            prepend apiSchemas = ["NewtonJointAPI", "PhysicsDriveAPI:angular"]
         )
         {
             float drive:angular:physics:damping = 10
             float drive:angular:physics:stiffness = 80
             float drive:angular:physics:targetPosition = 0
             uniform token drive:angular:physics:type = "force"
+            float newton:velocityLimit = 2291.8313
             uniform token physics:axis = "Z"
             rel physics:body0 = </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1/link2/link3/link4>
             rel physics:body1 = </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1/link2/link3/link4/link5>
             point3f physics:localPos0 = (0.087, -0.048, -0.03075)
             point3f physics:localPos1 = (0, 0, 0)
-            quatf physics:localRot0 = (-0.7071081, -0.70710546, 0, -0)
-            quatf physics:localRot1 = (0, -1, 0, 0)
+            quatf physics:localRot0 = (0.70710546, -0.7071081, 0, 0)
+            quatf physics:localRot1 = (1, 0, 0, 0)
             float physics:lowerLimit = -89.95438
             float physics:upperLimit = 89.95438
             custom float urdf:limit:effort = 14
-            custom float urdf:limit:velocity = 40
         }
 
         def PhysicsRevoluteJoint "joint6" (
-            prepend apiSchemas = ["PhysicsDriveAPI:angular"]
+            prepend apiSchemas = ["NewtonJointAPI", "PhysicsDriveAPI:angular"]
         )
         {
             float drive:angular:physics:damping = 7
             float drive:angular:physics:stiffness = 50
             float drive:angular:physics:targetPosition = 0
             uniform token drive:angular:physics:type = "force"
+            float newton:velocityLimit = 2291.8313
             uniform token physics:axis = "Z"
             rel physics:body0 = </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1/link2/link3/link4/link5>
             rel physics:body1 = </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1/link2/link3/link4/link5/link6>
-            point3f physics:localPos0 = (0.0365, 2.1175824e-22, 0.048)
+            point3f physics:localPos0 = (0.0365, 0, 0.048)
             point3f physics:localPos1 = (0, 0, 0)
-            quatf physics:localRot0 = (-3.3148634e-17, -0.70710546, -3.7116984e-17, 0.7071081)
-            quatf physics:localRot1 = (0, -1, 0, 0)
+            quatf physics:localRot0 = (0.70710546, -3.3149124e-17, 0.7071081, 3.7116984e-17)
+            quatf physics:localRot1 = (1, 0, 0, 0)
             float physics:lowerLimit = -179.90875
             float physics:upperLimit = 179.90875
             custom float urdf:limit:effort = 14
-            custom float urdf:limit:velocity = 40
         }
 
         def PhysicsFixedJoint "j_gripper_end"
         {
             rel physics:body0 = </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1/link2/link3/link4/link5/link6>
             rel physics:body1 = </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end>
-            point3f physics:localPos0 = (2.7755576e-17, 0, 0.16621)
+            point3f physics:localPos0 = (0, -2.1175824e-22, 0.16621)
             point3f physics:localPos1 = (0, 0, 0)
             quatf physics:localRot0 = (0.0000025977158, -0.70710546, -0.0000025977254, -0.7071081)
             quatf physics:localRot1 = (1, 0, 0, 0)
         }
 
         def PhysicsPrismaticJoint "joint_left" (
-            prepend apiSchemas = ["PhysicsDriveAPI:linear"]
+            prepend apiSchemas = ["NewtonJointAPI", "PhysicsDriveAPI:linear"]
         )
         {
             float drive:linear:physics:damping = 4
             float drive:linear:physics:stiffness = 100
             float drive:linear:physics:targetPosition = 0
             uniform token drive:linear:physics:type = "force"
+            float newton:velocityLimit = 10
             uniform token physics:axis = "Z"
             rel physics:body0 = </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end>
             rel physics:body1 = </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_left>
-            point3f physics:localPos0 = (-0.041939, -0.000073385, -2.7755576e-17)
+            point3f physics:localPos0 = (-0.041939, -0.000073385, 2.7755576e-17)
             point3f physics:localPos1 = (0, 0, 0)
             quatf physics:localRot0 = (0.49999815, 0.5, -0.5, 0.50000185)
             quatf physics:localRot1 = (1, 0, 0, 0)
             float physics:lowerLimit = 0
             float physics:upperLimit = 0.05
             custom float urdf:limit:effort = 500
-            custom float urdf:limit:velocity = 10
         }
 
         def PhysicsPrismaticJoint "joint_right" (
-            prepend apiSchemas = ["PhysicsDriveAPI:linear"]
+            prepend apiSchemas = ["NewtonJointAPI", "PhysicsDriveAPI:linear"]
         )
         {
             float drive:linear:physics:damping = 4
             float drive:linear:physics:stiffness = 100
             float drive:linear:physics:targetPosition = 0
             uniform token drive:linear:physics:type = "force"
+            float newton:velocityLimit = 10
             uniform token physics:axis = "Z"
             rel physics:body0 = </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end>
             rel physics:body1 = </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_right>
@@ -200,7 +202,6 @@ def Xform "tn__00armrs_asmv3_hJ6D" (
             float physics:lowerLimit = 0
             float physics:upperLimit = 0.0715
             custom float urdf:limit:effort = 500
-            custom float urdf:limit:velocity = 10
         }
     }
 
@@ -214,7 +215,7 @@ def Xform "tn__00armrs_asmv3_hJ6D" (
             point3f physics:centerOfMass = (0.0000028764189, -0.00012230249, 0.024337612)
             float3 physics:diagonalInertia = (0.0013304, 0.00213119, 0.00275877)
             float physics:mass = 1.1774
-            quatf physics:principalAxes = (1, 0, -0, 0.0000062438353)
+            quatf physics:principalAxes = (1, 0, 0, -0.0000062438353)
 
             over "base_link_1" (
                 prepend apiSchemas = ["PhysicsCollisionAPI", "NewtonCollisionAPI", "PhysicsMeshCollisionAPI", "NewtonMeshCollisionAPI"]
@@ -231,7 +232,7 @@ def Xform "tn__00armrs_asmv3_hJ6D" (
                 point3f physics:centerOfMass = (0.008176523, 0.0012258422, 0.033141967)
                 float3 physics:diagonalInertia = (0.00015464, 0.0002134129, 0.0002728171)
                 float physics:mass = 0.4655
-                quatf physics:principalAxes = (-0.31977478, 0.63066953, 0.63066953, 0.31977478)
+                quatf physics:principalAxes = (0.31977478, 0.63066953, 0.63066953, 0.31977478)
 
                 over "link1_1" (
                     prepend apiSchemas = ["PhysicsCollisionAPI", "NewtonCollisionAPI", "PhysicsMeshCollisionAPI", "NewtonMeshCollisionAPI"]
@@ -244,11 +245,11 @@ def Xform "tn__00armrs_asmv3_hJ6D" (
                     prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI", "NewtonMassAPI"]
                 )
                 {
-                    double[] newton:inertia = [0.00073374, 0.01255987, 0.01281387, -4.3e-7, 0.00000851, 0.00000128]
+                    double[] newton:inertia = [0.000577466775, 0.00988484698, 0.0100847496, -3.3841785e-7, 0.00000669752535, 0.00000100738337]
                     point3f physics:centerOfMass = (-0.11786481, -0.0034222642, -0.027155194)
-                    float3 physics:diagonalInertia = (0.000733734, 0.012559864, 0.012813883)
-                    float physics:mass = 1.972
-                    quatf physics:principalAxes = (0.9999968, 0.0025189344, -0.00035218598, -0.000019105386)
+                    float3 physics:diagonalInertia = (0.000577462, 0.009884842, 0.010084759)
+                    float physics:mass = 1.552
+                    quatf physics:principalAxes = (0.9999968, -0.0025189347, 0.00035218598, 0.000019105386)
 
                     over "link2" (
                         prepend apiSchemas = ["PhysicsCollisionAPI", "NewtonCollisionAPI", "PhysicsMeshCollisionAPI", "NewtonMeshCollisionAPI"]
@@ -261,11 +262,11 @@ def Xform "tn__00armrs_asmv3_hJ6D" (
                         prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI", "NewtonMassAPI"]
                     )
                     {
-                        double[] newton:inertia = [0.00046807, 0.00632695, 0.00648221, -0.00003456, -0.0000426, 6e-8]
+                        double[] newton:inertia = [0.000551811337, 0.00745889021, 0.00764192742, -0.0000407430508, -0.0000502214689, 7.07344633e-8]
                         point3f physics:centerOfMass = (0.10342716, -0.06641379, -0.027106868)
-                        float3 physics:diagonalInertia = (0.00046756444, 0.006327153, 0.006482512)
-                        float physics:mass = 1.062
-                        quatf physics:principalAxes = (0.9999889, 0.0009913049, 0.0035441353, -0.0029454725)
+                        float3 physics:diagonalInertia = (0.0005512153, 0.0074591297, 0.007642284)
+                        float physics:mass = 1.252
+                        quatf physics:principalAxes = (0.9999889, -0.0009913049, -0.0035441353, 0.0029454725)
 
                         over "link3" (
                             prepend apiSchemas = ["PhysicsCollisionAPI", "NewtonCollisionAPI", "PhysicsMeshCollisionAPI", "NewtonMeshCollisionAPI"]
@@ -278,11 +279,11 @@ def Xform "tn__00armrs_asmv3_hJ6D" (
                             prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI", "NewtonMassAPI"]
                         )
                         {
-                            double[] newton:inertia = [0.00045986, 0.00075258, 0.00066742, 0.00024219, -0, -0]
+                            double[] newton:inertia = [0.000320508485, 0.000524525455, 0.000465171515, 0.000168799091, -0, -0]
                             point3f physics:centerOfMass = (0.047554456, -0.04411135, -0.031411193)
-                            float3 physics:diagonalInertia = (0.00032324076, 0.00066742, 0.0008891992)
-                            float physics:mass = 0.66
-                            quatf physics:principalAxes = (-0.6839188, 0.6839188, -0.17959702, -0.17959702)
+                            float3 physics:diagonalInertia = (0.00022528903, 0.00046517153, 0.00061974494)
+                            float physics:mass = 0.46
+                            quatf physics:principalAxes = (0.6839188, 0.6839188, -0.17959702, -0.17959702)
 
                             over "link4" (
                                 prepend apiSchemas = ["PhysicsCollisionAPI", "NewtonCollisionAPI", "PhysicsMeshCollisionAPI", "NewtonMeshCollisionAPI"]
@@ -295,11 +296,11 @@ def Xform "tn__00armrs_asmv3_hJ6D" (
                                 prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI", "NewtonMassAPI"]
                             )
                             {
-                                double[] newton:inertia = [0.0000734238025911107, 0.000055153884237714, 0.0000529920095811017, 1.35700947009798e-8, -8.58146433770359e-7, -1.32742144977931e-8]
-                                point3f physics:centerOfMass = (0.011440062, 0.000004790774, 0.038048748)
-                                float3 physics:diagonalInertia = (0.00005295596, 0.000055153945, 0.00007345979)
-                                float physics:mass = 0.15012045
-                                quatf physics:principalAxes = (0.7217615, 0.0017204558, 0.6921357, -0.0023510843)
+                                double[] newton:inertia = [0.0000984090046, 0.0000739220615, 0.0000710245279, 1.81878283e-8, -0.00000115016294, -1.77912637e-8]
+                                point3f physics:centerOfMass = (-0.011440062, 0.000004790774, 0.04804875)
+                                float3 physics:diagonalInertia = (0.00007097621, 0.00007392214, 0.00009845724)
+                                float physics:mass = 0.20120457
+                                quatf physics:principalAxes = (0.7217615, -0.0017204558, -0.6921357, 0.002351084)
 
                                 over "link5" (
                                     prepend apiSchemas = ["PhysicsCollisionAPI", "NewtonCollisionAPI", "PhysicsMeshCollisionAPI", "NewtonMeshCollisionAPI"]
@@ -312,11 +313,11 @@ def Xform "tn__00armrs_asmv3_hJ6D" (
                                     prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI", "NewtonMassAPI"]
                                 )
                                 {
-                                    double[] newton:inertia = [0.00000442273835852359, 0.00000437185522080034, 0.00000854299378942051, 3.16758463739482e-12, 1.51852818442002e-10, -2.21864017603015e-12]
+                                    double[] newton:inertia = [0.0000147424612, 0.0000145728507, 0.000028476646, 1.05586155e-11, 5.06176061e-10, -7.39546725e-12]
                                     point3f physics:centerOfMass = (0.000018019602, 2.483346e-8, 0.004348058)
-                                    float3 physics:diagonalInertia = (0.000004371855, 0.000004422738, 0.000008542994)
-                                    float physics:mass = 0.03
-                                    quatf physics:principalAxes = (0.000013218725, 0.7070848, 0.70712876, -0.000012841821)
+                                    float3 physics:diagonalInertia = (0.000014572851, 0.000014742461, 0.000028476647)
+                                    float physics:mass = 0.1
+                                    quatf physics:principalAxes = (-0.000013218725, 0.7070848, 0.70712876, -0.000012841821)
 
                                     over "link6_1" (
                                         prepend apiSchemas = ["PhysicsCollisionAPI", "NewtonCollisionAPI", "PhysicsMeshCollisionAPI", "NewtonMeshCollisionAPI"]
@@ -333,7 +334,7 @@ def Xform "tn__00armrs_asmv3_hJ6D" (
                                         point3f physics:centerOfMass = (-0.11275169, 0.00012844308, -0.0000057260245)
                                         float3 physics:diagonalInertia = (0.00015825892, 0.00037353695, 0.00045357412)
                                         float physics:mass = 0.65
-                                        quatf physics:principalAxes = (-0.0019646983, 0.70729434, 0.7068878, -0.006368091)
+                                        quatf physics:principalAxes = (0.0019646983, 0.70729434, 0.7068878, -0.006368091)
 
                                         over "gripper_end" (
                                             prepend apiSchemas = ["PhysicsCollisionAPI", "NewtonCollisionAPI", "PhysicsMeshCollisionAPI", "NewtonMeshCollisionAPI"]
@@ -350,7 +351,7 @@ def Xform "tn__00armrs_asmv3_hJ6D" (
                                             point3f physics:centerOfMass = (-0.0021800871, 0.018709036, 0.009321886)
                                             float3 physics:diagonalInertia = (0.0000093078, 0.00000950146, 0.0000109877965)
                                             float physics:mass = 0.0752
-                                            quatf physics:principalAxes = (0.70710677, 0, 0.70710677, 0)
+                                            quatf physics:principalAxes = (-0.70710677, 0, 0.70710677, 0)
 
                                             over "gripper_left" (
                                                 prepend apiSchemas = ["PhysicsCollisionAPI", "NewtonCollisionAPI", "PhysicsMeshCollisionAPI", "NewtonMeshCollisionAPI"]
@@ -368,7 +369,7 @@ def Xform "tn__00armrs_asmv3_hJ6D" (
                                             point3f physics:centerOfMass = (0.0021800871, -0.018709036, 0.009321886)
                                             float3 physics:diagonalInertia = (0.0000093078, 0.00000950146, 0.0000109877965)
                                             float physics:mass = 0.0752
-                                            quatf physics:principalAxes = (0.70710677, 0, 0.70710677, 0)
+                                            quatf physics:principalAxes = (-0.70710677, 0, 0.70710677, 0)
 
                                             over "gripper_right" (
                                                 prepend apiSchemas = ["PhysicsCollisionAPI", "NewtonCollisionAPI", "PhysicsMeshCollisionAPI", "NewtonMeshCollisionAPI"]
