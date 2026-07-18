@@ -1,5 +1,7 @@
 # reBot-Isaacsim
 
+简体中文 | [English](./README_EN.md) | [Español](./README_ES.md)
+
 reBot-Isaacsim 是一个专为 reBotArm 设计的 NVIDIA Isaac Sim 仿真项目。它利用 Isaac Sim 的高保真物理引擎，在虚拟环境中精确复现机械臂的运动学特性与夹爪联动逻辑，为控制算法开发、轨迹规划验证及通信协议测试提供独立的纯仿真环境。
 
 ## 功能组件概览
@@ -40,6 +42,7 @@ reBot-Isaacsim/
 ├── pyproject.toml                           # uv 工作空间配置
 ├── README.md
 ├── README_EN.md
+├── README_ES.md
 ├── reBotArm_Isaacsim/                       # 主示例目录
 │   ├── gravity_joint_sender.py              # 重力补偿手柄模式（改装机械臂，手动掰动）
 │   ├── isaacsim_ik_sender.py                # 逆运动学模式（IK 控制）

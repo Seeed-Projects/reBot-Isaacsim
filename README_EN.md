@@ -1,5 +1,7 @@
 # reBot-Isaacsim
 
+[简体中文](./README.md) | English | [Español](./README_ES.md)
+
 reBot-Isaacsim is an NVIDIA Isaac Sim simulation project designed specifically for the reBotArm. It leverages Isaac Sim's high-fidelity physics engine to accurately replicate the kinematic characteristics and gripper coordination logic of the robot arm in a virtual environment, providing an independent simulation-only environment for control algorithm development, trajectory planning verification, and communication protocol testing.
 
 ## Component Overview
@@ -40,6 +42,7 @@ reBot-Isaacsim/
 ├── pyproject.toml                           # uv workspace configuration
 ├── README.md
 ├── README_EN.md                             # English version of this README
+├── README_ES.md                             # Spanish version of this README
 ├── reBotArm_Isaacsim/                       # Main example directory
 │   ├── gravity_joint_sender.py              # Gravity comp + handle mode (modified arm, hand-guided)
 │   ├── isaacsim_ik_sender.py                # Inverse kinematics mode (IK control)
