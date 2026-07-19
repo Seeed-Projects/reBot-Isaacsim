@@ -51,17 +51,17 @@ _running = True
 # Pose trajectory extracted from receiver-side logs to replay the
 # physical sender's motion in simulation.
 POSES = [
-    np.array([0.025, 0.099, 0.043, -0.082, 0.027, -0.019], dtype=np.float64),
-    np.array([0.025, 0.346, 0.043, -0.082, 0.027, -0.019], dtype=np.float64),
-    np.array([0.025, 0.470, 0.246, -0.092, 0.027, -0.019], dtype=np.float64),
-    np.array([0.025, 0.497, 0.407, -0.095, 0.027, -0.019], dtype=np.float64),
-    np.array([0.025, 0.563, 0.558, -0.138, 0.027, -0.019], dtype=np.float64),
-    np.array([0.023, 0.541, 0.548, -0.185, 0.027, -0.019], dtype=np.float64),
-    np.array([0.022, 0.462, 0.497, -0.227, 0.027, -0.019], dtype=np.float64),
-    np.array([0.023, 0.263, 0.315, -0.227, 0.027, -0.019], dtype=np.float64),
-    np.array([0.024, 0.247, 0.302, -0.228, 0.027, -0.019], dtype=np.float64),
+    np.array([0.125, -0.099, -0.043, -0.082, 0.027, -0.019], dtype=np.float64),
+    np.array([0.125, -0.346, -0.043, -0.082, 0.027, -0.019], dtype=np.float64),
+    np.array([0.125, -0.470, -0.246, -0.092, 0.027, -0.019], dtype=np.float64),
+    np.array([0.125, -0.497, -0.407, -0.095, 0.027, -0.019], dtype=np.float64),
+    np.array([0.125, -0.563, -0.558, -0.138, 0.027, -0.019], dtype=np.float64),
+    np.array([-0.123, -0.541, -0.548, -0.185, 0.027, -0.019], dtype=np.float64),
+    np.array([-0.122, -0.462, -0.497, -0.227, 0.027, -0.019], dtype=np.float64),
+    np.array([-0.123, -0.263, -0.315, -0.227, 0.027, -0.019], dtype=np.float64),
+    np.array([-0.124, -0.247, -0.302, -0.228, 0.027, -0.019], dtype=np.float64),
 ]
-GRIPPER_RATIOS = [0.35] * len(POSES)
+GRIPPER_RATIOS = [0.0] * len(POSES)
 
 
 def _sigint_handler(signum, frame) -> None:

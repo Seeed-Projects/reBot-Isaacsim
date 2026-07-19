@@ -88,7 +88,7 @@ class GravityCompensationSender:
 
     @staticmethod
     def _gripper_q_to_position(gripper_q: float) -> float:
-        return float(-gripper_q * GRIPPER_POSITION_SCALE)
+        return float(gripper_q * GRIPPER_POSITION_SCALE)
 
     def setup_hardware(self) -> None:
         self.rebotarm.connect()
@@ -122,7 +122,7 @@ class GravityCompensationSender:
         q_arm = q[:ARM_JOINT_COUNT]
         tau_g = compute_generalized_gravity(q=q_arm)
 
-        tau_g[1] *= 1.45  # joint2 额外补偿 / additional compensation for joint 2
+        tau_g[1] *= 1.3  # joint2 额外补偿 / additional compensation for joint 2
         tau_g[2] *= 1.6  # joint3 额外补偿 / additional compensation for joint 3
 
         pad_len = max(robot.arm.num_joints - ARM_JOINT_COUNT, 0)

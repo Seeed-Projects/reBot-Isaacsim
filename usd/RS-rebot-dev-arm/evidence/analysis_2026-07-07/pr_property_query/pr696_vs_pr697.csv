@@ -1,0 +1,7 @@
+aspect,PR #696,PR #697
+url,github.com/isaac-sim/IsaacSim/pull/696,github.com/isaac-sim/IsaacSim/pull/697
+fix logic,parser descriptor (identical),parser descriptor (identical)
+style,guard clauses + continue (matches file style),"named predicates + filter/comprehensions, zero continue"
+no-report sentinel,empty sets,explicit None
+diff size,+84/-2,+112/-18
+verification,harness 6/6 + live Gain Tuner,harness 6/6

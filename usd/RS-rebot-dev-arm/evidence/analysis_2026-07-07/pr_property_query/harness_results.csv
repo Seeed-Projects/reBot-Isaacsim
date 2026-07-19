@@ -1,0 +1,7 @@
+test_case,expected_bodies,expected_joints,v3_descriptor,v4_predicates
+UR10e,7,6,PASS,PASS
+G1 humanoid,30,29,PASS,PASS
+nested articulations,-,-,PASS (no leak),PASS (no leak)
+flat scene (2 pendulums),3,2,PASS (alpha only),PASS (alpha only)
+live Gain Tuner flat scene,-,2,"PASS {alpha_joint1, alpha_joint2}",not run (kit was gone)
+live Gain Tuner UR10e,-,6,PASS,not run (kit was gone)

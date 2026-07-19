@@ -1,49 +1,14 @@
 #usda 1.0
 (
+    "re-export 2026-07-17b: urdf-usd-converter 0.3.0 @554f3dc, masses PR#3 + inertia rescale"
     customLayerData = {
-        dictionary cameraSettings = {
-            dictionary Front = {
-                double3 position = (5, 0, 0)
-                double radius = 5
-            }
-            dictionary Perspective = {
-                double3 position = (0.5953450468622206, 0.5323837503565053, 0.6360977642278548)
-                double3 target = (-0.1385743056573635, -0.17932091480438372, 0.02586298851772395)
-            }
-            dictionary Right = {
-                double3 position = (0, -5, 0)
-                double radius = 5
-            }
-            dictionary Top = {
-                double3 position = (0, 0, 5)
-                double radius = 5
-            }
-            string boundCamera = "/OmniverseKit_Persp"
-        }
-        string creator = "URDF USD Converter v0.1.0"
-        dictionary omni_layer = {
-            string authoring_layer = "./00-arm-rs_asm-v3.usda"
-        }
-        dictionary renderSettings = {
-        }
+        string creator = "URDF USD Converter v0.3.0"
     }
     defaultPrim = "tn__00armrs_asmv3_hJ6D"
-    doc = """Generated from Composed Stage of root layer /tmp/tmp3m7m4nnq/00-arm-rs_asm-v3.usdc
+    doc = """Generated from Composed Stage of root layer urdf/00-arm-rs_asm-v3 (asset transformer, Isaac Sim Structure)
 
 
-Generated from Composed Stage of root layer /home/seeed/reBotArm/asset/usdex/00-arm-rs_asm-v3.usdc
-
-
-Generated from Composed Stage of root layer /home/seeed/reBotArm/asset/temp/00-arm-rs_asm-v3.usd
-
-
-Generated from Composed Stage of root layer /home/seeed/reBotArm/asset/00-arm-rs_asm-v3/payloads/base.usd
-
-
-Generated from Composed Stage of root layer /home/johnny/Projects/00-arm-rs_asm-v3/00-arm-rs_asm-v3.usda
-
-
-Generated from Composed Stage of root layer /home/johnny/Projects/00-arm-rs_asm-v3/RS-rebot-dev-arm/payloads/base.usd
+Generated from Composed Stage of root layer urdf/00-arm-rs_asm-v3 (asset transformer, Isaac Sim Structure)
 """
     kilogramsPerUnit = 1
     metersPerUnit = 1
@@ -64,139 +29,271 @@ def Xform "tn__00armrs_asmv3_hJ6D" (
 {
     float3[] extentsHint = [(-0.2596303, -0.1, -1.0949644e-11), (0.30171034, 0.1, 0.3207462), (3.4028235e38, 3.4028235e38, 3.4028235e38), (-3.4028235e38, -3.4028235e38, -3.4028235e38), (3.4028235e38, 3.4028235e38, 3.4028235e38), (-3.4028235e38, -3.4028235e38, -3.4028235e38), (-0.2596303, -0.1, -1.0949644e-11), (0.30171034, 0.1, 0.32074627)]
 
-    def Scope "Physics"
+    def Scope "Materials"
     {
     }
 
     def Scope "Geometry"
     {
-        def Xform "base_link"
+        def Xform "base_link" (
+            prepend apiSchemas = ["NewtonMassAPI"]
+        )
         {
-            bool newton:selfCollisionEnabled = 1
-            quatf xformOp:orient = (1, 0, 0, 0)
-            float3 xformOp:scale = (1, 1, 1)
-            float3 xformOp:translate = (4.3655746e-11, 2.910383e-11, 0)
-            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
-
-            def Xform "link1"
+            def Xform "base_link" (
+                instanceable = true
+                prepend references = @./instances.usda@</Instances/base_link>
+            )
             {
-                quatf xformOp:orient = (1, 3.635687e-24, -7.559354e-8, 4.5356124e-8)
+                quatd xformOp:orient = (1, 0, 0, 0)
+                double3 xformOp:scale = (1, 1, 1)
+                double3 xformOp:translate = (0, 0, 0)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+            }
+
+            def Xform "link1" (
+                prepend apiSchemas = ["NewtonMassAPI"]
+            )
+            {
+                double[] newton:inertia = [0.00025207, 0.00015464, 0.00023416, 0, -0.00002832, 0]
+                quatf xformOp:orient = (1, 0, 0, 0)
                 float3 xformOp:scale = (1, 1, 1)
-                double3 xformOp:translate = (-0.00034282455453649163, -0.0009868275374174118, 0.07499999552965164)
+                double3 xformOp:translate = (-0.00034283, -0.00098683, 0.075)
                 uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
-                def Xform "link2"
+                def Xform "link1" (
+                    instanceable = true
+                    prepend references = @./instances.usda@</Instances/link1>
+                )
                 {
-                    quatf xformOp:orient = (-0.7071055, 0.707108, -0.0000033974648, -0.000003409179)
+                    quatd xformOp:orient = (1, 0, 0, 0)
+                    double3 xformOp:scale = (1, 1, 1)
+                    double3 xformOp:translate = (0, 0, 0)
+                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+                }
+
+                def Xform "link2" (
+                    prepend apiSchemas = ["NewtonMassAPI"]
+                )
+                {
+                    double[] newton:inertia = [0.000577466775, 0.00988484698, 0.0100847496, -3.3841785e-7, 0.00000669752535, 0.00000100738337]
+                    quatf xformOp:orient = (-0.70710546, 0.7071081, 0, 0)
                     float3 xformOp:scale = (1, 1, 1)
-                    double3 xformOp:translate = (0.02034297026693821, 0.02723698690533638, 0.07000000029802322)
+                    double3 xformOp:translate = (0.020343, 0.027237, 0.07)
                     uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
-                    def Xform "link3"
+                    def Xform "motor_2_3" (
+                        instanceable = true
+                        prepend references = @./instances.usda@</Instances/motor_2_3>
+                    )
                     {
-                        quatf xformOp:orient = (1, -5.6980653e-8, -1.1984827e-8, -0.00012228214)
+                        quatd xformOp:orient = (1, 0, 0, 0)
+                        double3 xformOp:scale = (1, 1, 1)
+                        double3 xformOp:translate = (0, 0, 0)
+                        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+                    }
+
+                    def Xform "cnc2" (
+                        instanceable = true
+                        prepend references = @./instances.usda@</Instances/cnc2>
+                    )
+                    {
+                        quatd xformOp:orient = (1, 0, 0, 0)
+                        double3 xformOp:scale = (1, 1, 1)
+                        double3 xformOp:translate = (0, 0, 0)
+                        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+                    }
+
+                    def Xform "pla2_black" (
+                        instanceable = true
+                        prepend references = @./instances.usda@</Instances/pla2_black>
+                    )
+                    {
+                        quatd xformOp:orient = (1, 0, 0, 0)
+                        double3 xformOp:scale = (1, 1, 1)
+                        double3 xformOp:translate = (0, 0, 0)
+                        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+                    }
+
+                    def Xform "pla2_green" (
+                        instanceable = true
+                        prepend references = @./instances.usda@</Instances/pla2_green>
+                    )
+                    {
+                        quatd xformOp:orient = (1, 0, 0, 0)
+                        double3 xformOp:scale = (1, 1, 1)
+                        double3 xformOp:translate = (0, 0, 0)
+                        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+                    }
+
+                    def Xform "link3" (
+                        prepend apiSchemas = ["NewtonMassAPI"]
+                    )
+                    {
+                        double[] newton:inertia = [0.000551811337, 0.00745889021, 0.00764192742, -0.0000407430508, -0.0000502214689, 7.07344633e-8]
+                        quatf xformOp:orient = (1, 0, 0, 0)
                         float3 xformOp:scale = (1, 1, 1)
-                        double3 xformOp:translate = (-0.2359999269247055, 2.167139001585383e-8, -5.436616934417771e-9)
+                        double3 xformOp:translate = (-0.236, 0, 0)
                         uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
-                        def Xform "link4"
+                        def Xform "cnc3" (
+                            instanceable = true
+                            prepend references = @./instances.usda@</Instances/cnc3>
+                        )
                         {
-                            quatf xformOp:orient = (1, -5.6959266e-8, -8.6657934e-8, -0.00012209684)
+                            quatd xformOp:orient = (1, 0, 0, 0)
+                            double3 xformOp:scale = (1, 1, 1)
+                            double3 xformOp:translate = (0, 0, 0)
+                            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+                        }
+
+                        def Xform "motor_4" (
+                            instanceable = true
+                            prepend references = @./instances.usda@</Instances/motor_4>
+                        )
+                        {
+                            quatd xformOp:orient = (1, 0, 0, 0)
+                            double3 xformOp:scale = (1, 1, 1)
+                            double3 xformOp:translate = (0, 0, 0)
+                            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+                        }
+
+                        def Xform "pla3_black" (
+                            instanceable = true
+                            prepend references = @./instances.usda@</Instances/pla3_black>
+                        )
+                        {
+                            quatd xformOp:orient = (1, 0, 0, 0)
+                            double3 xformOp:scale = (1, 1, 1)
+                            double3 xformOp:translate = (0, 0, 0)
+                            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+                        }
+
+                        def Xform "pla3_green" (
+                            instanceable = true
+                            prepend references = @./instances.usda@</Instances/pla3_green>
+                        )
+                        {
+                            quatd xformOp:orient = (1, 0, 0, 0)
+                            double3 xformOp:scale = (1, 1, 1)
+                            double3 xformOp:translate = (0, 0, 0)
+                            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+                        }
+
+                        def Xform "link4" (
+                            prepend apiSchemas = ["NewtonMassAPI"]
+                        )
+                        {
+                            double[] newton:inertia = [0.000320508485, 0.000524525455, 0.000465171515, 0.000168799091, -0, -0]
+                            quatf xformOp:orient = (1, 0, 0, 0)
                             float3 xformOp:scale = (1, 1, 1)
-                            double3 xformOp:translate = (0.22798208892345428, -0.07280176132917404, 0.0044999984093010426)
+                            double3 xformOp:translate = (0.228, -0.072746, 0.0045)
                             uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
-                            def Xform "link5"
+                            def Xform "motor_5" (
+                                instanceable = true
+                                prepend references = @./instances.usda@</Instances/motor_5>
+                            )
                             {
-                                quatf xformOp:orient = (-0.7071054, 0.70710814, -0.00008625751, 0.00008639233)
+                                quatd xformOp:orient = (1, 0, 0, 0)
+                                double3 xformOp:scale = (1, 1, 1)
+                                double3 xformOp:translate = (0, 0, 0)
+                                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+                            }
+
+                            def Xform "cnc4" (
+                                instanceable = true
+                                prepend references = @./instances.usda@</Instances/cnc4>
+                            )
+                            {
+                                quatd xformOp:orient = (1, 0, 0, 0)
+                                double3 xformOp:scale = (1, 1, 1)
+                                double3 xformOp:translate = (0, 0, 0)
+                                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+                            }
+
+                            def Xform "link5" (
+                                prepend apiSchemas = ["NewtonMassAPI"]
+                            )
+                            {
+                                double[] newton:inertia = [0.0000984090046, 0.0000739220615, 0.0000710245279, 1.81878283e-8, -0.00000115016294, -1.77912637e-8]
+                                quatf xformOp:orient = (-0.70710546, 0.7071081, 0, 0)
                                 float3 xformOp:scale = (1, 1, 1)
-                                double3 xformOp:translate = (0.08698825538158417, -0.04802122339606285, -0.0307499710470438)
+                                double3 xformOp:translate = (0.087, -0.048, -0.03075)
                                 uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
-                                def Xform "link6"
+                                def Xform "motor_6" (
+                                    instanceable = true
+                                    prepend references = @./instances.usda@</Instances/motor_6>
+                                )
                                 {
-                                    quatf xformOp:orient = (0.7071055, 1.8028558e-8, 0.707108, 7.812294e-8)
+                                    quatd xformOp:orient = (1, 0, 0, 0)
+                                    double3 xformOp:scale = (1, 1, 1)
+                                    double3 xformOp:translate = (0, 0, 0)
+                                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+                                }
+
+                                def Xform "cnc5" (
+                                    instanceable = true
+                                    prepend references = @./instances.usda@</Instances/cnc5>
+                                )
+                                {
+                                    quatd xformOp:orient = (1, 0, 0, 0)
+                                    double3 xformOp:scale = (1, 1, 1)
+                                    double3 xformOp:translate = (0, 0, 0)
+                                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+                                }
+
+                                def Xform "pla5_green" (
+                                    instanceable = true
+                                    prepend references = @./instances.usda@</Instances/pla5_green>
+                                )
+                                {
+                                    quatd xformOp:orient = (1, 0, 0, 0)
+                                    double3 xformOp:scale = (1, 1, 1)
+                                    double3 xformOp:translate = (0, 0, 0)
+                                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+                                }
+
+                                def Xform "link6" (
+                                    prepend apiSchemas = ["NewtonMassAPI"]
+                                )
+                                {
+                                    double[] newton:inertia = [0.0000147424612, 0.0000145728507, 0.000028476646, 1.05586155e-11, 5.06176061e-10, -7.39546725e-12]
+                                    quatf xformOp:orient = (0.70710546, 0, 0.7071081, 0)
                                     float3 xformOp:scale = (1, 1, 1)
-                                    double3 xformOp:translate = (0.0364999994635582, 1.675407867995915e-10, 0.04799998924136162)
+                                    double3 xformOp:translate = (0.0365, 0, 0.048)
                                     uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
-                                    def Xform "gripper_end"
+                                    def Xform "link6" (
+                                        instanceable = true
+                                        prepend references = @./instances.usda@</Instances/link6>
+                                    )
                                     {
-                                        quatf xformOp:orient = (-0.0000025919007, 0.70710546, 0.0000025949935, 0.7071081)
-                                        float3 xformOp:scale = (1, 1, 1)
-                                        double3 xformOp:translate = (2.1780848236119255e-9, 1.5775025730135894e-8, 0.16621001064777374)
+                                        quatd xformOp:orient = (1, 0, 0, 0)
+                                        double3 xformOp:scale = (1, 1, 1)
+                                        double3 xformOp:translate = (0, 0, 0)
                                         uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+                                    }
 
-                                        def Xform "gripper_left"
-                                        {
-                                            quatf xformOp:orient = (0.49999818, 0.5, -0.49999997, 0.50000185)
-                                            float3 xformOp:scale = (1, 1, 1)
-                                            double3 xformOp:translate = (-0.04193901643157005, -0.00012597208842635155, -4.119943497471468e-9)
-                                            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
-
-                                            def Xform "pla_left" (
-                                                instanceable = true
-                                                prepend references = @./instances.usda@</Instances/pla_left>
-                                            )
-                                            {
-                                                token visibility = "inherited"
-                                            }
-
-                                            def Xform "cnc_left" (
-                                                instanceable = true
-                                                prepend references = @./instances.usda@</Instances/cnc_left>
-                                            )
-                                            {
-                                                token visibility = "inherited"
-                                            }
-
-                                            def Xform "gripper_left" (
-                                                instanceable = true
-                                                prepend references = @./instances.usda@</Instances/gripper_left>
-                                            )
-                                            {
-                                                token visibility = "inherited"
-                                            }
-                                        }
-
-                                        def Xform "gripper_right"
-                                        {
-                                            quatf xformOp:orient = (-0.49999815, 0.50000006, 0.5, 0.5000018)
-                                            float3 xformOp:scale = (1, 1, 1)
-                                            double3 xformOp:translate = (-0.04193901643157005, 0.00009998631867347285, 1.078121414366251e-8)
-                                            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
-
-                                            def Xform "pla_right" (
-                                                instanceable = true
-                                                prepend references = @./instances.usda@</Instances/pla_right>
-                                            )
-                                            {
-                                                token visibility = "inherited"
-                                            }
-
-                                            def Xform "cnc_right" (
-                                                instanceable = true
-                                                prepend references = @./instances.usda@</Instances/cnc_right>
-                                            )
-                                            {
-                                                token visibility = "inherited"
-                                            }
-
-                                            def Xform "gripper_right" (
-                                                instanceable = true
-                                                prepend references = @./instances.usda@</Instances/gripper_right>
-                                            )
-                                            {
-                                                token visibility = "inherited"
-                                            }
-                                        }
+                                    def Xform "gripper_end" (
+                                        prepend apiSchemas = ["NewtonMassAPI"]
+                                    )
+                                    {
+                                        double[] newton:inertia = [0.00037354, 0.0001583, 0.00045353, -1.1e-7, 5e-7, 0.00000348]
+                                        quatf xformOp:orient = (-0.0000025973434, 0.70710546, 0.000002597353, 0.7071081)
+                                        float3 xformOp:scale = (1, 1, 1)
+                                        double3 xformOp:translate = (0, 0, 0.16621)
+                                        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
                                         def Xform "pla7_green" (
                                             instanceable = true
                                             prepend references = @./instances.usda@</Instances/pla7_green>
                                         )
                                         {
-                                            token visibility = "inherited"
+                                            quatd xformOp:orient = (1, 0, 0, 0)
+                                            double3 xformOp:scale = (1, 1, 1)
+                                            double3 xformOp:translate = (0, 0, 0)
+                                            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
                                         }
 
                                         def Xform "cnc7" (
@@ -204,7 +301,10 @@ def Xform "tn__00armrs_asmv3_hJ6D" (
                                             prepend references = @./instances.usda@</Instances/cnc7>
                                         )
                                         {
-                                            token visibility = "inherited"
+                                            quatd xformOp:orient = (1, 0, 0, 0)
+                                            double3 xformOp:scale = (1, 1, 1)
+                                            double3 xformOp:translate = (0, 0, 0)
+                                            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
                                         }
 
                                         def Xform "motor_7" (
@@ -212,7 +312,98 @@ def Xform "tn__00armrs_asmv3_hJ6D" (
                                             prepend references = @./instances.usda@</Instances/motor_7>
                                         )
                                         {
-                                            token visibility = "inherited"
+                                            quatd xformOp:orient = (1, 0, 0, 0)
+                                            double3 xformOp:scale = (1, 1, 1)
+                                            double3 xformOp:translate = (0, 0, 0)
+                                            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+                                        }
+
+                                        def Xform "gripper_left" (
+                                            prepend apiSchemas = ["NewtonMassAPI"]
+                                        )
+                                        {
+                                            double[] newton:inertia = [0.0000109877964176176, 0.00000950146036720166, 0.00000930779991911125, 0, 0, 0]
+                                            quatf xformOp:orient = (0.49999815, 0.5, -0.5, 0.50000185)
+                                            float3 xformOp:scale = (1, 1, 1)
+                                            double3 xformOp:translate = (-0.041939, -0.000073385, 0)
+                                            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+
+                                            def Xform "pla_left" (
+                                                instanceable = true
+                                                prepend references = @./instances.usda@</Instances/pla_left>
+                                            )
+                                            {
+                                                quatd xformOp:orient = (1, 0, 0, 0)
+                                                double3 xformOp:scale = (1, 1, 1)
+                                                double3 xformOp:translate = (0, 0, 0)
+                                                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+                                            }
+
+                                            def Xform "cnc_left" (
+                                                instanceable = true
+                                                prepend references = @./instances.usda@</Instances/cnc_left>
+                                            )
+                                            {
+                                                quatd xformOp:orient = (1, 0, 0, 0)
+                                                double3 xformOp:scale = (1, 1, 1)
+                                                double3 xformOp:translate = (0, 0, 0)
+                                                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+                                            }
+
+                                            def Xform "gripper_left" (
+                                                instanceable = true
+                                                prepend references = @./instances.usda@</Instances/gripper_left>
+                                            )
+                                            {
+                                                quatd xformOp:orient = (1, 0, 0, 0)
+                                                double3 xformOp:scale = (1, 1, 1)
+                                                double3 xformOp:translate = (0, 0, 0)
+                                                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+                                            }
+                                        }
+
+                                        def Xform "gripper_right" (
+                                            prepend apiSchemas = ["NewtonMassAPI"]
+                                        )
+                                        {
+                                            double[] newton:inertia = [0.0000109877964176176, 0.00000950146036720166, 0.00000930779991911125, 0, 0, 0]
+                                            quatf xformOp:orient = (-0.49999815, 0.5, 0.5, 0.50000185)
+                                            float3 xformOp:scale = (1, 1, 1)
+                                            double3 xformOp:translate = (-0.041939, 0.000073385, 0)
+                                            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+
+                                            def Xform "pla_right" (
+                                                instanceable = true
+                                                prepend references = @./instances.usda@</Instances/pla_right>
+                                            )
+                                            {
+                                                quatd xformOp:orient = (1, 0, 0, 0)
+                                                double3 xformOp:scale = (1, 1, 1)
+                                                double3 xformOp:translate = (0, 0, 0)
+                                                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+                                            }
+
+                                            def Xform "cnc_right" (
+                                                instanceable = true
+                                                prepend references = @./instances.usda@</Instances/cnc_right>
+                                            )
+                                            {
+                                                quatd xformOp:orient = (1, 0, 0, 0)
+                                                double3 xformOp:scale = (1, 1, 1)
+                                                double3 xformOp:translate = (0, 0, 0)
+                                                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+                                            }
+
+                                            def Xform "gripper_right" (
+                                                instanceable = true
+                                                prepend references = @./instances.usda@</Instances/gripper_right>
+                                            )
+                                            {
+                                                quatd xformOp:orient = (1, 0, 0, 0)
+                                                double3 xformOp:scale = (1, 1, 1)
+                                                double3 xformOp:translate = (0, 0, 0)
+                                                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+                                            }
                                         }
 
                                         def Xform "gripper_end" (
@@ -220,16 +411,11 @@ def Xform "tn__00armrs_asmv3_hJ6D" (
                                             prepend references = @./instances.usda@</Instances/gripper_end>
                                         )
                                         {
-                                            token visibility = "inherited"
+                                            quatd xformOp:orient = (1, 0, 0, 0)
+                                            double3 xformOp:scale = (1, 1, 1)
+                                            double3 xformOp:translate = (0, 0, 0)
+                                            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
                                         }
-                                    }
-
-                                    def Xform "link6" (
-                                        instanceable = true
-                                        prepend references = @./instances.usda@</Instances/link6>
-                                    )
-                                    {
-                                        token visibility = "inherited"
                                     }
 
                                     def Xform "link6_1" (
@@ -238,32 +424,11 @@ def Xform "tn__00armrs_asmv3_hJ6D" (
                                         prepend references = @./instances.usda@</Instances/link6_1>
                                     )
                                     {
-                                        token visibility = "inherited"
+                                        quatd xformOp:orient = (1, 0, 0, 0)
+                                        double3 xformOp:scale = (1, 1, 1)
+                                        double3 xformOp:translate = (0, 0, 0)
+                                        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
                                     }
-                                }
-
-                                def Xform "motor_6" (
-                                    instanceable = true
-                                    prepend references = @./instances.usda@</Instances/motor_6>
-                                )
-                                {
-                                    token visibility = "inherited"
-                                }
-
-                                def Xform "cnc5" (
-                                    instanceable = true
-                                    prepend references = @./instances.usda@</Instances/cnc5>
-                                )
-                                {
-                                    token visibility = "inherited"
-                                }
-
-                                def Xform "pla5_green" (
-                                    instanceable = true
-                                    prepend references = @./instances.usda@</Instances/pla5_green>
-                                )
-                                {
-                                    token visibility = "inherited"
                                 }
 
                                 def Xform "link5" (
@@ -271,24 +436,11 @@ def Xform "tn__00armrs_asmv3_hJ6D" (
                                     prepend references = @./instances.usda@</Instances/link5>
                                 )
                                 {
-                                    token visibility = "inherited"
+                                    quatd xformOp:orient = (1, 0, 0, 0)
+                                    double3 xformOp:scale = (1, 1, 1)
+                                    double3 xformOp:translate = (0, 0, 0)
+                                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
                                 }
-                            }
-
-                            def Xform "motor_5" (
-                                instanceable = true
-                                prepend references = @./instances.usda@</Instances/motor_5>
-                            )
-                            {
-                                token visibility = "inherited"
-                            }
-
-                            def Xform "cnc4" (
-                                instanceable = true
-                                prepend references = @./instances.usda@</Instances/cnc4>
-                            )
-                            {
-                                token visibility = "inherited"
                             }
 
                             def Xform "link4" (
@@ -296,40 +448,11 @@ def Xform "tn__00armrs_asmv3_hJ6D" (
                                 prepend references = @./instances.usda@</Instances/link4>
                             )
                             {
-                                token visibility = "inherited"
+                                quatd xformOp:orient = (1, 0, 0, 0)
+                                double3 xformOp:scale = (1, 1, 1)
+                                double3 xformOp:translate = (0, 0, 0)
+                                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
                             }
-                        }
-
-                        def Xform "cnc3" (
-                            instanceable = true
-                            prepend references = @./instances.usda@</Instances/cnc3>
-                        )
-                        {
-                            token visibility = "inherited"
-                        }
-
-                        def Xform "motor_4" (
-                            instanceable = true
-                            prepend references = @./instances.usda@</Instances/motor_4>
-                        )
-                        {
-                            token visibility = "inherited"
-                        }
-
-                        def Xform "pla3_black" (
-                            instanceable = true
-                            prepend references = @./instances.usda@</Instances/pla3_black>
-                        )
-                        {
-                            token visibility = "inherited"
-                        }
-
-                        def Xform "pla3_green" (
-                            instanceable = true
-                            prepend references = @./instances.usda@</Instances/pla3_green>
-                        )
-                        {
-                            token visibility = "inherited"
                         }
 
                         def Xform "link3" (
@@ -337,40 +460,11 @@ def Xform "tn__00armrs_asmv3_hJ6D" (
                             prepend references = @./instances.usda@</Instances/link3>
                         )
                         {
-                            token visibility = "inherited"
+                            quatd xformOp:orient = (1, 0, 0, 0)
+                            double3 xformOp:scale = (1, 1, 1)
+                            double3 xformOp:translate = (0, 0, 0)
+                            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
                         }
-                    }
-
-                    def Xform "motor_2_3" (
-                        instanceable = true
-                        prepend references = @./instances.usda@</Instances/motor_2_3>
-                    )
-                    {
-                        token visibility = "inherited"
-                    }
-
-                    def Xform "cnc2" (
-                        instanceable = true
-                        prepend references = @./instances.usda@</Instances/cnc2>
-                    )
-                    {
-                        token visibility = "inherited"
-                    }
-
-                    def Xform "pla2_black" (
-                        instanceable = true
-                        prepend references = @./instances.usda@</Instances/pla2_black>
-                    )
-                    {
-                        token visibility = "inherited"
-                    }
-
-                    def Xform "pla2_green" (
-                        instanceable = true
-                        prepend references = @./instances.usda@</Instances/pla2_green>
-                    )
-                    {
-                        token visibility = "inherited"
                     }
 
                     def Xform "link2" (
@@ -378,16 +472,11 @@ def Xform "tn__00armrs_asmv3_hJ6D" (
                         prepend references = @./instances.usda@</Instances/link2>
                     )
                     {
-                        token visibility = "inherited"
+                        quatd xformOp:orient = (1, 0, 0, 0)
+                        double3 xformOp:scale = (1, 1, 1)
+                        double3 xformOp:translate = (0, 0, 0)
+                        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
                     }
-                }
-
-                def Xform "link1" (
-                    instanceable = true
-                    prepend references = @./instances.usda@</Instances/link1>
-                )
-                {
-                    token visibility = "inherited"
                 }
 
                 def Xform "link1_1" (
@@ -396,16 +485,11 @@ def Xform "tn__00armrs_asmv3_hJ6D" (
                     prepend references = @./instances.usda@</Instances/link1_1>
                 )
                 {
-                    token visibility = "inherited"
+                    quatd xformOp:orient = (1, 0, 0, 0)
+                    double3 xformOp:scale = (1, 1, 1)
+                    double3 xformOp:translate = (0, 0, 0)
+                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
                 }
-            }
-
-            def Xform "base_link" (
-                instanceable = true
-                prepend references = @./instances.usda@</Instances/base_link>
-            )
-            {
-                token visibility = "inherited"
             }
 
             def Xform "base_link_1" (
@@ -414,12 +498,15 @@ def Xform "tn__00armrs_asmv3_hJ6D" (
                 prepend references = @./instances.usda@</Instances/base_link_1>
             )
             {
-                token visibility = "inherited"
+                quatd xformOp:orient = (1, 0, 0, 0)
+                double3 xformOp:scale = (1, 1, 1)
+                double3 xformOp:translate = (0, 0, 0)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
             }
         }
     }
 
-    def Scope "Materials"
+    def Scope "Physics"
     {
     }
 

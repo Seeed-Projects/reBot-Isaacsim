@@ -1,6 +1,20 @@
 # reBot-Isaacsim
 
-A real-time mirror system that synchronizes a reBotArm physical robot arm with an NVIDIA Isaac Sim simulation. The system streams joint angles (including gravity-compensated, hand-guided motion) and gripper state from the real arm to Isaac Sim over a UDP JSON channel.
+[简体中文](./README.md) | English | [Español](./README_ES.md)
+
+reBot-Isaacsim is an NVIDIA Isaac Sim simulation project designed specifically for the reBotArm. It leverages Isaac Sim's high-fidelity physics engine to accurately replicate the kinematic characteristics and gripper coordination logic of the robot arm in a virtual environment, providing an independent simulation-only environment for control algorithm development, trajectory planning verification, and communication protocol testing.
+
+## Component Overview
+
+This project provides multiple sender components to cover different use cases:
+
+| Component | Description |
+|------|------|
+| `gravity_joint_sender` | **Gravity Compensation + Handle Mode**: For modified robot arms (gripper removed, handle attached), using gravity compensation mode to allow manual manipulation, real-time joint angle sync to Isaac Sim |
+| `isaacsim_ik_sender` | **Inverse Kinematics (IK) Mode**: Input end-effector pose, compute joint angles via IK solver, send to Isaac Sim |
+| `isaacsim_traj_sender` | **Trajectory Planning (Traj) Mode**: Based on IK, adds joint-space trajectory planning (MIN_JERK profile) for smooth motion control |
+| `isaacsim_joint_test_sender` | **Joint Test Mode**: No physical arm required, sends preset joint angle trajectories to verify Isaac Sim receiver and communication |
+| `joint_reader_sender` | **Real-to-Sim Mapping Mode**: Read-only joint angles mapped to Isaac Sim, suitable for use with other control projects (e.g., when the physical arm is running other tasks, this feature can simultaneously map to Isaac Sim for visualization) |
 
 ## System Architecture
 
@@ -8,16 +22,16 @@ A real-time mirror system that synchronizes a reBotArm physical robot arm with a
 ┌──────────────────────────────────────────────────────────────────┐
 │                         reBot-Isaacsim                           │
 │                                                                  │
-│   ┌─────────────────────┐         ┌─────────────────────────┐   │
+│   ┌──────────────────────┐        ┌──────────────────────────┐   │
 │   │ Sender (Terminal 1)  │  UDP   │   Receiver (Terminal 2)  │   │
-│   │                     │  JSON  │                         │   │
-│   │ gravity_joint_sender │──────▶│ isaacsim_joint_receiver  │   │
-│   │                     │ 5005   │                         │   │
-│   │  • reBotArm_control  │        │  • Isaac Sim            │   │
-│   │    _py uv env         │        │  • Ground + arm USD     │   │
-│   │  • MIT + gravity FF   │        │  • Joint-angle sync     │   │
-│   │  • Hand-guided OK     │        │  • Gripper dual-joint   │   │
-│   └─────────────────────┘        └─────────────────────────┘   │
+│   │                      │  JSON  │                          │   │
+│   │ gravity_joint_sender │──────▶ │ isaacsim_joint_receiver  │   │
+│   │                      │ 5005   │                          │   │
+│   │  • reBotArm_control  │        │  • Isaac Sim             │   │
+│   │    _py uv env        │        │  • Ground + arm USD      │   │
+│   │  • MIT + gravity FF  │        │  • Joint-angle sync      │   │
+│   │  • Hand-guided OK    │        │  • Gripper dual-joint    │   │
+│   └──────────────────────┘        └──────────────────────────┘   │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
@@ -28,10 +42,14 @@ reBot-Isaacsim/
 ├── pyproject.toml                           # uv workspace configuration
 ├── README.md
 ├── README_EN.md                             # English version of this README
+├── README_ES.md                             # Spanish version of this README
 ├── reBotArm_Isaacsim/                       # Main example directory
-│   ├── gravity_joint_sender.py              # Physical-arm sender (gravity comp + UDP)
+│   ├── gravity_joint_sender.py              # Gravity comp + handle mode (modified arm, hand-guided)
+│   ├── isaacsim_ik_sender.py                # Inverse kinematics mode (IK control)
+│   ├── isaacsim_traj_sender.py              # Trajectory planning mode (IK + joint-space trajectory)
+│   ├── isaacsim_joint_test_sender.py        # Joint test mode (preset trajectory, no hardware)
+│   ├── joint_reader_sender.py                # Real-to-Sim mapping mode (read-only, sync visualization)
 │   ├── isaacsim_joint_receiver.py           # Isaac Sim receiver (joint-angle sync)
-│   ├── isaacsim_joint_test_sender.py        # Test sender (no hardware, preset trajectory)
 │   ├── live_sync.py                         # Launch-instructions helper script
 │   ├── run_sender.sh                        # Launch the sender
 │   └── run_isaacsim_receiver.sh             # Launch the Isaac Sim receiver
@@ -58,13 +76,13 @@ reBot-Isaacsim/
 ### Check the CAN interface
 
 ```bash
+# View CAN interface status
 ip link show can0
 # Make sure the state is UP and bitrate is 1000000
 
-# If you need to restart CAN:
-can_restart can0
-# or
-sudo ip link set can0 down && sudo ip link set can0 up type can bitrate 1000000 restart-ms 100
+# If you need to configure or restart CAN:
+sudo ip link set can0 down
+sudo ip link set can0 up type can bitrate 1000000 restart-ms 100
 ```
 
 ## Environment Setup
@@ -86,9 +104,9 @@ uv sync
 
 ## Launch (Two-Terminal Mode)
 
-Two independent terminals are required:
+Two independent terminals are required. **Terminal 1 is always the Isaac Sim receiver**, **Terminal 2 selects the corresponding sender based on the desired feature**.
 
-### Terminal 1 — Launch the Isaac Sim receiver
+### Terminal 1 — Launch the Isaac Sim receiver (common to all modes)
 
 ```bash
 cd reBotArm_Isaacsim
@@ -101,7 +119,13 @@ cd reBotArm_Isaacsim
 - It listens on UDP `127.0.0.1:5005`
 - It waits for the sender to connect
 
-### Terminal 2 — Launch the sender (physical arm)
+### Terminal 2 — Choose the sender based on the feature
+
+**Launch order: receiver first, then the sender.**
+
+#### ① Gravity Compensation + Handle Mode (`gravity_joint_sender`)
+
+For modified robot arms (gripper removed, handle attached), allows manual hand-guided control to drive the Isaac Sim simulation:
 
 ```bash
 cd reBotArm_Isaacsim
@@ -109,25 +133,70 @@ cd reBotArm_Isaacsim
 ```
 
 **Expected behavior:**
-- The physical arm connects and gravity-compensation mode is enabled
+- The physical arm connects and MIT + gravity feed-forward compensation is enabled
 - The arm can be moved freely by hand
 - Joint angles are streamed over UDP at 60 Hz
 
-**Launch order: receiver first, then the sender.**
+#### ② Inverse Kinematics Mode (`isaacsim_ik_sender`)
 
-## Hardware-Free Test Mode
-
-If no physical arm is available, use the test sender to verify the Isaac Sim receiver:
+Input end-effector pose (position/orientation), solve via IK and drive the Isaac Sim arm. Run directly with `uv run` from `reBotArm_Isaacsim/`:
 
 ```bash
-# In Terminal 2, use the test sender instead of the real one
 cd reBotArm_Isaacsim
-./run_sender.sh --test
-# or, directly:
-python third_party/reBotArm_control_py/.venv/bin/python isaacsim_joint_test_sender.py
+uv run python isaacsim_ik_sender.py
+```
+
+**Input format (one per line):**
+```
+x y z                       # position (m), orientation held
+x y z r p y                 # position + orientation (m/deg)
+q j1 j2 j3 j4 j5 j6         # direct joint angles (deg)
+gripper <0~1>                # update gripper only
+```
+
+#### ③ Trajectory Planning Mode (`isaacsim_traj_sender`)
+
+IK plus joint-space trajectory planning (MIN_JERK) for smooth motion. Run directly with `uv run` from `reBotArm_Isaacsim/`:
+
+```bash
+cd reBotArm_Isaacsim
+uv run python isaacsim_traj_sender.py
+```
+
+**Input format (one per line):**
+```
+x y z                       # position (m)
+x y z r p y                 # position + orientation (m/deg)
+q j1 j2 j3 j4 j5 j6         # direct joint-space target (deg)
+gripper <0~1>                # update gripper only
+speed <scale>                # adjust trajectory duration scale
+resync                       # re-read current joint angles from simulator
+```
+
+#### ④ Joint Test Mode (`isaacsim_joint_test_sender`)
+
+No hardware required; preset trajectory loop to verify communication and Isaac Sim receiver:
+
+```bash
+cd reBotArm_Isaacsim
+uv run python isaacsim_joint_test_sender.py
 ```
 
 The test sender loops through a few preset joint poses with slow interpolation; no CAN connection is required.
+
+#### ⑤ Real-to-Sim Mapping Mode (`joint_reader_sender`)
+
+Read-only joint angles mapped to Isaac Sim; suitable for use while the physical arm is running other tasks (simultaneous visualization). Run directly with `uv run` from `reBotArm_Isaacsim/`:
+
+```bash
+cd reBotArm_Isaacsim
+uv run python joint_reader_sender.py
+```
+
+**Expected behavior:**
+- Joint angles are read in passive feedback mode only (no control commands are sent)
+- Joint angles are streamed over UDP at 60 Hz
+- When the physical arm is being controlled by another project, this still mirrors its motion into Isaac Sim for visualization
 
 ## Communication Protocol
 

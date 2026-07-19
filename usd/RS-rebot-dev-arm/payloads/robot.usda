@@ -1,46 +1,11 @@
 #usda 1.0
 (
+    "re-export 2026-07-17b: urdf-usd-converter 0.3.0 @554f3dc, masses PR#3 + inertia rescale"
     customLayerData = {
-        dictionary cameraSettings = {
-            dictionary Front = {
-                double3 position = (5, 0, 0)
-                double radius = 5
-            }
-            dictionary Perspective = {
-                double3 position = (0.5953450468622206, 0.5323837503565053, 0.6360977642278548)
-                double3 target = (-0.1385743056573635, -0.17932091480438372, 0.02586298851772395)
-            }
-            dictionary Right = {
-                double3 position = (0, -5, 0)
-                double radius = 5
-            }
-            dictionary Top = {
-                double3 position = (0, 0, 5)
-                double radius = 5
-            }
-            string boundCamera = "/OmniverseKit_Persp"
-        }
-        string creator = "URDF USD Converter v0.1.0"
-        dictionary omni_layer = {
-            string authoring_layer = "./00-arm-rs_asm-v3.usda"
-        }
-        dictionary renderSettings = {
-        }
+        string creator = "URDF USD Converter v0.3.0"
     }
     defaultPrim = "tn__00armrs_asmv3_hJ6D"
-    doc = """Generated from Composed Stage of root layer /tmp/tmp3m7m4nnq/00-arm-rs_asm-v3.usdc
-
-
-Generated from Composed Stage of root layer /home/seeed/reBotArm/asset/usdex/00-arm-rs_asm-v3.usdc
-
-
-Generated from Composed Stage of root layer /home/seeed/reBotArm/asset/temp/00-arm-rs_asm-v3.usd
-
-
-Generated from Composed Stage of root layer /home/seeed/reBotArm/asset/00-arm-rs_asm-v3/payloads/base.usd
-
-
-Generated from Composed Stage of root layer /home/johnny/Projects/00-arm-rs_asm-v3/00-arm-rs_asm-v3.usda
+    doc = """Generated from Composed Stage of root layer urdf/00-arm-rs_asm-v3 (asset transformer, Isaac Sim Structure)
 """
     kilogramsPerUnit = 1
     metersPerUnit = 1
@@ -48,12 +13,12 @@ Generated from Composed Stage of root layer /home/johnny/Projects/00-arm-rs_asm-
 )
 
 over "tn__00armrs_asmv3_hJ6D" (
-    prepend apiSchemas = ["IsaacRobotAPI", "IsaacLinkAPI"]
+    prepend apiSchemas = ["IsaacRobotAPI"]
 )
 {
     prepend rel isaac:physics:robotJoints = [
-        </tn__00armrs_asmv3_hJ6D/Physics/joint1>,
         </tn__00armrs_asmv3_hJ6D/Physics/root_joint>,
+        </tn__00armrs_asmv3_hJ6D/Physics/joint1>,
         </tn__00armrs_asmv3_hJ6D/Physics/joint2>,
         </tn__00armrs_asmv3_hJ6D/Physics/joint3>,
         </tn__00armrs_asmv3_hJ6D/Physics/joint4>,
@@ -76,24 +41,70 @@ over "tn__00armrs_asmv3_hJ6D" (
         </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_right>,
     ]
 
+    over "Geometry"
+    {
+        over "base_link" (
+            prepend apiSchemas = ["IsaacLinkAPI"]
+        )
+        {
+            over "link1" (
+                prepend apiSchemas = ["IsaacLinkAPI"]
+            )
+            {
+                over "link2" (
+                    prepend apiSchemas = ["IsaacLinkAPI"]
+                )
+                {
+                    over "link3" (
+                        prepend apiSchemas = ["IsaacLinkAPI"]
+                    )
+                    {
+                        over "link4" (
+                            prepend apiSchemas = ["IsaacLinkAPI"]
+                        )
+                        {
+                            over "link5" (
+                                prepend apiSchemas = ["IsaacLinkAPI"]
+                            )
+                            {
+                                over "link6" (
+                                    prepend apiSchemas = ["IsaacLinkAPI"]
+                                )
+                                {
+                                    over "gripper_end" (
+                                        prepend apiSchemas = ["IsaacLinkAPI"]
+                                    )
+                                    {
+                                        over "gripper_left" (
+                                            prepend apiSchemas = ["IsaacLinkAPI"]
+                                        )
+                                        {
+                                        }
+
+                                        over "gripper_right" (
+                                            prepend apiSchemas = ["IsaacLinkAPI"]
+                                        )
+                                        {
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     over "Physics"
     {
-        over "joint1" (
+        over "root_joint" (
             prepend apiSchemas = ["IsaacJointAPI"]
         )
         {
-            bool[] isaac:actuator (
-                displayName = "Actuator"
-            )
-            string isaac:NameOverride (
-                displayName = "Joint Name Override"
-            )
-            token[] isaac:physics:DofOffsetOpOrder (
-                displayName = "Dof Offset Op Order"
-            )
         }
 
-        over "root_joint" (
+        over "joint1" (
             prepend apiSchemas = ["IsaacJointAPI"]
         )
         {
@@ -103,30 +114,12 @@ over "tn__00armrs_asmv3_hJ6D" (
             prepend apiSchemas = ["IsaacJointAPI"]
         )
         {
-            bool[] isaac:actuator (
-                displayName = "Actuator"
-            )
-            string isaac:NameOverride (
-                displayName = "Joint Name Override"
-            )
-            token[] isaac:physics:DofOffsetOpOrder (
-                displayName = "Dof Offset Op Order"
-            )
         }
 
         over "joint3" (
             prepend apiSchemas = ["IsaacJointAPI"]
         )
         {
-            bool[] isaac:actuator (
-                displayName = "Actuator"
-            )
-            string isaac:NameOverride (
-                displayName = "Joint Name Override"
-            )
-            token[] isaac:physics:DofOffsetOpOrder (
-                displayName = "Dof Offset Op Order"
-            )
         }
 
         over "joint4" (
@@ -163,80 +156,6 @@ over "tn__00armrs_asmv3_hJ6D" (
             prepend apiSchemas = ["IsaacJointAPI"]
         )
         {
-        }
-    }
-
-    over "Geometry"
-    {
-        over "base_link" (
-            prepend apiSchemas = ["IsaacLinkAPI"]
-        )
-        {
-            string isaac:nameOverride (
-                displayName = "Name Override"
-            )
-
-            over "link1" (
-                prepend apiSchemas = ["IsaacLinkAPI"]
-            )
-            {
-                string isaac:nameOverride (
-                    displayName = "Name Override"
-                )
-
-                over "link2" (
-                    prepend apiSchemas = ["IsaacLinkAPI"]
-                )
-                {
-                    string isaac:nameOverride (
-                        displayName = "Name Override"
-                    )
-
-                    over "link3" (
-                        prepend apiSchemas = ["IsaacLinkAPI"]
-                    )
-                    {
-                        string isaac:nameOverride (
-                            displayName = "Name Override"
-                        )
-
-                        over "link4" (
-                            prepend apiSchemas = ["IsaacLinkAPI"]
-                        )
-                        {
-                            over "link5" (
-                                prepend apiSchemas = ["IsaacLinkAPI"]
-                            )
-                            {
-                                over "link6" (
-                                    prepend apiSchemas = ["IsaacLinkAPI"]
-                                )
-                                {
-                                    over "gripper_end" (
-                                        prepend apiSchemas = ["IsaacLinkAPI"]
-                                    )
-                                    {
-                                        over "gripper_left" (
-                                            prepend apiSchemas = ["IsaacLinkAPI"]
-                                        )
-                                        {
-                                            string isaac:nameOverride (
-                                                displayName = "Name Override"
-                                            )
-                                        }
-
-                                        over "gripper_right" (
-                                            prepend apiSchemas = ["IsaacLinkAPI"]
-                                        )
-                                        {
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
         }
     }
 }

@@ -1,0 +1,130 @@
+<mujoco model="rebot_devarm">
+  <default>
+    <default class="robot">
+      <default class="visual">
+        <geom contype="0" conaffinity="0" group="2" />
+      </default>
+      <default class="collision">
+        <geom contype="0" conaffinity="1" group="3" />
+      </default>
+      <joint armature="0.01" frictionloss="0.2" />
+      <default class="rs06">
+        <joint damping="5" />
+        <position kp="900" kv="60" forcerange="-36 36" />
+      </default>
+      <default class="rs00">
+        <joint damping="2" />
+        <position kp="120" kv="10" forcerange="-14 14" />
+      </default>
+      <default class="gripper">
+        <joint damping="1" />
+        <position kp="100" kv="4" forcerange="-500 500" />
+      </default>
+    </default>
+    <default class="floor">
+      <geom type="plane" size="0 0 0.05" material="groundplane" />
+    </default>
+  </default>
+  <compiler angle="radian" meshdir="assets" balanceinertia="true" autolimits="true" />
+  <option integrator="implicitfast" cone="elliptic" impratio="10" />
+  <visual>
+    <global offwidth="3840" offheight="2160" />
+  </visual>
+  <worldbody>
+    <body name="base_link" childclass="robot" pos="0 0 0">
+      <inertial pos="2.87642e-06 -0.000122302 0.0243376" mass="1.1774" fullinertia="0.0013304 0.00213119 0.00275877 1e-08 0 0" />
+      <geom name="base_link_visual" type="mesh" mesh="base_link_base_link" material="default_material" class="visual" />
+      <geom type="mesh" class="collision" name="base_link_collision_base_link_convex" mesh="base_link_convex" />
+      <body name="link1" pos="-0.00034283 -0.00098683 0.075">
+        <inertial pos="0.00817652280320541 0.00122584211922395 0.0331419658967293" mass="0.4655" diaginertia="0.00025207 0.00015464 0.00023416" />
+        <joint name="joint1" type="hinge" range="-2.8 2.8" axis="0 0 1" class="rs06" />
+        <geom name="link1_visual" type="mesh" mesh="link1_link1" material="default_material" class="visual" />
+        <geom type="mesh" class="collision" name="link1_collision_link1_convex" mesh="link1_convex" />
+        <body name="link2" pos="0.020343 0.027237 0.07" quat="0.7071 -0.7071 0 0">
+          <inertial pos="-0.117864812717456 -0.00342226413942967 -0.0271551938501484" mass="1.552" diaginertia="0.000577466775 0.00988484698 0.0100847496" />
+          <joint name="joint2" type="hinge" range="-3.14 0" axis="0 0 -1" class="rs06" />
+          <geom name="link2_visual_0" type="mesh" mesh="link2_merged_link2" material="default_material" class="visual" pos="0 0 0" />
+          <geom type="mesh" class="collision" name="link2_collision_link2_convex" mesh="link2_convex" />
+          <body name="link3" pos="-0.236 0 0">
+            <inertial pos="0.103427154487799 -0.0664137912104635 -0.0271068687716704" mass="1.252" diaginertia="0.000551811337 0.00745889021 0.00764192742" />
+            <joint name="joint3" type="hinge" range="-3.14 0" axis="0 0 1" class="rs06" />
+            <geom name="link3_visual_0" type="mesh" mesh="link3_merged_link3" material="default_material" class="visual" pos="0 0 0" />
+            <geom type="mesh" class="collision" name="link3_collision_link3_convex" mesh="link3_convex" />
+            <body name="link4" pos="0.228 -0.072746 0.0045">
+              <inertial pos="0.0475544540775559 -0.0441113470158517 -0.0314111924918381" mass="0.46" diaginertia="0.000320508485 0.000524525455 0.000465171515" />
+              <joint name="joint4" type="hinge" range="-1.79 1.69" axis="0 0 1" class="rs00" />
+              <geom name="link4_visual_0" type="mesh" mesh="link4_merged_link4" material="default_material" class="visual" pos="0 0 0" />
+              <geom type="mesh" class="collision" name="link4_collision_link4_convex" mesh="link4_convex" />
+              <body name="link5" pos="0.087 -0.048 -0.03075" quat="0.7071 -0.7071 0 0">
+                <inertial pos="-0.0114400622356175 4.7907739316217E-06 0.0480487481818926" mass="0.20120457182895" diaginertia="9.84090046e-05 7.39220615e-05 7.10245279e-05" />
+                <joint name="joint5" type="hinge" range="-1.57 1.57" axis="0 0 1" class="rs00" />
+                <geom name="link5_visual_0" type="mesh" mesh="link5_merged_link5" material="default_material" class="visual" pos="0 0 0" />
+                <geom type="mesh" class="collision" name="link5_collision_link5_convex" mesh="link5_convex" />
+                <body name="link6" pos="0.0365 0 0.048" quat="0.7071 0 0.7071 0">
+                  <inertial pos="1.80196022567525E-05 2.48334592051007E-08 0.00434805764057547" mass="0.1" diaginertia="1.47424612e-05 1.45728507e-05 2.8476646e-05" />
+                  <joint name="joint6" type="hinge" range="-3.14 3.14" axis="0 0 1" class="rs00" />
+                  <geom name="link6_visual" type="mesh" mesh="link6_link6" material="default_material" class="visual" />
+                  <geom type="mesh" class="collision" name="link6_collision_link6_convex" mesh="link6_convex" />
+                  <body name="gripper_end" pos="0 0 0.16621" quat="0 0.7071 0 0.7071">
+                    <inertial pos="-0.112751692515958 0.000128443070436966 -5.72602449749882E-06" mass="0.65" diaginertia="0.00037354 0.0001583 0.00045353" />
+                    <geom name="gripper_end_visual_0" type="mesh" mesh="gripper_end_merged_gripper" material="default_material" class="visual" pos="0 0 0" />
+                    <geom type="mesh" class="collision" name="gripper_end_collision_gripper_end_convex" mesh="gripper_end_convex" />
+                    <body name="gripper_left" pos="-0.041939 -7.3385E-05 0" quat="0.5 0.5 -0.5 0.5">
+                      <inertial pos="-0.00218008703135955 0.0187090355934181 0.00932188568692145" mass="0.0752" diaginertia="1.09877964176176e-05 9.50146036720166e-06 9.30779991911125e-06" />
+                      <joint name="joint_left" type="slide" range="0 0.05" axis="0 0 1" class="gripper" />
+                      <geom name="gripper_left_visual_0" type="mesh" mesh="gripper_left_merged_gripper" material="default_material" class="visual" pos="0 0 0" />
+                      <geom type="mesh" class="collision" name="gripper_left_collision_gripper_left_convex" mesh="gripper_left_convex" />
+                    </body>
+                    <body name="gripper_right" pos="-0.041939 7.3385E-05 0" quat="0.5 -0.5 -0.5 -0.5">
+                      <inertial pos="0.00218008703135955 -0.018709035593418 0.00932188568692151" mass="0.0752" diaginertia="1.09877964176176e-05 9.50146036720166e-06 9.30779991911125e-06" />
+                      <joint name="joint_right" type="slide" range="0 0.0715" axis="0 0 1" class="gripper" />
+                      <geom name="gripper_right_visual_0" type="mesh" mesh="gripper_right_merged_gripper" material="default_material" class="visual" pos="0 0 0" />
+                      <geom type="mesh" class="collision" name="gripper_right_collision_gripper_right_convex" mesh="gripper_right_convex" />
+                    </body>
+                  </body>
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+  <asset>
+    <material name="default_material" rgba="0.7 0.7 0.7 1" />
+    <mesh name="base_link_base_link" file="base_link.STL" />
+    <mesh name="link1_link1" file="link1.STL" />
+    <mesh name="link6_link6" file="link6.STL" />
+    <mesh name="base_link_convex" file="base_link_convex.stl" />
+    <mesh name="link6_convex" file="link6_convex.stl" />
+    <mesh name="gripper_left_convex" file="gripper_left_convex.stl" />
+    <mesh name="link1_convex" file="link1_convex.stl" />
+    <mesh name="link2_convex" file="link2_convex.stl" />
+    <mesh name="gripper_end_convex" file="gripper_end_convex.stl" />
+    <mesh name="link3_convex" file="link3_convex.stl" />
+    <mesh name="link5_convex" file="link5_convex.stl" />
+    <mesh name="gripper_right_convex" file="gripper_right_convex.stl" />
+    <mesh name="link4_convex" file="link4_convex.stl" />
+    <mesh name="link2_merged_link2" file="link2_merged_link2.obj" />
+    <mesh name="link3_merged_link3" file="link3_merged_link3.obj" />
+    <mesh name="link4_merged_link4" file="link4_merged_link4.obj" />
+    <mesh name="link5_merged_link5" file="link5_merged_link5.obj" />
+    <mesh name="gripper_end_merged_gripper" file="gripper_end_merged_gripper.obj" />
+    <mesh name="gripper_left_merged_gripper" file="gripper_left_merged_gripper.obj" />
+    <mesh name="gripper_right_merged_gripper" file="gripper_right_merged_gripper.obj" />
+  </asset>
+  <actuator>
+    <position class="rs06" name="joint1" joint="joint1" />
+    <position class="rs06" name="joint2" joint="joint2" />
+    <position class="rs06" name="joint3" joint="joint3" />
+    <position class="rs00" name="joint4" joint="joint4" />
+    <position class="rs00" name="joint5" joint="joint5" />
+    <position class="rs00" name="joint6" joint="joint6" />
+    <position class="gripper" name="joint_left" joint="joint_left" />
+    <position class="gripper" name="joint_right" joint="joint_right" />
+  </actuator>
+  <keyframe>
+    <key name="home" qpos="0 0 0 0 0 0 0 0" ctrl="0 0 0 0 0 0 0 0" />
+    <key name="raised" qpos="0 -0.7 -1.1 0 0 0 0 0" ctrl="0 -0.7 -1.1 0 0 0 0 0" />
+  </keyframe>
+</mujoco>

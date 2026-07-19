@@ -32,8 +32,10 @@ from __future__ import annotations
 import json
 import signal
 import socket
+import struct
 import sys
 import time
+import zlib
 from pathlib import Path
 from typing import Any
 
@@ -59,9 +61,19 @@ if not callable(SimulationApp):
 ARM_JOINT_COUNT = 6
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 5005
+DEFAULT_FEEDBACK_PORT = 5006
 DEFAULT_RENDER_HZ = 120.0
 ASSET_RELATIVE_PATH = Path("usd/RS-rebot-dev-arm/00-arm-rs_asm-v3.usda")
+GRID_TEXTURE_RELATIVE_PATH = Path("reBotArm_Isaacsim/assets/grid_ground.png")
+GRID_TEXTURE_CELLS = 10
+GRID_TEXTURE_SIZE = 512
+GRID_TEXTURE_SCALE = np.array([10.0, 10.0], dtype=np.float64)
 ROBOT_PRIM_PATH = "/World/reBotArm"
+GROUND_PLANE_PRIM_PATH = "/World/defaultGroundPlane"
+DOME_LIGHT_PRIM_PATH = "/World/DomeLight"
+DISTANT_LIGHT_PRIM_PATH = "/World/DistantLight"
+DEFAULT_CAMERA_EYE = np.array([0.595, 0.532, 0.636], dtype=np.float64)
+DEFAULT_CAMERA_TARGET = np.array([0.0, 0.0, 0.35], dtype=np.float64)
 GRIPPER_JOINT_NAMES = ("joint_left", "joint_right")
 GRIPPER_POSITION_SCALE = 0.01
 
@@ -93,9 +105,11 @@ class IsaacJointMirror:
 
         self.host = host
         self.port = port
+        self.feedback_port = DEFAULT_FEEDBACK_PORT
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.socket.bind((self.host, self.port))
         self.socket.setblocking(False)
+        self.feedback_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
         self.sim_app = None
         self.world = None
@@ -109,6 +123,121 @@ class IsaacJointMirror:
         self.gripper_target_position = 0.0
         self._last_gripper_command_signature: tuple[float, float, float] | None = None
 
+    @staticmethod
+    def _write_png_rgb(path: Path, rgb: np.ndarray) -> None:
+        """Write an RGB PNG without external image dependencies."""
+        if rgb.dtype != np.uint8 or rgb.ndim != 3 or rgb.shape[2] != 3:
+            raise ValueError("PNG input must be uint8 RGB array")
+
+        height, width = rgb.shape[:2]
+        raw_data = b"".join(b"\x00" + rgb[row].tobytes() for row in range(height))
+        compressed = zlib.compress(raw_data, level=9)
+
+        def _chunk(tag: bytes, data: bytes) -> bytes:
+            crc = zlib.crc32(tag + data) & 0xFFFFFFFF
+            return struct.pack(">I", len(data)) + tag + data + struct.pack(">I", crc)
+
+        png = b"\x89PNG\r\n\x1a\n"
+        png += _chunk(b"IHDR", struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0))
+        png += _chunk(b"IDAT", compressed)
+        png += _chunk(b"IEND", b"")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(png)
+
+    @classmethod
+    def _ensure_grid_texture(cls) -> Path:
+        """Create a local light-gray grid texture for the ground plane."""
+        texture_path = REPO_ROOT / GRID_TEXTURE_RELATIVE_PATH
+
+        size = GRID_TEXTURE_SIZE
+        cells = GRID_TEXTURE_CELLS
+        background = np.array([245, 245, 247], dtype=np.uint8)
+        minor_line = np.array([220, 220, 224], dtype=np.uint8)
+        major_line = np.array([190, 190, 198], dtype=np.uint8)
+        image = np.tile(background, (size, size, 1))
+        cell_size = size // cells
+
+        for index in range(cells + 1):
+            pos = min(index * cell_size, size - 1)
+            line_color = major_line if index == cells // 2 else minor_line
+            thickness = 2 if index == cells // 2 else 1
+            end = min(pos + thickness, size)
+            image[pos:end, :, :] = line_color
+            image[:, pos:end, :] = line_color
+
+        cls._write_png_rgb(texture_path, image)
+        return texture_path
+
+    @staticmethod
+    def _add_local_ground_plane(world) -> None:
+        """Create a local physics ground plane with an Isaac-style grid texture."""
+        from isaacsim.core.api.materials.omni_pbr import OmniPBR
+        from isaacsim.core.api.materials.physics_material import PhysicsMaterial
+        from isaacsim.core.api.objects import GroundPlane
+        from isaacsim.core.utils.prims import is_prim_path_valid
+        from isaacsim.core.utils.string import find_unique_string_name
+
+        physics_material_path = find_unique_string_name(
+            initial_name="/World/Physics_Materials/physics_material",
+            is_unique_fn=lambda x: not is_prim_path_valid(x),
+        )
+        physics_material = PhysicsMaterial(
+            prim_path=physics_material_path,
+            static_friction=0.5,
+            dynamic_friction=0.5,
+            restitution=0.8,
+        )
+        visual_material_path = find_unique_string_name(
+            initial_name="/World/Looks/grid_ground_material",
+            is_unique_fn=lambda x: not is_prim_path_valid(x),
+        )
+        grid_texture = IsaacJointMirror._ensure_grid_texture()
+        visual_material = OmniPBR(
+            prim_path=visual_material_path,
+            texture_path=str(grid_texture),
+            texture_scale=GRID_TEXTURE_SCALE,
+            color=np.array([1.0, 1.0, 1.0], dtype=np.float64),
+        )
+        ground_plane = GroundPlane(
+            prim_path=GROUND_PLANE_PRIM_PATH,
+            name="default_ground_plane",
+            z_position=0.0,
+            physics_material=physics_material,
+            visual_material=visual_material,
+        )
+        world.scene.add(ground_plane)
+
+    @staticmethod
+    def _add_default_lighting() -> None:
+        """Add basic scene lighting without relying on Nucleus assets."""
+        from isaacsim.core.utils.stage import get_current_stage
+        from pxr import Gf, Sdf, UsdLux
+
+        stage = get_current_stage()
+        if not stage.GetPrimAtPath(DOME_LIGHT_PRIM_PATH).IsValid():
+            dome = UsdLux.DomeLight.Define(stage, Sdf.Path(DOME_LIGHT_PRIM_PATH))
+            dome.CreateIntensityAttr(450.0)
+            dome.CreateColorAttr(Gf.Vec3f(0.96, 0.96, 0.98))
+
+        if not stage.GetPrimAtPath(DISTANT_LIGHT_PRIM_PATH).IsValid():
+            distant = UsdLux.DistantLight.Define(stage, Sdf.Path(DISTANT_LIGHT_PRIM_PATH))
+            distant.CreateIntensityAttr(500.0)
+            distant.AddRotateXYZOp().Set(Gf.Vec3f(-45.0, 45.0, 0.0))
+
+    @staticmethod
+    def _set_viewport_camera(sim_app) -> None:
+        """Point the default viewport at the robot after the UI is ready."""
+        from isaacsim.core.utils.viewports import set_camera_view
+
+        for _ in range(3):
+            sim_app.update()
+
+        set_camera_view(
+            eye=DEFAULT_CAMERA_EYE,
+            target=DEFAULT_CAMERA_TARGET,
+            camera_prim_path="/OmniverseKit_Persp",
+        )
+
     def setup_isaac_sim(self) -> None:
         self.sim_app = SimulationApp({"headless": False})
 
@@ -117,8 +246,16 @@ class IsaacJointMirror:
         from isaacsim.core.utils.prims import is_prim_path_valid
         from isaacsim.core.utils.stage import add_reference_to_stage
 
+        # 创建纹理路径符号链接，解决 IsaacSim 从错误路径查找纹理的问题
+        expected_tex_dir = Path.home() / "reBotArm_control_py" / "config" / "RS-rebot-dev-arm" / "Textures"
+        if not expected_tex_dir.exists():
+            expected_tex_dir.parent.mkdir(parents=True, exist_ok=True)
+            actual_tex_dir = self.asset_path.parent / "Textures"
+            expected_tex_dir.symlink_to(actual_tex_dir)
+
         self.world = World(stage_units_in_meters=1.0)
-        self.world.scene.add_default_ground_plane()
+        self._add_local_ground_plane(self.world)
+        self._add_default_lighting()
         add_reference_to_stage(str(self.asset_path), ROBOT_PRIM_PATH)
 
         if not is_prim_path_valid(ROBOT_PRIM_PATH):
@@ -126,6 +263,40 @@ class IsaacJointMirror:
                 f"Isaac Sim 中未找到机器人 Prim: {ROBOT_PRIM_PATH} / "
                 f"robot prim not found in Isaac Sim: {ROBOT_PRIM_PATH}"
             )
+
+        # 让 gripper 左右两指互不碰撞：把两指的 collider 放进一个 PhysicsCollisionGroup
+        # 并把 group 的 filteredGroups 自引用——USD 的 PhysicsCollisionGroup 机制
+        # 是"colliders 列表 ∩ filteredGroups 集合内的对象不互相接触"。同组内成员之
+        # 间不发生接触。arm 6 个 link 之间不受影响。
+        from pxr import Sdf, UsdPhysics
+        from isaacsim.core.utils.stage import get_current_stage
+
+        stage = get_current_stage()
+        collision_group_path = Sdf.Path("/World/GripperFingerNoCollideGroup")
+        collision_group = UsdPhysics.CollisionGroup.Define(stage, collision_group_path)
+        colliders_api = collision_group.GetCollidersCollectionAPI()
+        if colliders_api is None:
+            colliders_api = UsdPhysics.CollectionAPI.Apply(collision_group.GetPrim(), "colliders")
+        colliders_rel = colliders_api.GetIncludesRel()
+        if colliders_rel is None:
+            colliders_rel = colliders_api.CreateIncludesRel()
+        finger_collider_paths = (
+            f"{ROBOT_PRIM_PATH}/Geometry/base_link/link1/link2/link3/link4/link5/link6"
+            f"/gripper_end/gripper_left/gripper_left",
+            f"{ROBOT_PRIM_PATH}/Geometry/base_link/link1/link2/link3/link4/link5/link6"
+            f"/gripper_end/gripper_right/gripper_right",
+        )
+        for finger_collider_path in finger_collider_paths:
+            if stage.GetPrimAtPath(finger_collider_path).IsValid():
+                colliders_rel.AddTarget(Sdf.Path(finger_collider_path))
+        filtered_groups_rel = collision_group.GetFilteredGroupsRel()
+        if filtered_groups_rel is None:
+            filtered_groups_rel = collision_group.CreateFilteredGroupsRel()
+        filtered_groups_rel.AddTarget(collision_group_path)
+        print(
+            f"[recv-setup] PhysicsCollisionGroup 已创建于 {collision_group_path}，"
+            f"包含 colliders: {colliders_rel.GetTargets()}"
+        )
 
         self.articulation = SingleArticulation(prim_path=ROBOT_PRIM_PATH, name="rebotarm_live")
         self.world.scene.add(self.articulation)
@@ -151,6 +322,7 @@ class IsaacJointMirror:
             joint_indices=self.arm_joint_indices,
         )
         self._apply_gripper_target(self.gripper_target_position)
+        self._set_viewport_camera(self.sim_app)
 
     def _setup_gripper_mapping(self, dof_names: list[str]) -> None:
         missing_joints = [name for name in GRIPPER_JOINT_NAMES if name not in dof_names]
@@ -220,10 +392,24 @@ class IsaacJointMirror:
         latest_packet = None
         while True:
             try:
-                packet, _ = self.socket.recvfrom(65535)
+                packet, addr = self.socket.recvfrom(65535)
             except BlockingIOError:
                 break
             payload = json.loads(packet.decode("utf-8"))
+
+            # ── feedback_request：把当前关节角回传给发送端 ──
+            if payload.get("type") == "feedback_request":
+                feedback = {
+                    "type": "feedback",
+                    "joint_positions": self.latest_q.tolist(),
+                    "timestamp": time.time(),
+                }
+                self.feedback_socket.sendto(
+                    json.dumps(feedback, separators=(",", ":")).encode("utf-8"),
+                    (addr[0], self.feedback_port),
+                )
+                continue
+
             joint_positions = np.asarray(payload["joint_positions"], dtype=np.float64)
             if joint_positions.shape != (ARM_JOINT_COUNT,):
                 raise RuntimeError(
@@ -286,6 +472,7 @@ class IsaacJointMirror:
 
     def shutdown(self) -> None:
         self.socket.close()
+        self.feedback_socket.close()
         if self.sim_app is not None:
             self.sim_app.close()
             self.sim_app = None
