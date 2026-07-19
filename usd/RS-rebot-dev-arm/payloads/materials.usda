@@ -48,5 +48,58 @@ def Scope "Materials"
             token outputs:surface
         }
     }
+
+    # reBot palette (added to fix the flat-gray render: the URDF->USD converter
+    # collapsed every piece onto the single gray material_1). Bound per-piece
+    # in instances.usda by name: pla*_green -> green, pla*_black/gripper ->
+    # black, cnc* -> aluminium, motor_* -> dark. Cosmetic only; no physics.
+    def Material "mat_green"
+    {
+        token outputs:surface.connect = </Materials/mat_green/PreviewSurface.outputs:surface>
+        def Shader "PreviewSurface"
+        {
+            token info:id = "UsdPreviewSurface"
+            color3f inputs:diffuseColor = (0.278, 0.616, 0.298)
+            float inputs:metallic = 0
+            float inputs:roughness = 0.45
+            token outputs:surface
+        }
+    }
+    def Material "mat_black"
+    {
+        token outputs:surface.connect = </Materials/mat_black/PreviewSurface.outputs:surface>
+        def Shader "PreviewSurface"
+        {
+            token info:id = "UsdPreviewSurface"
+            color3f inputs:diffuseColor = (0.055, 0.055, 0.062)
+            float inputs:metallic = 0
+            float inputs:roughness = 0.55
+            token outputs:surface
+        }
+    }
+    def Material "mat_alu"
+    {
+        token outputs:surface.connect = </Materials/mat_alu/PreviewSurface.outputs:surface>
+        def Shader "PreviewSurface"
+        {
+            token info:id = "UsdPreviewSurface"
+            color3f inputs:diffuseColor = (0.78, 0.80, 0.83)
+            float inputs:metallic = 0.85
+            float inputs:roughness = 0.32
+            token outputs:surface
+        }
+    }
+    def Material "mat_motor"
+    {
+        token outputs:surface.connect = </Materials/mat_motor/PreviewSurface.outputs:surface>
+        def Shader "PreviewSurface"
+        {
+            token info:id = "UsdPreviewSurface"
+            color3f inputs:diffuseColor = (0.13, 0.13, 0.14)
+            float inputs:metallic = 0.6
+            float inputs:roughness = 0.38
+            token outputs:surface
+        }
+    }
 }
 
