@@ -15,6 +15,14 @@ Generated from Composed Stage of root layer urdf/00-arm-rs_asm-v3 (asset transfo
     upAxis = "Z"
 )
 
+def PhysicsScene "PhysicsScene" (
+    prepend apiSchemas = ["NewtonSceneAPI", "MjcSceneAPI"]
+)
+{
+    vector3f physics:gravityDirection = (0, 0, -1)
+    float physics:gravityMagnitude = 9.81
+}
+
 def Xform "tn__00armrs_asmv3_hJ6D" (
     prepend references = @./payloads/base.usda@
     variants = {

@@ -21,11 +21,12 @@ with the URDF and the Isaac Sim USD asset.
 
 Built with [discoverse-dev/urdf-to-mjcf](https://github.com/discoverse-dev/urdf-to-mjcf)
 (`-ct convex_hull`) for the body tree + coacd convex collision, then
-`build_mjcf.py` layers on: fixed base, `base_link` inertial, joint
+`build_mjcf.py` layers on: fixed base, exact full inertials from the URDF, joint
 armature/damping, position actuators with the hardware-validated PD gains
 (rs-06 shoulder/elbow, rs-00 wrist, gripper), and keyframes.
 
-Every link keeps its **exact URDF inertial**, and `gripper_end` is kept as a
+Every link keeps its **exact full URDF inertial**, including off-diagonal tensor
+terms, and `gripper_end` is kept as a
 **separate welded body** rather than merged into `link6`. This matters:
 MuJoCo's own URDF importer mis-rotates the `gripper_end` fixed-joint inertial
 (it drops the joint's rpy `3.1416 -1.5708 0`), putting the merged CoM at
@@ -43,6 +44,10 @@ Newton) drive droop and with the real-arm PD-sweep measurements to 3 digits.
 So this MJCF is gravity-consistent with the URDF, the USD asset, and hardware.
 
 Reproduce: `python parity_mujoco_vs_pinocchio.py` (numbers in the JSON).
+
+Full mass/CoM/inertia parity against the composed USD and URDF is checked by
+`usd/RS-rebot-dev-arm/scripts/validate_physics_fidelity.py`; the committed
+evidence is `usd/RS-rebot-dev-arm/evidence/physics_fidelity_validation.json`.
 
 ## Conventions
 

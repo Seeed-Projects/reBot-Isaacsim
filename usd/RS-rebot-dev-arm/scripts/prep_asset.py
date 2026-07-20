@@ -4,24 +4,26 @@ The converter authors kinematic-only joints (no drives), uniform convexHull
 colliders, and no Isaac robot schema. This script re-applies the validated
 July-2026 setup from the uploaded RS-rebot-dev-arm package:
 
-  1. PhysicsDriveAPI on the 8 actuated joints with the 8/8-validated gains.
+  1. PhysicsDriveAPI on the 8 actuated joints with validated gains and effort limits.
   2. Hybrid colliders: convexDecomposition on gripper_end/left/right only.
   3. newton:selfCollisionEnabled=0 + MuJoCo-Warp solver caps on base_link.
-  4. Isaac robot schema (IsaacRobotAPI/IsaacLinkAPI/IsaacJointAPI + rels)
+  4. PhysX velocity limits and a composed PhysicsScene with explicit gravity.
+  5. Isaac robot schema (IsaacRobotAPI/IsaacLinkAPI/IsaacJointAPI + rels)
      so the Gain Tuner GUI robot dropdown finds the asset.
 
 Run with any python that has pxr (usd-core):
   .demo/bin/python prep_asset.py
 """
 
-import sys
+import math
 from pathlib import Path
 
 from pxr import Sdf, Usd, UsdPhysics
 
 ASSET_DIR = Path(__file__).resolve().parent.parent
 TOP = ASSET_DIR / "00-arm-rs_asm-v3.usda"
-PHYSICS = ASSET_DIR / "Payload" / "Physics.usda"
+PHYSICS = ASSET_DIR / "payloads" / "Physics" / "physics.usda"
+INSTANCES = ASSET_DIR / "payloads" / "instances.usda"
 
 ROOT = "/tn__00armrs_asmv3_hJ6D"
 
@@ -36,6 +38,19 @@ GAINS = {
     "joint6": ("angular", 50.0, 7.0),
     "joint_left": ("linear", 100.0, 4.0),
     "joint_right": ("linear", 100.0, 4.0),
+}
+
+# joint -> (URDF effort, velocity in USD units). Revolute velocity is deg/s;
+# prismatic velocity remains m/s.
+LIMITS = {
+    "joint1": (36.0, 2864.789),
+    "joint2": (36.0, 2864.789),
+    "joint3": (36.0, 2864.789),
+    "joint4": (14.0, 2291.8313),
+    "joint5": (14.0, 2291.8313),
+    "joint6": (14.0, 2291.8313),
+    "joint_left": (500.0, 10.0),
+    "joint_right": (500.0, 10.0),
 }
 
 # Concave parts that must make real contact; everything else stays convexHull
@@ -54,9 +69,9 @@ JOINT_ORDER = [
 
 def link_path(name: str) -> str:
     chain = ["Geometry"]
-    for l in LINK_ORDER:
-        chain.append(l)
-        if l == name:
+    for link in LINK_ORDER:
+        chain.append(link)
+        if link == name:
             break
     # gripper_left/right hang off gripper_end, not off each other
     if name in ("gripper_left", "gripper_right"):
@@ -67,8 +82,6 @@ def link_path(name: str) -> str:
 def author_physics_layer() -> None:
     stage = Usd.Stage.Open(str(PHYSICS))
     drives = 0
-    decomp = 0
-    # collision meshes are `over` prims in this layer — Traverse() skips overs
     for prim in stage.TraverseAll():
         tname = prim.GetTypeName()
         name = prim.GetName()
@@ -79,16 +92,36 @@ def author_physics_layer() -> None:
             drive.CreateStiffnessAttr().Set(k)
             drive.CreateDampingAttr().Set(d)
             drive.CreateTargetPositionAttr().Set(0.0)
+            effort, velocity = LIMITS[name]
+            drive.CreateMaxForceAttr().Set(effort)
+            prim.AddAppliedSchema("PhysxJointAPI")
+            prim.CreateAttribute(
+                "physxJoint:maxJointVelocity", Sdf.ValueTypeNames.Float
+            ).Set(velocity)
             drives += 1
-        attr = prim.GetAttribute("physics:approximation")
-        if attr and attr.Get() in ("convexHull", "convexDecomposition"):
-            if any(g in str(prim.GetPath()) for g in DECOMP_LINKS):
-                attr.Set("convexDecomposition")
-                decomp += 1
     assert drives == 8, f"expected 8 drives, authored {drives}"
+    stage.GetRootLayer().Save()
+    print(f"[physics.usda] drives={drives}")
+
+
+def author_collision_layer() -> None:
+    stage = Usd.Stage.Open(str(INSTANCES))
+    decomp = 0
+    for prim in stage.TraverseAll():
+        attr = prim.GetAttribute("physics:approximation")
+        if not attr or attr.Get() not in ("convexHull", "convexDecomposition"):
+            continue
+        approximation = (
+            "convexDecomposition"
+            if any(link in str(prim.GetPath()) for link in DECOMP_LINKS)
+            else "convexHull"
+        )
+        attr.Set(approximation)
+        if approximation == "convexDecomposition":
+            decomp += 1
     assert decomp == 3, f"expected 3 decomposition colliders, got {decomp}"
     stage.GetRootLayer().Save()
-    print(f"[Physics.usda] drives={drives} convexDecomposition={decomp}")
+    print(f"[instances.usda] convexDecomposition={decomp}")
 
 
 def author_top_layer() -> None:
@@ -109,31 +142,34 @@ def author_top_layer() -> None:
     for j in JOINT_ORDER:
         rj.AddTarget(f"{ROOT}/Physics/{j}")
     rl = root.CreateRelationship("isaac:physics:robotLinks")
-    for l in LINK_ORDER:
-        rl.AddTarget(link_path(l))
+    for link in LINK_ORDER:
+        rl.AddTarget(link_path(link))
 
-    for l in LINK_ORDER:
-        prim = stage.GetPrimAtPath(link_path(l))
-        assert prim, f"link {l} not found at {link_path(l)}"
+    for link in LINK_ORDER:
+        prim = stage.GetPrimAtPath(link_path(link))
+        assert prim, f"link {link} not found at {link_path(link)}"
         prim.AddAppliedSchema("IsaacLinkAPI")
     for j in JOINT_ORDER:
         prim = stage.GetPrimAtPath(f"{ROOT}/Physics/{j}")
         assert prim, f"joint {j} not found"
         prim.AddAppliedSchema("IsaacJointAPI")
 
-    scene = stage.GetPrimAtPath("/PhysicsScene")
-    if scene:
-        scene.AddAppliedSchema("MjcSceneAPI")
+    scene = UsdPhysics.Scene.Define(stage, "/PhysicsScene")
+    scene.CreateGravityDirectionAttr().Set((0.0, 0.0, -1.0))
+    scene.CreateGravityMagnitudeAttr().Set(9.81)
+    scene_prim = scene.GetPrim()
+    scene_prim.AddAppliedSchema("NewtonSceneAPI")
+    scene_prim.AddAppliedSchema("MjcSceneAPI")
 
     stage.GetRootLayer().Save()
-    print("[top layer] newton attrs + robot schema authored")
+    print("[top layer] physics scene + newton attrs + robot schema authored")
 
 
 def verify() -> None:
     stage = Usd.Stage.Open(str(TOP))
     drives = {}
     approx = {}
-    for prim in stage.Traverse():
+    for prim in Usd.PrimRange.Stage(stage, Usd.TraverseInstanceProxies()):
         for kind in ("angular", "linear"):
             d = UsdPhysics.DriveAPI(prim, kind)
             if d and d.GetStiffnessAttr().HasAuthoredValue():
@@ -142,6 +178,8 @@ def verify() -> None:
                     d.GetStiffnessAttr().Get(),
                     d.GetDampingAttr().Get(),
                     d.GetTypeAttr().Get(),
+                    d.GetMaxForceAttr().Get(),
+                    prim.GetAttribute("physxJoint:maxJointVelocity").Get(),
                 )
         a = prim.GetAttribute("physics:approximation")
         if a and a.Get():
@@ -150,7 +188,13 @@ def verify() -> None:
     for n in GAINS:
         print(f"  {n:12s} {drives.get(n)}")
     assert set(drives) == set(GAINS), f"drive mismatch: {set(GAINS) ^ set(drives)}"
+    for name, (_, _, _, _, effort, velocity) in drives.items():
+        expected_effort, expected_velocity = LIMITS[name]
+        assert math.isclose(effort, expected_effort, rel_tol=0.0, abs_tol=1e-6)
+        assert math.isclose(velocity, expected_velocity, rel_tol=0.0, abs_tol=2e-4)
     print("composed approximations:", approx)
+    assert len(approx) == 10
+    assert sum(value == "convexDecomposition" for value in approx.values()) == 3
     base = stage.GetPrimAtPath(link_path("base_link"))
     print(
         "newton attrs:",
@@ -185,6 +229,7 @@ def verify() -> None:
 
 if __name__ == "__main__":
     author_physics_layer()
+    author_collision_layer()
     author_top_layer()
     verify()
     print("\nOK — asset prepped for gain tuning")

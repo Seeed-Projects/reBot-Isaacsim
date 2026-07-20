@@ -41,14 +41,20 @@ issues are a firmware feedforward (mass/CoM) concern, not a USD drive-gain conce
 ## Known deltas vs the uploaded `usd/RS-rebot-dev-arm`
 
 - Masses: PR#3 values baked (link2 1.552, link3 1.252, link4 0.46, link5 0.2012, link6 0.1 kg; total 6.01 kg).
-  Inertia tensors are unchanged from the URDF (PR#3 did not update them to match the new masses).
+  Inertia tensors were rescaled with the mass update and preserve the current URDF within float32 USD precision;
+  `newton:inertia` and the MJCF full tensors preserve all six URDF components exactly.
 - Joint limits follow the repo URDF: j2/j3 ∈ [-180°, 0], j4 ∈ [-102.6°, +96.8°] — the uploaded asset
   (converted from a different local URDF) uses j2/j3 ∈ [0, +180°], j4 ±90°. Mirror convention: check
   sim2real sign mapping and home poses before swapping assets.
-- newton:velocityLimit (deg/s) authored by converter 0.3.0 replaces the old custom `urdf:limit:velocity`.
+- `newton:velocityLimit` and `physxJoint:maxJointVelocity` preserve URDF velocity limits on both backends.
+- Drive `maxForce` preserves URDF effort limits (36 N·m RS-06, 14 N·m RS-00, 500 N gripper).
 - No MDL materials in 0.3.0 output (UsdPreviewSurface only); no legacy `payloads/` transformer package.
-- Post-export edits re-applied by `scripts/prep_asset.py`: drives (July gains), gripper convexDecomposition,
-  `newton:selfCollisionEnabled=0`, solver caps nconmax=8192/njmax=32768, Isaac robot schema.
+- Post-export edits re-applied by `scripts/prep_asset.py`: drives/limits (July gains), explicit physics scene,
+  gripper convexDecomposition, `newton:selfCollisionEnabled=0`, solver caps nconmax=8192/njmax=32768,
+  and Isaac robot schema.
 
 Evidence: `evidence/gt_pj_new_newton.json`, `evidence/gt_pj_new_physx.json`, `evidence/gravity_droop.json`,
-logs alongside. Harness: `scripts/gaintuner_perjoint_361.py` (+ `scripts/run_full_matrix.sh`).
+`evidence/physics_fidelity_validation.json`, `evidence/physics_fidelity_dynamic_newton.json`,
+`evidence/physics_fidelity_dynamic_physx.json`, and logs alongside. Harnesses:
+`scripts/gaintuner_perjoint_361.py`, `scripts/run_full_matrix.sh`,
+`scripts/validate_physics_fidelity.py`, and `scripts/validate_dynamic_physics.py`.

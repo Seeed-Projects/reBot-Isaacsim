@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "urdf": "urdf/00-arm-rs_asm-v3/urdf/00-arm-rs_asm-v3.urdf",
+  "usd": "usd/RS-rebot-dev-arm/00-arm-rs_asm-v3.usda",
+  "mjcf": "mjcf/rebot_devarm/rebot_devarm.xml",
+  "links_checked": 10,
+  "joints_checked": 8,
+  "metrics": {
+    "max_usd_mass_error_kg": 4.577636714131472e-08,
+    "max_usd_com_error_m": 2.7871314423055793e-09,
+    "max_usd_inertia_error_kgm2": 1.9458749021816768e-10,
+    "max_newton_inertia_error_kgm2": 0.0,
+    "max_mjcf_inertia_error_kgm2": 0.0
+  },
+  "failures": []
+}

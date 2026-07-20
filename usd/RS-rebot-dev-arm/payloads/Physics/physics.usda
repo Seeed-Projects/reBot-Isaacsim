@@ -133,15 +133,17 @@ over "tn__00armrs_asmv3_hJ6D"
     over "Physics"
     {
         def PhysicsRevoluteJoint "joint1" (
-            prepend apiSchemas = ["PhysicsDriveAPI:angular", "PhysicsJointStateAPI:angular"]
+            prepend apiSchemas = ["PhysicsDriveAPI:angular", "PhysicsJointStateAPI:angular", "PhysxJointAPI"]
         )
         {
             float drive:angular:physics:damping = 60
             float drive:angular:physics:stiffness = 500
             float drive:angular:physics:targetPosition = 0.0
             float state:angular:physics:position = 0.0
+            float drive:angular:physics:maxForce = 36
             uniform token drive:angular:physics:type = "force"
             float newton:velocityLimit = 2864.789
+            float physxJoint:maxJointVelocity = 2864.789
             uniform token physics:axis = "Z"
             custom rel physics:body0
             prepend rel physics:body0 = </tn__00armrs_asmv3_hJ6D/Geometry/base_link>
@@ -157,15 +159,17 @@ over "tn__00armrs_asmv3_hJ6D"
         }
 
         def PhysicsRevoluteJoint "joint2" (
-            prepend apiSchemas = ["PhysicsDriveAPI:angular", "PhysicsJointStateAPI:angular"]
+            prepend apiSchemas = ["PhysicsDriveAPI:angular", "PhysicsJointStateAPI:angular", "PhysxJointAPI"]
         )
         {
             float drive:angular:physics:damping = 96
             float drive:angular:physics:stiffness = 1500
             float drive:angular:physics:targetPosition = -90
             float state:angular:physics:position = -90
+            float drive:angular:physics:maxForce = 36
             uniform token drive:angular:physics:type = "force"
             float newton:velocityLimit = 2864.789
+            float physxJoint:maxJointVelocity = 2864.789
             uniform token physics:axis = "Z"
             custom rel physics:body0
             prepend rel physics:body0 = </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1>
@@ -181,15 +185,17 @@ over "tn__00armrs_asmv3_hJ6D"
         }
 
         def PhysicsRevoluteJoint "joint3" (
-            prepend apiSchemas = ["PhysicsDriveAPI:angular", "PhysicsJointStateAPI:angular"]
+            prepend apiSchemas = ["PhysicsDriveAPI:angular", "PhysicsJointStateAPI:angular", "PhysxJointAPI"]
         )
         {
             float drive:angular:physics:damping = 76
             float drive:angular:physics:stiffness = 1000
             float drive:angular:physics:targetPosition = -1
             float state:angular:physics:position = -1
+            float drive:angular:physics:maxForce = 36
             uniform token drive:angular:physics:type = "force"
             float newton:velocityLimit = 2864.789
+            float physxJoint:maxJointVelocity = 2864.789
             uniform token physics:axis = "Z"
             custom rel physics:body0
             prepend rel physics:body0 = </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1/link2>
@@ -205,15 +211,17 @@ over "tn__00armrs_asmv3_hJ6D"
         }
 
         def PhysicsRevoluteJoint "joint4" (
-            prepend apiSchemas = ["PhysicsDriveAPI:angular", "PhysicsJointStateAPI:angular"]
+            prepend apiSchemas = ["PhysicsDriveAPI:angular", "PhysicsJointStateAPI:angular", "PhysxJointAPI"]
         )
         {
             float drive:angular:physics:damping = 18
             float drive:angular:physics:stiffness = 150
             float drive:angular:physics:targetPosition = 0.0
             float state:angular:physics:position = 0.0
+            float drive:angular:physics:maxForce = 14
             uniform token drive:angular:physics:type = "force"
             float newton:velocityLimit = 2291.8313
+            float physxJoint:maxJointVelocity = 2291.8313
             uniform token physics:axis = "Z"
             custom rel physics:body0
             prepend rel physics:body0 = </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1/link2/link3>
@@ -229,15 +237,17 @@ over "tn__00armrs_asmv3_hJ6D"
         }
 
         def PhysicsRevoluteJoint "joint5" (
-            prepend apiSchemas = ["PhysicsDriveAPI:angular", "PhysicsJointStateAPI:angular"]
+            prepend apiSchemas = ["PhysicsDriveAPI:angular", "PhysicsJointStateAPI:angular", "PhysxJointAPI"]
         )
         {
             float drive:angular:physics:damping = 10
             float drive:angular:physics:stiffness = 80
             float drive:angular:physics:targetPosition = 0
             float state:angular:physics:position = 0
+            float drive:angular:physics:maxForce = 14
             uniform token drive:angular:physics:type = "force"
             float newton:velocityLimit = 2291.8313
+            float physxJoint:maxJointVelocity = 2291.8313
             uniform token physics:axis = "Z"
             custom rel physics:body0
             prepend rel physics:body0 = </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1/link2/link3/link4>
@@ -253,15 +263,17 @@ over "tn__00armrs_asmv3_hJ6D"
         }
 
         def PhysicsRevoluteJoint "joint6" (
-            prepend apiSchemas = ["PhysicsDriveAPI:angular", "PhysicsJointStateAPI:angular"]
+            prepend apiSchemas = ["PhysicsDriveAPI:angular", "PhysicsJointStateAPI:angular", "PhysxJointAPI"]
         )
         {
             float drive:angular:physics:damping = 7
             float drive:angular:physics:stiffness = 50
             float drive:angular:physics:targetPosition = 0.0
             float state:angular:physics:position = 0.0
+            float drive:angular:physics:maxForce = 14
             uniform token drive:angular:physics:type = "force"
             float newton:velocityLimit = 2291.8313
+            float physxJoint:maxJointVelocity = 2291.8313
             uniform token physics:axis = "Z"
             custom rel physics:body0
             prepend rel physics:body0 = </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1/link2/link3/link4/link5>
@@ -277,15 +289,17 @@ over "tn__00armrs_asmv3_hJ6D"
         }
 
         def PhysicsPrismaticJoint "joint_left" (
-            prepend apiSchemas = ["PhysicsDriveAPI:linear", "PhysicsJointStateAPI:linear"]
+            prepend apiSchemas = ["PhysicsDriveAPI:linear", "PhysicsJointStateAPI:linear", "PhysxJointAPI"]
         )
         {
             float drive:linear:physics:damping = 4
             float drive:linear:physics:stiffness = 100
             float drive:linear:physics:targetPosition = 0.02
             float state:linear:physics:position = 0.02
+            float drive:linear:physics:maxForce = 500
             uniform token drive:linear:physics:type = "force"
             float newton:velocityLimit = 10
+            float physxJoint:maxJointVelocity = 10
             uniform token physics:axis = "Z"
             custom rel physics:body0
             prepend rel physics:body0 = </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end>
@@ -301,15 +315,17 @@ over "tn__00armrs_asmv3_hJ6D"
         }
 
         def PhysicsPrismaticJoint "joint_right" (
-            prepend apiSchemas = ["PhysicsDriveAPI:linear", "PhysicsJointStateAPI:linear"]
+            prepend apiSchemas = ["PhysicsDriveAPI:linear", "PhysicsJointStateAPI:linear", "PhysxJointAPI"]
         )
         {
             float drive:linear:physics:damping = 4
             float drive:linear:physics:stiffness = 100
             float drive:linear:physics:targetPosition = 0.02
             float state:linear:physics:position = 0.02
+            float drive:linear:physics:maxForce = 500
             uniform token drive:linear:physics:type = "force"
             float newton:velocityLimit = 10
+            float physxJoint:maxJointVelocity = 10
             uniform token physics:axis = "Z"
             custom rel physics:body0
             prepend rel physics:body0 = </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end>
