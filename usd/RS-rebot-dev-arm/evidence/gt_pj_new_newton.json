@@ -1,6 +1,6 @@
 {
  "engine": "newton",
- "usd": "/home/spark/Projects/demo/reBot-Isaacsim/usd/RS-rebot-dev-arm-new/00-arm-rs_asm-v3.usda",
+ "usd": "usd/RS-rebot-dev-arm/00-arm-rs_asm-v3.usda",
  "dt": 0.002,
  "sim_steps": 16131,
  "sim_time_s": 32.262,

@@ -38,6 +38,7 @@ from dynamic_evidence_contract import (
     UPPER_POSITION_LIMITS,
     EXPECTED_MAX_EFFORTS,
     EXPECTED_MAX_VELOCITIES,
+    atomic_write_json,
     dynamic_evidence_problems,
 )
 
@@ -53,8 +54,6 @@ if output_path == asset_path:
     raise SystemExit("OUTPUT.json must not overwrite the asset")
 output_path.parent.mkdir(parents=True, exist_ok=True)
 output_path.unlink(missing_ok=True)
-temporary_output_path = output_path.with_name(f".{output_path.name}.{os.getpid()}.tmp")
-temporary_output_path.unlink(missing_ok=True)
 if engine not in {"newton", "physx"}:
     raise SystemExit("ENGINE must be newton or physx")
 if not asset_path.is_file():
@@ -214,9 +213,16 @@ try:
     settle_consecutive_steps_required = SETTLE_CONSECUTIVE_STEPS_REQUIRED
     settle_consecutive_steps = 0
     hold_settle_steps = 0
+    settle_tail_positions = []
+    settle_tail_velocities = []
     for hold_settle_steps in range(1, settle_max_steps + 1):
         current = advance_one_physics_step(target)
         velocity = articulation.get_dof_velocities().numpy()[0].copy()
+        settle_tail_positions.append(current.copy())
+        settle_tail_velocities.append(velocity.copy())
+        if len(settle_tail_positions) > settle_consecutive_steps_required:
+            settle_tail_positions.pop(0)
+            settle_tail_velocities.pop(0)
         settled = bool(
             np.all(np.abs(current - target) < settle_error_tolerances)
             and np.all(np.abs(velocity) < rest_velocity_tolerances)
@@ -350,6 +356,8 @@ try:
         "settle_consecutive_steps_required": settle_consecutive_steps_required,
         "settling_converged": settling_converged,
         "settle_error_tolerances": settle_error_tolerances.tolist(),
+        "settle_tail_positions": [position.tolist() for position in settle_tail_positions],
+        "settle_tail_velocities": [velocity.tolist() for velocity in settle_tail_velocities],
         "hold_measurement_physics_steps": hold_measurement_steps,
         "hold_start_positions": hold_start.tolist(),
         "hold_end_positions": hold_end.tolist(),
@@ -366,6 +374,8 @@ try:
         "passive_probe_joint": "joint3",
         "passive_probe_physics_steps": passive_probe_physics_steps,
         "passive_probe_simulation_time_s": passive_probe_simulation_time,
+        "passive_start_positions": passive_start.tolist(),
+        "passive_end_positions": passive_end.tolist(),
         "passive_start_velocity": passive_start_velocity.tolist(),
         "rest_velocity_tolerances": rest_velocity_tolerances.tolist(),
         "passive_probe_positions_joint3": [
@@ -376,17 +386,13 @@ try:
     validation_errors = dynamic_evidence_problems(output, engine)
     output["validation_errors"] = validation_errors
     output["passed"] = not validation_errors
-    with temporary_output_path.open("w", encoding="utf-8") as stream:
-        json.dump(output, stream, indent=2)
-        stream.write("\n")
-    os.replace(temporary_output_path, output_path)
+    atomic_write_json(output_path, output)
     print(json.dumps(output, indent=2), flush=True)
     exit_code = 0 if output["passed"] else 1
 except BaseException:
     traceback.print_exc()
     raise
 finally:
-    temporary_output_path.unlink(missing_ok=True)
     try:
         if app_utils is not None:
             app_utils.stop()

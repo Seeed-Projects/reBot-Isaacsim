@@ -1,7 +1,10 @@
 """Pure, stdlib-only contract for reBot dynamic validation evidence."""
 
 from datetime import datetime
+import json
 import math
+import os
+from pathlib import Path
 import re
 
 DOF_NAMES = (
@@ -38,6 +41,28 @@ EXPECTED_ARTICULATION_ROOT = "/tn__00armrs_asmv3_hJ6D/Geometry/base_link"
 EXPECTED_SCENES = ("/PhysicsScene",)
 EXPECTED_DEVICE = "cuda:0"
 _HASH_RE = re.compile(r"^[0-9a-f]{64}$")
+
+
+def atomic_write_text(output_path, text):
+    """Atomically install text and remove the temporary file on any failure."""
+
+    output_path = Path(output_path)
+    temporary_path = output_path.with_name(f".{output_path.name}.{os.getpid()}.tmp")
+    temporary_path.unlink(missing_ok=True)
+    try:
+        with temporary_path.open("w", encoding="utf-8") as stream:
+            stream.write(text)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary_path, output_path)
+    finally:
+        temporary_path.unlink(missing_ok=True)
+
+
+def atomic_write_json(output_path, payload):
+    """Serialize JSON and atomically install it at output_path."""
+
+    atomic_write_text(output_path, json.dumps(payload, indent=2) + "\n")
 
 
 def _is_number(value):
@@ -77,6 +102,22 @@ def dynamic_evidence_problems(report, expected_engine=None):
             problems.append(f"{key} contains non-finite or non-numeric values")
             return None
         return [float(item) for item in value]
+
+    def matrix(key, rows, columns=8):
+        value = report.get(key)
+        if not isinstance(value, list) or len(value) != rows:
+            problems.append(f"{key} must contain {rows} rows")
+            return None
+        converted = []
+        for row in value:
+            if not isinstance(row, list) or len(row) != columns:
+                problems.append(f"{key} rows must contain {columns} values")
+                return None
+            if not all(_is_number(item) and math.isfinite(float(item)) for item in row):
+                problems.append(f"{key} contains non-finite or non-numeric values")
+                return None
+            converted.append([float(item) for item in row])
+        return converted
 
     requested_engine = report.get("requested_engine")
     active_engine = report.get("active_engine")
@@ -130,6 +171,7 @@ def dynamic_evidence_problems(report, expected_engine=None):
     limit_tolerances = vector("position_limit_tolerances")
     observed_min = vector("observed_min_positions")
     observed_max = vector("observed_max_positions")
+    start_positions = vector("start_positions")
     if lower is not None:
         require(_vectors_close(lower, LOWER_POSITION_LIMITS), "lower position limits changed")
     if upper is not None:
@@ -155,6 +197,16 @@ def dynamic_evidence_problems(report, expected_engine=None):
         "positions_within_limits is inconsistent with observed extrema",
     )
     require(recomputed_positions_within_limits, "observed positions exceed authored limits")
+    if start_positions is not None and observed_min is not None and observed_max is not None:
+        require(
+            all(
+                minimum <= position <= maximum
+                for position, minimum, maximum in zip(
+                    start_positions, observed_min, observed_max
+                )
+            ),
+            "start positions are outside observed extrema",
+        )
 
     target = vector("target_positions")
     hold_start = vector("hold_start_positions")
@@ -168,6 +220,14 @@ def dynamic_evidence_problems(report, expected_engine=None):
     settle_error_tolerances = vector("settle_error_tolerances")
     rest_velocity_tolerances = vector("rest_velocity_tolerances")
     passive_start_velocity = vector("passive_start_velocity")
+    passive_start_positions = vector("passive_start_positions")
+    passive_end_positions = vector("passive_end_positions")
+    settle_tail_positions = matrix(
+        "settle_tail_positions", SETTLE_CONSECUTIVE_STEPS_REQUIRED
+    )
+    settle_tail_velocities = matrix(
+        "settle_tail_velocities", SETTLE_CONSECUTIVE_STEPS_REQUIRED
+    )
 
     if target is not None:
         require(_vectors_close(target, TARGET_POSITIONS), "target positions changed")
@@ -217,7 +277,40 @@ def dynamic_evidence_problems(report, expected_engine=None):
         require(_close(report.get("max_angular_hold_excursion_rad"), max(hold_excursions[:6])), "published angular hold excursion is inconsistent")
         require(_close(report.get("max_linear_hold_excursion_m"), max(hold_excursions[6:])), "published linear hold excursion is inconsistent")
 
-    require(report.get("settling_converged") is True, "settling did not converge")
+    recomputed_settling_converged = False
+    if (
+        settle_tail_positions is not None
+        and settle_tail_velocities is not None
+        and target is not None
+        and settle_error_tolerances is not None
+        and rest_velocity_tolerances is not None
+    ):
+        recomputed_settling_converged = all(
+            all(
+                abs(position - desired) < position_tolerance
+                and abs(velocity) < velocity_tolerance
+                for position, desired, position_tolerance, velocity, velocity_tolerance in zip(
+                    positions,
+                    target,
+                    settle_error_tolerances,
+                    velocities,
+                    rest_velocity_tolerances,
+                )
+            )
+            for positions, velocities in zip(
+                settle_tail_positions, settle_tail_velocities
+            )
+        )
+    require(
+        report.get("settling_converged") is recomputed_settling_converged,
+        "settling_converged is inconsistent with the settling tail",
+    )
+    require(recomputed_settling_converged, "settling did not converge")
+    if settle_tail_positions is not None and hold_start is not None:
+        require(
+            _vectors_close(settle_tail_positions[-1], hold_start),
+            "hold start is discontinuous with the settling tail",
+        )
     require(report.get("settle_max_physics_steps") == SETTLE_MAX_PHYSICS_STEPS, "unexpected settling step cap")
     require(
         report.get("settle_consecutive_steps_required") == SETTLE_CONSECUTIVE_STEPS_REQUIRED,
@@ -233,6 +326,29 @@ def dynamic_evidence_problems(report, expected_engine=None):
         require(
             all(abs(value) < tolerance for value, tolerance in zip(passive_start_velocity, rest_velocity_tolerances)),
             "passive probe did not start from rest",
+        )
+    if hold_end is not None and passive_start_positions is not None:
+        require(
+            _vectors_close(hold_end, passive_start_positions),
+            "passive probe start is discontinuous with hold end",
+        )
+    if (
+        passive_start_positions is not None
+        and passive_end_positions is not None
+        and observed_min is not None
+        and observed_max is not None
+    ):
+        require(
+            all(
+                minimum <= start <= maximum and minimum <= end <= maximum
+                for start, end, minimum, maximum in zip(
+                    passive_start_positions,
+                    passive_end_positions,
+                    observed_min,
+                    observed_max,
+                )
+            ),
+            "passive endpoint positions are outside observed extrema",
         )
 
     require(report.get("ramp_physics_steps") == RAMP_PHYSICS_STEPS, "unexpected ramp step count")
@@ -281,6 +397,16 @@ def dynamic_evidence_problems(report, expected_engine=None):
 
     passive_trace = vector("passive_probe_positions_joint3", PASSIVE_PROBE_PHYSICS_STEPS + 1)
     if passive_trace is not None:
+        if passive_start_positions is not None:
+            require(
+                _close(passive_trace[0], passive_start_positions[2]),
+                "passive trace start is inconsistent with passive start positions",
+            )
+        if passive_end_positions is not None:
+            require(
+                _close(passive_trace[-1], passive_end_positions[2]),
+                "passive trace end is inconsistent with passive end positions",
+            )
         recomputed_motion = passive_trace[-1] - passive_trace[0]
         require(_close(report.get("passive_motion_joint3_rad"), recomputed_motion), "passive motion is inconsistent with trace")
         require(recomputed_motion > PASSIVE_MOTION_MIN_RAD, "passive motion is too small")

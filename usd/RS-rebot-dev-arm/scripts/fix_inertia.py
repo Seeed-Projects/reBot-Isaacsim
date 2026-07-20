@@ -14,7 +14,8 @@ Run: python3 fix_inertia.py   (rewrites urdf in place, prints the scaling)
 import re
 from pathlib import Path
 
-URDF = Path("/home/spark/Projects/demo/reBot-Isaacsim/urdf/00-arm-rs_asm-v3/urdf/00-arm-rs_asm-v3.urdf")
+REPO_ROOT = Path(__file__).resolve().parents[3]
+URDF = REPO_ROOT / "urdf/00-arm-rs_asm-v3/urdf/00-arm-rs_asm-v3.urdf"
 
 # m_old (c2eba19) -> m_new (b094da6)
 SCALE = {
