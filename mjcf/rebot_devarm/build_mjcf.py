@@ -12,13 +12,13 @@ collision meshes. This script layers the menagerie conventions on top:
   - meshdir=assets, flat mesh paths
 
 Gravity parity verified: MuJoCo qfrc_bias vs Pinocchio g(q) < 1e-5 N.m.
-Run: python build_mjcf.py   (writes rebot_devarm.xml next to it)
+Run: python build_mjcf.py SOURCE.xml   (writes rebot_devarm.xml next to it)
 """
+import argparse
 from pathlib import Path
 import xml.etree.ElementTree as ET
 
 HERE = Path(__file__).resolve().parent
-SRC = "/tmp/u2m/rebot.xml"
 URDF = HERE.parents[1] / "urdf/00-arm-rs_asm-v3/urdf/00-arm-rs_asm-v3.urdf"
 
 
@@ -36,7 +36,8 @@ def apply_urdf_inertials(mjcf_root):
         if body is None:
             raise ValueError(f"URDF link {name!r} has no MJCF body")
         origin = source.find("origin")
-        rpy = [float(value) for value in origin.get("rpy", "0 0 0").split()]
+        rpy_text = origin.get("rpy", "0 0 0") if origin is not None else "0 0 0"
+        rpy = [float(value) for value in rpy_text.split()]
         if any(abs(value) > 1e-12 for value in rpy):
             raise ValueError(
                 f"URDF link {name!r} has a rotated inertial frame; "
@@ -47,13 +48,22 @@ def apply_urdf_inertials(mjcf_root):
             inertial = ET.Element("inertial")
             body.insert(0, inertial)
         inertia = source.find("inertia")
-        inertial.set("pos", origin.get("xyz", "0 0 0"))
+        inertial.set("pos", origin.get("xyz", "0 0 0") if origin is not None else "0 0 0")
         inertial.set("mass", source.find("mass").get("value"))
         inertial.set("fullinertia", " ".join(inertia.get(key) for key in inertia_keys))
-        for stale_attribute in ("diaginertia", "quat", "euler"):
+        for stale_attribute in (
+            "diaginertia", "quat", "euler", "axisangle", "xyaxes", "zaxis"
+        ):
             inertial.attrib.pop(stale_attribute, None)
 
-tree = ET.parse(SRC)
+parser = argparse.ArgumentParser()
+parser.add_argument("source", type=Path, help="urdf-to-mjcf output XML")
+parser.add_argument(
+    "--output", type=Path, default=HERE / "rebot_devarm.xml", help="output MJCF"
+)
+args = parser.parse_args()
+
+tree = ET.parse(args.source)
 root = tree.getroot()
 root.set("model", "rebot_devarm")
 
@@ -166,6 +176,6 @@ for el in list(asset):
         asset.remove(el)
 
 ET.indent(tree, space="  ")
-out = HERE / "rebot_devarm.xml"
+out = args.output
 tree.write(out, encoding="unicode", xml_declaration=False)
 print("WROTE", out)

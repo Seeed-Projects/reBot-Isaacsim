@@ -8,20 +8,16 @@ hybrid colliders (convexHull arm / convexDecomposition gripper), validated July 
 
 ## Per-joint snap-to-limits (max of lower/upper hold error)
 
-| joint | gains K/D | Newton 3.6.1 (new) | PhysX 3.6.1 (new) | Newton 3.5.3 Jul-07 baseline | PhysX 3.5.3 Jul-07 baseline |
-|---|---|---|---|---|---|
-| joint1 | 500/60 | **pass** 7.2e-06 | **pass** 1.7e-04 | **pass** 5.2e-06 | **pass** 1.7e-04 |
-| joint2 | 1500/96 | **pass** 1.8e-05 | **pass** 4.8e-04 | **blocked** 1.1e-01 | **blocked** 7.5e-01 |
-| joint3 | 1000/76 | **pass** 1.2e-04 | **pass** 2.4e-06 | **pass** 1.2e-04 | **pass** 2.6e-06 |
-| joint4 | 150/18 | **pass** 6.9e-05 | **pass** 3.4e-05 | **blocked** 5.7e-01 | **blocked** 4.2e-01 |
-| joint5 | 80/10 | **pass** 3.7e-06 | **pass** 4.3e-05 | **pass** 2.4e-07 | **pass** 5.7e-05 |
-| joint6 | 50/7 | **pass** 8.8e-06 | **pass** 2.8e-04 | **pass** 7.4e-06 | **pass** 4.6e-04 |
-| joint_left | 100/4 | **pass** 3.8e-08 | **pass** 2.9e-07 | **pass** 4.4e-04 (decomp run) | **pass** 6.1e-04 (decomp run) |
-| joint_right | 100/4 | **pass** 9.7e-08 | **pass** 5.2e-08 | **pass** 2.2e-04 (decomp run) | **pass** 3.0e-04 (decomp run) |
-
-July baseline notes: full-matrix runs (`gt_pj_newasset_*.json`) predate the hybrid-collider fix
-(joint2/joint4/grippers blocked by convexHull inflation with collision on); the shipped asset's
-gripper baseline is `gt_grip_decomp_*.json` and the final GUI matrix (self-collision OFF) was 8/8 pass.
+| joint | gains K/D | Newton 3.6.1 | PhysX 3.6.1 |
+|---|---|---|---|
+| joint1 | 500/60 | **pass** 7.2e-06 | **pass** 1.7e-04 |
+| joint2 | 1500/96 | **pass** 1.8e-05 | **pass** 4.8e-04 |
+| joint3 | 1000/76 | **pass** 1.2e-04 | **pass** 2.4e-06 |
+| joint4 | 150/18 | **pass** 6.9e-05 | **pass** 3.4e-05 |
+| joint5 | 80/10 | **pass** 3.7e-06 | **pass** 4.3e-05 |
+| joint6 | 50/7 | **pass** 8.8e-06 | **pass** 2.8e-04 |
+| joint_left | 100/4 | **pass** 3.8e-08 | **pass** 2.9e-07 |
+| joint_right | 100/4 | **pass** 9.7e-08 | **pass** 5.2e-08 |
 
 ## Gravity-compensation impact of PR#3 masses (current gains, worst in-limit pose)
 
@@ -34,9 +30,8 @@ gripper baseline is `gt_grip_decomp_*.json` and the final GUI matrix (self-colli
 | joint5 | -0.778 | -0.800 | 9.72e-03 | 1.00e-02 | 114.1/113.2 | 44.82/44.45 |
 | joint6 | -0.001 | -0.001 | 1.64e-05 | 1.64e-05 | 418.1/408.4 | 183.90/179.63 |
 
-Conclusion: the mass redistribution changes worst-case gravity torque by <2% and static droop stays
-≤0.013 deg on every joint — the validated gains remain correct for simulation. Real-arm gravity-feel
-issues are a firmware feedforward (mass/CoM) concern, not a USD drive-gain concern.
+Conclusion: the mass redistribution changes worst-case gravity-torque magnitude by at most 2.9% and modeled static droop stays at or below 0.0131 deg.
+This simulation study does not identify the mass or center-of-mass parameters of the physical hardware.
 
 ## Known deltas vs the uploaded `usd/RS-rebot-dev-arm`
 
@@ -49,12 +44,47 @@ issues are a firmware feedforward (mass/CoM) concern, not a USD drive-gain conce
 - `newton:velocityLimit` and `physxJoint:maxJointVelocity` preserve URDF velocity limits on both backends.
 - Drive `maxForce` preserves URDF effort limits (36 N·m RS-06, 14 N·m RS-00, 500 N gripper).
 - No MDL materials in 0.3.0 output (UsdPreviewSurface only); no legacy `payloads/` transformer package.
-- Post-export edits re-applied by `scripts/prep_asset.py`: drives/limits (July gains), explicit physics scene,
-  gripper convexDecomposition, `newton:selfCollisionEnabled=0`, solver caps nconmax=8192/njmax=32768,
-  and Isaac robot schema.
+- Post-export edits re-applied by `scripts/prep_asset.py`: drives/limits and matching startup target/state,
+  explicit physics scene, gripper convexDecomposition, Newton/PhysX self-collision disabled,
+  solver caps nconmax=8192/njmax=32768, and Isaac robot schema.
+
+## Physics-fidelity smoke — 2026-07-20
+
+The static validator checks all 10 URDF/USD/MJCF inertials, all 8 drive effort limits, both
+Newton and PhysX velocity attributes, startup target/state agreement, articulation schemas,
+self-collision overrides, and standalone PhysicsScene composition.
+
+- Static fidelity: **PASS**, 10 links / 8 joints.
+- Newton dynamic: **PASS**, max hold error 2.006e-04 rad / 7.898e-09 m; max measured-window excursion 4.983e-05 rad / 0.000e+00 m; 2733 discrete physics steps.
+- PhysX dynamic: **PASS**, max hold error 6.420e-04 rad / 1.550e-07 m; max measured-window excursion 1.466e-05 rad / 1.192e-07 m; 2782 discrete physics steps.
+
+The dynamic smoke runs at physics dt=0.002 on `cuda:0`. During measured phases it advances no
+application frames: each sample follows one `SimulationManager.step(steps=1)` call, a verified +1
+physics-step counter increment, and backend Fabric synchronization (explicit for Newton). It verifies
+runtime ingestion/readback of effort and velocity limits, one composed scene, convergence before
+measurement, bounded error/excursion over the complete hold window, a short passive response, and
+limits at every discrete physics step in the measured phases. It does **not** observe solver-internal
+substeps or claim torque/velocity saturation enforcement, hard-stop enforcement, or quantitative
+Newton/PhysX trajectory parity.
+Evidence generation records and checks the exact validator, shared contract, and USD-package SHA-256
+values.
+
+From the repository root, with `ISAACSIM_PATH` set to the Isaac Sim release directory:
+
+```bash
+$ISAACSIM_PATH/python.sh usd/RS-rebot-dev-arm/scripts/validate_physics_fidelity.py \
+  --json usd/RS-rebot-dev-arm/evidence/physics_fidelity_validation.json
+$ISAACSIM_PATH/python.sh usd/RS-rebot-dev-arm/scripts/validate_dynamic_physics.py \
+  usd/RS-rebot-dev-arm/00-arm-rs_asm-v3.usda newton \
+  usd/RS-rebot-dev-arm/evidence/physics_fidelity_dynamic_newton.json
+$ISAACSIM_PATH/python.sh usd/RS-rebot-dev-arm/scripts/validate_dynamic_physics.py \
+  usd/RS-rebot-dev-arm/00-arm-rs_asm-v3.usda physx \
+  usd/RS-rebot-dev-arm/evidence/physics_fidelity_dynamic_physx.json
+```
 
 Evidence: `evidence/gt_pj_new_newton.json`, `evidence/gt_pj_new_physx.json`, `evidence/gravity_droop.json`,
 `evidence/physics_fidelity_validation.json`, `evidence/physics_fidelity_dynamic_newton.json`,
-`evidence/physics_fidelity_dynamic_physx.json`, and logs alongside. Harnesses:
+and `evidence/physics_fidelity_dynamic_physx.json`. Harnesses:
 `scripts/gaintuner_perjoint_361.py`, `scripts/run_full_matrix.sh`,
-`scripts/validate_physics_fidelity.py`, and `scripts/validate_dynamic_physics.py`.
+`scripts/validate_physics_fidelity.py`, `scripts/validate_dynamic_physics.py`,
+and `scripts/dynamic_evidence_contract.py`.

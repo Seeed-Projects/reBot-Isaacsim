@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Validate reBot URDF, composed USD, and MJCF physics fidelity.
 
-Run with an Isaac Sim/OpenUSD Python environment:
+Run with an OpenUSD Python environment or the Isaac Sim Python launcher:
 
     python validate_physics_fidelity.py
 """
@@ -16,7 +16,17 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 import numpy as np
-from pxr import Sdf, Usd, UsdPhysics
+
+_simulation_app = None
+try:
+    from pxr import Sdf, Usd, UsdPhysics
+except ModuleNotFoundError as error:
+    if error.name != "pxr":
+        raise
+    from isaacsim import SimulationApp
+
+    _simulation_app = SimulationApp({"headless": True})
+    from pxr import Sdf, Usd, UsdPhysics  # noqa: E402
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 PACKAGE_DIR = SCRIPT_DIR.parent
@@ -29,6 +39,17 @@ MASS_ATOL = 1e-7
 COM_ATOL = 1e-8
 INERTIA_ATOL = 5e-10
 LIMIT_ATOL = 2e-4
+
+STARTUP_POSITIONS = {
+    "joint1": 0.0,
+    "joint2": -90.0,
+    "joint3": -1.0,
+    "joint4": 0.0,
+    "joint5": 0.0,
+    "joint6": 0.0,
+    "joint_left": 0.02,
+    "joint_right": 0.02,
+}
 
 
 def vector(text: str | None, default=(0.0, 0.0, 0.0)) -> np.ndarray:
@@ -250,6 +271,15 @@ def validate() -> dict:
         if mjcf_error > INERTIA_ATOL:
             failures.append(f"{name}: MJCF full inertia mismatch {mjcf_error:.3e}")
 
+    base = usd_links.get("base_link")
+    if base is not None:
+        if "PhysxArticulationAPI" not in authored_schemas(base):
+            failures.append("base_link: PhysxArticulationAPI is not applied")
+        if base.GetAttribute("physxArticulation:enabledSelfCollisions").Get() is not False:
+            failures.append("base_link: PhysX self-collision is not disabled")
+        if base.GetAttribute("newton:selfCollisionEnabled").Get() is not False:
+            failures.append("base_link: Newton self-collision is not disabled")
+
     usd_joints = {
         prim.GetName(): prim
         for prim in stage.Traverse()
@@ -283,6 +313,37 @@ def validate() -> dict:
             failures.append(
                 f"{name}: PhysX maxJointVelocity {physx_velocity.Get()} "
                 f"!= expected {expected_velocity}"
+            )
+
+        newton_velocity = prim.GetAttribute("newton:velocityLimit")
+        if not newton_velocity or not newton_velocity.HasAuthoredValue():
+            failures.append(f"{name}: Newton velocityLimit is not authored")
+        elif abs(float(newton_velocity.Get()) - expected_velocity) > LIMIT_ATOL:
+            failures.append(
+                f"{name}: Newton velocityLimit {newton_velocity.Get()} "
+                f"!= expected {expected_velocity}"
+            )
+
+        expected_position = STARTUP_POSITIONS[name]
+        target_position = prim.GetAttribute(
+            f"drive:{drive_kind}:physics:targetPosition"
+        )
+        state_position = prim.GetAttribute(f"state:{drive_kind}:physics:position")
+        if f"PhysicsJointStateAPI:{drive_kind}" not in authored_schemas(prim):
+            failures.append(f"{name}: PhysicsJointStateAPI:{drive_kind} is not applied")
+        if not target_position or not target_position.HasAuthoredValue():
+            failures.append(f"{name}: drive targetPosition is not authored")
+        elif abs(float(target_position.Get()) - expected_position) > LIMIT_ATOL:
+            failures.append(
+                f"{name}: drive targetPosition {target_position.Get()} "
+                f"!= startup position {expected_position}"
+            )
+        if not state_position or not state_position.HasAuthoredValue():
+            failures.append(f"{name}: joint state position is not authored")
+        elif abs(float(state_position.Get()) - expected_position) > LIMIT_ATOL:
+            failures.append(
+                f"{name}: joint state {state_position.Get()} "
+                f"!= startup position {expected_position}"
             )
 
     for selection in ("physics", "mujoco"):
@@ -337,4 +398,7 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    exit_code = main()
+    if _simulation_app is not None:
+        _simulation_app.close(exit_code=exit_code)
+    sys.exit(exit_code)

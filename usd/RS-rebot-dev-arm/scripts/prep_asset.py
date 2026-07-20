@@ -53,6 +53,19 @@ LIMITS = {
     "joint_right": (500.0, 10.0),
 }
 
+# Validated startup pose. Drive targets and authored joint state must match so
+# the articulation does not move as soon as simulation starts.
+TARGET_POSITIONS = {
+    "joint1": 0.0,
+    "joint2": -90.0,
+    "joint3": -1.0,
+    "joint4": 0.0,
+    "joint5": 0.0,
+    "joint6": 0.0,
+    "joint_left": 0.02,
+    "joint_right": 0.02,
+}
+
 # Concave parts that must make real contact; everything else stays convexHull
 # (hybrid collider outcome validated: gripper blocked->pass on BOTH engines).
 DECOMP_LINKS = ("gripper_end", "gripper_left", "gripper_right")
@@ -91,7 +104,12 @@ def author_physics_layer() -> None:
             drive.CreateTypeAttr().Set("force")
             drive.CreateStiffnessAttr().Set(k)
             drive.CreateDampingAttr().Set(d)
-            drive.CreateTargetPositionAttr().Set(0.0)
+            target_position = TARGET_POSITIONS[name]
+            drive.CreateTargetPositionAttr().Set(target_position)
+            prim.AddAppliedSchema(f"PhysicsJointStateAPI:{kind}")
+            prim.CreateAttribute(
+                f"state:{kind}:physics:position", Sdf.ValueTypeNames.Float
+            ).Set(target_position)
             effort, velocity = LIMITS[name]
             drive.CreateMaxForceAttr().Set(effort)
             prim.AddAppliedSchema("PhysxJointAPI")
@@ -130,6 +148,10 @@ def author_top_layer() -> None:
 
     base = stage.GetPrimAtPath(link_path("base_link"))
     assert base, "base_link not found"
+    base.AddAppliedSchema("PhysxArticulationAPI")
+    base.CreateAttribute(
+        "physxArticulation:enabledSelfCollisions", Sdf.ValueTypeNames.Bool
+    ).Set(False)
     base.CreateAttribute("newton:selfCollisionEnabled", Sdf.ValueTypeNames.Bool).Set(False)
     a = base.CreateAttribute("newton:solver:nconmax", Sdf.ValueTypeNames.Int, custom=True)
     a.Set(8192)
@@ -166,6 +188,14 @@ def author_top_layer() -> None:
 
 
 def verify() -> None:
+    # Unregistered Isaac/PhysX/Newton schemas are filtered by GetAppliedSchemas()
+    # in bare usd-core, so verify the authored list-op directly.
+    def authored_schemas(prim):
+        list_op = prim.GetMetadata("apiSchemas")
+        if not list_op:
+            return []
+        return list(list_op.GetAddedOrExplicitItems())
+
     stage = Usd.Stage.Open(str(TOP))
     drives = {}
     approx = {}
@@ -179,7 +209,11 @@ def verify() -> None:
                     d.GetDampingAttr().Get(),
                     d.GetTypeAttr().Get(),
                     d.GetMaxForceAttr().Get(),
+                    d.GetTargetPositionAttr().Get(),
+                    prim.GetAttribute(f"state:{kind}:physics:position").Get(),
+                    prim.GetAttribute("newton:velocityLimit").Get(),
                     prim.GetAttribute("physxJoint:maxJointVelocity").Get(),
+                    authored_schemas(prim),
                 )
         a = prim.GetAttribute("physics:approximation")
         if a and a.Get():
@@ -188,10 +222,37 @@ def verify() -> None:
     for n in GAINS:
         print(f"  {n:12s} {drives.get(n)}")
     assert set(drives) == set(GAINS), f"drive mismatch: {set(GAINS) ^ set(drives)}"
-    for name, (_, _, _, _, effort, velocity) in drives.items():
+    for name, (
+        kind,
+        stiffness,
+        damping,
+        drive_type,
+        effort,
+        target,
+        state,
+        newton_velocity,
+        physx_velocity,
+        schemas,
+    ) in drives.items():
+        expected_kind, expected_stiffness, expected_damping = GAINS[name]
         expected_effort, expected_velocity = LIMITS[name]
+        expected_target = TARGET_POSITIONS[name]
+        assert kind == expected_kind
+        assert drive_type == "force"
+        assert math.isclose(stiffness, expected_stiffness, rel_tol=0.0, abs_tol=1e-6)
+        assert math.isclose(damping, expected_damping, rel_tol=0.0, abs_tol=1e-6)
         assert math.isclose(effort, expected_effort, rel_tol=0.0, abs_tol=1e-6)
-        assert math.isclose(velocity, expected_velocity, rel_tol=0.0, abs_tol=2e-4)
+        assert math.isclose(target, expected_target, rel_tol=0.0, abs_tol=1e-6)
+        assert math.isclose(state, expected_target, rel_tol=0.0, abs_tol=1e-6)
+        assert math.isclose(
+            newton_velocity, expected_velocity, rel_tol=0.0, abs_tol=2e-4
+        )
+        assert math.isclose(
+            physx_velocity, expected_velocity, rel_tol=0.0, abs_tol=2e-4
+        )
+        assert f"PhysicsDriveAPI:{kind}" in schemas
+        assert f"PhysicsJointStateAPI:{kind}" in schemas
+        assert "PhysxJointAPI" in schemas
     print("composed approximations:", approx)
     assert len(approx) == 10
     assert sum(value == "convexDecomposition" for value in approx.values()) == 3
@@ -202,17 +263,12 @@ def verify() -> None:
         base.GetAttribute("newton:solver:nconmax").Get(),
         base.GetAttribute("newton:solver:njmax").Get(),
     )
-    # The Isaac robot schema is not registered in this bare usd-core install,
-    # so GetAppliedSchemas() filters the tokens out — read authored metadata.
-    def authored_schemas(prim):
-        lo = prim.GetMetadata("apiSchemas")
-        if not lo:
-            return []
-        return list(lo.GetAddedOrExplicitItems())
-
     root = stage.GetPrimAtPath(ROOT)
     print("root schemas (authored):", authored_schemas(root))
     assert "IsaacRobotAPI" in authored_schemas(root)
+    assert "PhysxArticulationAPI" in authored_schemas(base)
+    assert base.GetAttribute("physxArticulation:enabledSelfCollisions").Get() is False
+    assert base.GetAttribute("newton:selfCollisionEnabled").Get() is False
     n_links = sum(
         1 for p in stage.Traverse() if "IsaacLinkAPI" in authored_schemas(p)
     )

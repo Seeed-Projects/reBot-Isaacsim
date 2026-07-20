@@ -14,7 +14,7 @@ with the URDF and the Isaac Sim USD asset.
 | `rebot_devarm.xml` | the model: bodies, joints, inertials, visual + convex-collision geoms, position actuators, `home` / `raised` keyframes |
 | `scene.xml` | `rebot_devarm.xml` + floor, lights, skybox |
 | `assets/` | visual meshes (`*.STL` / `*.obj`) and coacd convex-collision meshes (`*_convex.stl`) |
-| `build_mjcf.py` | regenerates `rebot_devarm.xml` from the URDF |
+| `build_mjcf.py` | converts an `urdf-to-mjcf` XML and reinjects exact inertials from the repo URDF |
 | `parity_mujoco_vs_pinocchio.json` | gravity-parity evidence |
 
 ## Provenance & correctness
@@ -24,6 +24,14 @@ Built with [discoverse-dev/urdf-to-mjcf](https://github.com/discoverse-dev/urdf-
 `build_mjcf.py` layers on: fixed base, exact full inertials from the URDF, joint
 armature/damping, position actuators with the hardware-validated PD gains
 (rs-06 shoulder/elbow, rs-00 wrist, gripper), and keyframes.
+
+Regenerate after producing the intermediate XML with `urdf-to-mjcf`:
+
+```bash
+python build_mjcf.py /path/to/urdf-to-mjcf-output.xml
+# Or preserve the checked-in file while testing:
+python build_mjcf.py /path/to/urdf-to-mjcf-output.xml --output /tmp/rebot_devarm.xml
+```
 
 Every link keeps its **exact full URDF inertial**, including off-diagonal tensor
 terms, and `gripper_end` is kept as a
