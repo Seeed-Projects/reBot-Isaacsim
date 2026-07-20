@@ -5,10 +5,15 @@
         string creator = "URDF USD Converter v0.3.0"
     }
     defaultPrim = "tn__00armrs_asmv3_hJ6D"
-    doc = """Generated from Composed Stage of root layer urdf/00-arm-rs_asm-v3 (asset transformer, Isaac Sim Structure)
+    doc = """Physics=mujoco alias of Physics=physics.
 
-
-Generated from Composed Stage of root layer urdf/00-arm-rs_asm-v3 (asset transformer, Isaac Sim Structure)
+This layer sublayers physics.usda and currently adds no opinions of its own.
+A payload arc maps only the defaultPrim subtree, so scene-level MuJoCo
+opinions (MjcSceneAPI on /PhysicsScene) cannot vary per variant; MjcSceneAPI
+is applied unconditionally on the scene in the asset root layer instead. The
+variant is kept as a stable selection target for MuJoCo-schema consumers:
+author future mjc:* joint/actuator opinions in this layer, under the
+defaultPrim subtree, where they will compose only for Physics=mujoco.
 """
     kilogramsPerUnit = 1
     metersPerUnit = 1
@@ -18,189 +23,7 @@ Generated from Composed Stage of root layer urdf/00-arm-rs_asm-v3 (asset transfo
     upAxis = "Z"
 )
 
-over "PhysicsScene" (
-    prepend apiSchemas = ["MjcSceneAPI"]
-)
-{
-}
-
 over "tn__00armrs_asmv3_hJ6D"
 {
-    over "Geometry"
-    {
-        over "base_link"
-        {
-            over "link1"
-            {
-                over "link2"
-                {
-                    over "link3"
-                    {
-                        over "link4"
-                        {
-                            over "link5"
-                            {
-                                over "link6"
-                                {
-                                    over "gripper_end"
-                                    {
-                                        over "gripper_left"
-                                        {
-                                            over "pla_left"
-                                            {
-                                            }
-
-                                            over "cnc_left"
-                                            {
-                                            }
-
-                                            over "gripper_left"
-                                            {
-                                            }
-                                        }
-
-                                        over "gripper_right"
-                                        {
-                                            over "pla_right"
-                                            {
-                                            }
-
-                                            over "cnc_right"
-                                            {
-                                            }
-
-                                            over "gripper_right"
-                                            {
-                                            }
-                                        }
-
-                                        over "pla7_green"
-                                        {
-                                        }
-
-                                        over "cnc7"
-                                        {
-                                        }
-
-                                        over "motor_7"
-                                        {
-                                        }
-
-                                        over "gripper_end"
-                                        {
-                                        }
-                                    }
-
-                                    over "link6"
-                                    {
-                                    }
-
-                                    over "link6_1"
-                                    {
-                                    }
-                                }
-
-                                over "motor_6"
-                                {
-                                }
-
-                                over "cnc5"
-                                {
-                                }
-
-                                over "pla5_green"
-                                {
-                                }
-
-                                over "link5"
-                                {
-                                }
-                            }
-
-                            over "motor_5"
-                            {
-                            }
-
-                            over "cnc4"
-                            {
-                            }
-
-                            over "link4"
-                            {
-                            }
-                        }
-
-                        over "cnc3"
-                        {
-                        }
-
-                        over "motor_4"
-                        {
-                        }
-
-                        over "pla3_black"
-                        {
-                        }
-
-                        over "pla3_green"
-                        {
-                        }
-
-                        over "link3"
-                        {
-                        }
-                    }
-
-                    over "motor_2_3"
-                    {
-                    }
-
-                    over "cnc2"
-                    {
-                    }
-
-                    over "pla2_black"
-                    {
-                    }
-
-                    over "pla2_green"
-                    {
-                    }
-
-                    over "link2"
-                    {
-                    }
-                }
-
-                over "link1"
-                {
-                }
-
-                over "link1_1"
-                {
-                }
-            }
-
-            over "base_link"
-            {
-            }
-
-            over "base_link_1"
-            {
-            }
-        }
-    }
-
-    over "Physics"
-    {
-    }
-
-    over "Materials"
-    {
-    }
-
-    over "VisualMaterials"
-    {
-    }
 }
 

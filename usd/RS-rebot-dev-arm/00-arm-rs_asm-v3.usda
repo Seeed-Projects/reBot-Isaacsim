@@ -16,6 +16,7 @@ Generated from Composed Stage of root layer urdf/00-arm-rs_asm-v3 (asset transfo
 )
 
 def PhysicsScene "PhysicsScene" (
+    "Explicit gravity so non-Newton engines (PhysX) get a valid field. Without these, PhysX reads an undefined/degenerate gravity (observed as magnitude = -inf with direction (0,0,0)), which sends every rigid body tunnelling through the ground on the first step. Newton derives gravity from NewtonSceneAPI defaults, but PhysX needs the standard USD Physics attributes set here. -Z, 9.81 m/s^2 matches the MuJoCo/Newton parity."
     prepend apiSchemas = ["NewtonSceneAPI", "MjcSceneAPI"]
 )
 {
@@ -33,6 +34,7 @@ def Xform "tn__00armrs_asmv3_hJ6D" (
 {
     variantSet "Physics" = {
         "mujoco" (
+            "Composes identically to Physics=physics; see the layer doc in payloads/Physics/mujoco.usda."
             prepend payload = @./payloads/Physics/mujoco.usda@
         ) {
 
