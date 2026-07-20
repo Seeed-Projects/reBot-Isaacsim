@@ -60,13 +60,18 @@ Newton and PhysX velocity attributes, startup target/state agreement, articulati
 self-collision overrides, and standalone PhysicsScene composition.
 
 - Static fidelity: **PASS**, 10 links / 8 joints.
-- Newton dynamic: **PASS**, hold error 2.006e-04 rad, steady drift 3.510e-20 rad.
-- PhysX dynamic: **PASS**, hold error 6.290e-04 rad, steady drift 2.384e-07 rad.
+- Newton dynamic: **PASS**, max hold error 2.006e-04 rad / 7.898e-09 m; max measured-window excursion 4.983e-05 rad / 0.000e+00 m; 2733 discrete physics steps.
+- PhysX dynamic: **PASS**, max hold error 6.420e-04 rad / 1.550e-07 m; max measured-window excursion 1.466e-05 rad / 1.192e-07 m; 2782 discrete physics steps.
 
-The dynamic smoke runs at dt=0.002 on `cuda:0`. It verifies runtime ingestion/readback of effort and
-velocity limits, one composed scene, steady hold, a short passive-motion response, and that every
-position observed by the smoke remains inside the URDF limits. It does **not** claim torque/velocity
-saturation enforcement, hard-stop enforcement, or quantitative Newton/PhysX trajectory parity.
+The dynamic smoke runs at physics dt=0.002 on `cuda:0`. During measured phases it advances no
+application frames: each sample follows one `SimulationManager.step(steps=1)` call, a verified +1
+physics-step counter increment, and backend Fabric synchronization (explicit for Newton). It verifies
+runtime ingestion/readback of effort and velocity limits, one composed scene, convergence before
+measurement, bounded error/excursion over the complete hold window, a short passive response, and
+limits at every discrete physics step advanced by the harness. It does **not** observe solver-internal
+substeps or claim torque/velocity saturation enforcement, hard-stop enforcement, or quantitative
+Newton/PhysX trajectory parity.
+Evidence generation records and checks the exact validator and USD-package SHA-256 values.
 
 From the repository root, with `ISAACSIM_PATH` set to the Isaac Sim release directory:
 

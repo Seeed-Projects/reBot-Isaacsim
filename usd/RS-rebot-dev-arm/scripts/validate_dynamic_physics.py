@@ -11,11 +11,14 @@ Use the Isaac Sim Python launcher and point the script at the release directory:
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
+import hashlib
+import importlib
 import json
 import os
-from datetime import datetime, timezone
 from pathlib import Path
 import sys
+import traceback
 
 if len(sys.argv) != 4:
     raise SystemExit(
@@ -43,7 +46,36 @@ app = SimulationApp(
     experience=str(experience),
 )
 app_utils = None
-exit_code = 0
+# Fail closed: only a fully written, passing report changes this to zero.
+exit_code = 1
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def sha256_asset_package(root_asset: Path) -> str:
+    package_root = root_asset.parent
+    asset_files = sorted(
+        path
+        for path in package_root.rglob("*")
+        if path.is_file() and path.suffix.lower() in {".usd", ".usda", ".usdc"}
+    )
+    digest = hashlib.sha256()
+    for path in asset_files:
+        relative = path.relative_to(package_root).as_posix().encode("utf-8")
+        digest.update(relative)
+        digest.update(b"\0")
+        with path.open("rb") as stream:
+            for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                digest.update(chunk)
+        digest.update(b"\0")
+    return digest.hexdigest()
+
 
 try:
     import numpy as np
@@ -85,6 +117,14 @@ try:
     app_utils.play(commit=True)
     for _ in range(10):
         app.update()
+    newton_stage = None
+    fabric_sync_mode = "PhysX update_fabric=True"
+    if engine == "newton":
+        newton_module = importlib.import_module("isaacsim.physics.newton")
+        newton_stage = newton_module.acquire_stage()
+        if newton_stage is None:
+            raise RuntimeError("Newton stage is unavailable")
+        fabric_sync_mode = "explicit Newton stage update_fabric()"
 
     names = list(articulation.dof_names)
     expected_names = [
@@ -110,41 +150,77 @@ try:
     )
     lower_limits = np.asarray([-2.8, -3.14, -3.14, -1.79, -1.57, -3.14, 0.0, 0.0])
     upper_limits = np.asarray([2.8, 0.0, 0.0, 1.69, 1.57, 3.14, 0.05, 0.0715])
-    position_tolerance = 1e-3
-    hold_tolerance = 0.01
+    position_tolerances = np.asarray([1e-4] * 6 + [1e-5] * 2)
+    hold_error_tolerances = np.asarray([0.01] * 6 + [5e-4] * 2)
+    hold_excursion_tolerances = np.asarray([0.01] * 6 + [5e-4] * 2)
+    settle_error_tolerances = np.asarray([5e-3] * 6 + [2.5e-4] * 2)
+    rest_velocity_tolerances = np.asarray([0.01] * 6 + [1e-3] * 2)
 
     start = articulation.get_dof_positions().numpy()[0].copy()
     target = np.asarray([0.0, -0.7, -1.1, 0.0, 0.0, 0.0, 0.02, 0.02])
     observed_positions = [start.copy()]
 
-    def step(position):
+    def advance_one_physics_step(position):
+        """Advance and sample exactly one discrete physics step.
+
+        No application frame is advanced during measured phases, so the playing
+        timeline cannot auto-step physics. SimulationManager.step is the public
+        manual-stepping API. It updates PhysX Fabric; Newton requires an explicit
+        stage Fabric sync after the manual step.
+        """
+
         articulation.set_dof_position_targets(
             np.asarray(position, dtype=np.float32).reshape(1, -1)
         )
-        app.update()
+        before = SimulationManager.get_num_physics_steps()
+        SimulationManager.step(steps=1, update_fabric=True)
+        if newton_stage is not None:
+            newton_stage.update_fabric()
+        after = SimulationManager.get_num_physics_steps()
+        if after - before != 1:
+            raise RuntimeError(
+                "manual step did not advance exactly one physics step: "
+                f"before={before}, after={after}"
+            )
         current = articulation.get_dof_positions().numpy()[0].copy()
         observed_positions.append(current)
         return current
 
-    ramp_steps = 250
+    physics_steps_start = SimulationManager.get_num_physics_steps()
+    simulation_time_start = SimulationManager.get_simulation_time()
+
+    ramp_steps = 2000
     for index in range(ramp_steps):
         alpha = (index + 1) / ramp_steps
-        step(start * (1.0 - alpha) + target * alpha)
+        advance_one_physics_step(start * (1.0 - alpha) + target * alpha)
 
-    hold_settle_steps = 250
-    for _ in range(hold_settle_steps):
-        step(target)
+    settle_max_steps = 10000
+    settle_consecutive_steps_required = 100
+    settle_consecutive_steps = 0
+    hold_settle_steps = 0
+    for hold_settle_steps in range(1, settle_max_steps + 1):
+        current = advance_one_physics_step(target)
+        velocity = articulation.get_dof_velocities().numpy()[0].copy()
+        settled = bool(
+            np.all(np.abs(current - target) < settle_error_tolerances)
+            and np.all(np.abs(velocity) < rest_velocity_tolerances)
+        )
+        settle_consecutive_steps = settle_consecutive_steps + 1 if settled else 0
+        if settle_consecutive_steps >= settle_consecutive_steps_required:
+            break
+    settling_converged = settle_consecutive_steps >= settle_consecutive_steps_required
     hold_start = articulation.get_dof_positions().numpy()[0].copy()
 
-    hold_measurement_steps = 250
-    hold_samples = [hold_start]
-    for index in range(hold_measurement_steps):
-        current = step(target)
-        if (index + 1) % 50 == 0:
-            hold_samples.append(current)
-    hold_end = articulation.get_dof_positions().numpy()[0].copy()
-    hold_error = np.abs(hold_end - target)
-    hold_drift = np.abs(hold_end - hold_start)
+    hold_measurement_steps = 500
+    hold_samples = [hold_start.copy()]
+    for _ in range(hold_measurement_steps):
+        hold_samples.append(advance_one_physics_step(target))
+    hold_end = hold_samples[-1].copy()
+    hold_array = np.asarray(hold_samples)
+    hold_error_by_dof = np.max(np.abs(hold_array - target), axis=0)
+    hold_excursion_by_dof = np.max(np.abs(hold_array - hold_start), axis=0)
+    hold_min = hold_array.min(axis=0)
+    hold_max = hold_array.max(axis=0)
 
     kp, kd = articulation.get_dof_gains()
     kp_array = kp.numpy().copy()
@@ -156,19 +232,39 @@ try:
     passive_start = articulation.get_dof_positions().numpy()[0].copy()
     passive_start_velocity = articulation.get_dof_velocities().numpy()[0].copy()
     passive_probe_steps = 10
+    passive_probe_step_start = SimulationManager.get_num_physics_steps()
+    passive_probe_time_start = SimulationManager.get_simulation_time()
     passive_trace = [passive_start.copy()]
     for _ in range(passive_probe_steps):
-        passive_trace.append(step(target))
-    passive_end = articulation.get_dof_positions().numpy()[0].copy()
+        passive_trace.append(advance_one_physics_step(target))
+    passive_end = passive_trace[-1].copy()
+    passive_probe_step_end = SimulationManager.get_num_physics_steps()
+    passive_probe_time_end = SimulationManager.get_simulation_time()
     passive_motion = float(passive_end[joint3] - passive_start[joint3])
+
+    physics_steps_end = SimulationManager.get_num_physics_steps()
+    simulation_time_end = SimulationManager.get_simulation_time()
+    physics_steps_advanced = physics_steps_end - physics_steps_start
+    expected_physics_steps = ramp_steps + hold_settle_steps + hold_measurement_steps + passive_probe_steps
+    simulation_time_advanced = simulation_time_end - simulation_time_start
+    expected_simulation_time = expected_physics_steps * timestep
+    passive_probe_physics_steps = passive_probe_step_end - passive_probe_step_start
+    passive_probe_simulation_time = passive_probe_time_end - passive_probe_time_start
 
     observed = np.asarray(observed_positions)
     observed_min = observed.min(axis=0)
     observed_max = observed.max(axis=0)
     positions_within_limits = bool(
-        np.all(observed_min >= lower_limits - position_tolerance)
-        and np.all(observed_max <= upper_limits + position_tolerance)
+        np.all(observed_min >= lower_limits - position_tolerances)
+        and np.all(observed_max <= upper_limits + position_tolerances)
     )
+
+    angular = slice(0, 6)
+    linear = slice(6, 8)
+    max_angular_hold_error = float(hold_error_by_dof[angular].max())
+    max_linear_hold_error = float(hold_error_by_dof[linear].max())
+    max_angular_hold_excursion = float(hold_excursion_by_dof[angular].max())
+    max_linear_hold_excursion = float(hold_excursion_by_dof[linear].max())
 
     repo_root = Path(__file__).resolve().parents[3]
     try:
@@ -177,16 +273,28 @@ try:
         asset_label = str(asset_path)
 
     active_engine = str(SimulationManager.get_active_physics_engine()).lower()
+    time_tolerance = timestep * 1e-3
+    physics_step_contract_passed = bool(
+        physics_steps_advanced == expected_physics_steps
+        and abs(simulation_time_advanced - expected_simulation_time) <= time_tolerance
+        and passive_probe_physics_steps == passive_probe_steps
+        and abs(passive_probe_simulation_time - passive_probe_steps * timestep)
+        <= time_tolerance
+    )
     output = {
         "asset": asset_label,
+        "asset_package_sha256": sha256_asset_package(asset_path),
+        "validator_sha256": sha256_file(Path(__file__).resolve()),
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "isaac_sim_version": get_version()[0],
-        "timestep_s": timestep,
+        "physics_timestep_s": timestep,
         "device": device,
         "requested_engine": engine,
         "active_engine": active_engine,
         "articulation_root": articulation_root,
         "dof_names": names,
+        "dof_position_units": ["rad"] * 6 + ["m"] * 2,
+        "dof_velocity_units": ["rad/s"] * 6 + ["m/s"] * 2,
         "actuator_limit_validation": "runtime readback; saturation enforcement is not tested",
         "max_efforts": max_efforts.tolist(),
         "expected_max_efforts": expected_max_efforts.tolist(),
@@ -194,30 +302,58 @@ try:
         "expected_max_velocities": expected_max_velocities.tolist(),
         "physics_scenes_before_setup": scenes_before,
         "physics_scenes_after_setup": scenes_after,
-        "position_limit_validation": "all positions observed by this smoke remain in range",
+        "physics_step_validation": (
+            "readback after every discrete physics step advanced by the harness; "
+            "solver-internal substeps and hard-stop enforcement are not tested"
+        ),
+        "physics_steps_advanced": physics_steps_advanced,
+        "expected_physics_steps": expected_physics_steps,
+        "simulation_time_advanced_s": simulation_time_advanced,
+        "expected_simulation_time_s": expected_simulation_time,
+        "stepping_mode": (
+            "playing timeline without application updates; "
+            "SimulationManager.step(steps=1, update_fabric=True)"
+        ),
+        "fabric_sync_mode": fabric_sync_mode,
+        "physics_step_contract_passed": physics_step_contract_passed,
+        "position_limit_validation": (
+            "all discrete physics-step readbacks advanced by this smoke remain in range"
+        ),
         "lower_position_limits": lower_limits.tolist(),
         "upper_position_limits": upper_limits.tolist(),
+        "position_limit_tolerances": position_tolerances.tolist(),
         "observed_min_positions": observed_min.tolist(),
         "observed_max_positions": observed_max.tolist(),
         "positions_within_limits": positions_within_limits,
         "start_positions": start.tolist(),
         "target_positions": target.tolist(),
-        "hold_settle_steps": hold_settle_steps,
-        "hold_measurement_steps": hold_measurement_steps,
+        "hold_settle_physics_steps": hold_settle_steps,
+        "settle_max_physics_steps": settle_max_steps,
+        "settle_consecutive_steps_required": settle_consecutive_steps_required,
+        "settling_converged": settling_converged,
+        "settle_error_tolerances": settle_error_tolerances.tolist(),
+        "hold_measurement_physics_steps": hold_measurement_steps,
         "hold_start_positions": hold_start.tolist(),
         "hold_end_positions": hold_end.tolist(),
-        "hold_abs_error": hold_error.tolist(),
-        "hold_max_abs_error": float(hold_error.max()),
-        "hold_drift": hold_drift.tolist(),
-        "hold_max_drift": float(hold_drift.max()),
+        "hold_min_positions": hold_min.tolist(),
+        "hold_max_positions": hold_max.tolist(),
+        "hold_max_abs_error_by_dof": hold_error_by_dof.tolist(),
+        "hold_max_excursion_by_dof": hold_excursion_by_dof.tolist(),
+        "hold_error_tolerances": hold_error_tolerances.tolist(),
+        "hold_excursion_tolerances": hold_excursion_tolerances.tolist(),
+        "max_angular_hold_error_rad": max_angular_hold_error,
+        "max_linear_hold_error_m": max_linear_hold_error,
+        "max_angular_hold_excursion_rad": max_angular_hold_excursion,
+        "max_linear_hold_excursion_m": max_linear_hold_excursion,
         "passive_probe_joint": "joint3",
-        "passive_probe_steps": passive_probe_steps,
-        "passive_probe_duration_s": passive_probe_steps * timestep,
+        "passive_probe_physics_steps": passive_probe_physics_steps,
+        "passive_probe_simulation_time_s": passive_probe_simulation_time,
         "passive_start_velocity": passive_start_velocity.tolist(),
+        "rest_velocity_tolerances": rest_velocity_tolerances.tolist(),
         "passive_probe_positions_joint3": [
             float(position[joint3]) for position in passive_trace
         ],
-        "passive_motion_joint3": passive_motion,
+        "passive_motion_joint3_rad": passive_motion,
         "passed": bool(
             active_engine == engine
             and scenes_before == ["/PhysicsScene"]
@@ -226,11 +362,13 @@ try:
             and np.allclose(
                 max_velocities, expected_max_velocities, rtol=0.0, atol=1e-4
             )
-            and hold_error.max() < hold_tolerance
-            and hold_drift.max() < hold_tolerance
+            and np.all(hold_error_by_dof < hold_error_tolerances)
+            and np.all(hold_excursion_by_dof < hold_excursion_tolerances)
+            and settling_converged
             and positions_within_limits
-            and abs(passive_start_velocity[joint3]) < hold_tolerance
+            and np.all(np.abs(passive_start_velocity) < rest_velocity_tolerances)
             and passive_motion > 1e-5
+            and physics_step_contract_passed
         ),
     }
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -239,6 +377,9 @@ try:
         stream.write("\n")
     print(json.dumps(output, indent=2), flush=True)
     exit_code = 0 if output["passed"] else 1
+except BaseException:
+    traceback.print_exc()
+    raise
 finally:
     try:
         if app_utils is not None:

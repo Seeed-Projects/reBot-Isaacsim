@@ -1,8 +1,10 @@
 {
   "asset": "usd/RS-rebot-dev-arm/00-arm-rs_asm-v3.usda",
-  "generated_at_utc": "2026-07-20T15:07:01.153067+00:00",
+  "asset_package_sha256": "dda7d2f1946f31ff094b23edafe78c7631caf41b4ee5d5f2fadbd10968df9558",
+  "validator_sha256": "11bf7043113d2b2a0f51457da7b06c409bda037ef2f1e462d088cefc9576d90d",
+  "generated_at_utc": "2026-07-20T15:41:26.179476+00:00",
   "isaac_sim_version": "6.0.1",
-  "timestep_s": 0.002,
+  "physics_timestep_s": 0.002,
   "device": "cuda:0",
   "requested_engine": "newton",
   "active_engine": "newton",
@@ -16,6 +18,26 @@
     "joint6",
     "joint_left",
     "joint_right"
+  ],
+  "dof_position_units": [
+    "rad",
+    "rad",
+    "rad",
+    "rad",
+    "rad",
+    "rad",
+    "m",
+    "m"
+  ],
+  "dof_velocity_units": [
+    "rad/s",
+    "rad/s",
+    "rad/s",
+    "rad/s",
+    "rad/s",
+    "rad/s",
+    "m/s",
+    "m/s"
   ],
   "actuator_limit_validation": "runtime readback; saturation enforcement is not tested",
   "max_efforts": [
@@ -64,7 +86,15 @@
   "physics_scenes_after_setup": [
     "/PhysicsScene"
   ],
-  "position_limit_validation": "all positions observed by this smoke remain in range",
+  "physics_step_validation": "readback after every discrete physics step advanced by the harness; solver-internal substeps and hard-stop enforcement are not tested",
+  "physics_steps_advanced": 2733,
+  "expected_physics_steps": 2733,
+  "simulation_time_advanced_s": 5.466,
+  "expected_simulation_time_s": 5.466,
+  "stepping_mode": "playing timeline without application updates; SimulationManager.step(steps=1, update_fabric=True)",
+  "fabric_sync_mode": "explicit Newton stage update_fabric()",
+  "physics_step_contract_passed": true,
+  "position_limit_validation": "all discrete physics-step readbacks advanced by this smoke remain in range",
   "lower_position_limits": [
     -2.8,
     -3.14,
@@ -85,25 +115,35 @@
     0.05,
     0.0715
   ],
+  "position_limit_tolerances": [
+    0.0001,
+    0.0001,
+    0.0001,
+    0.0001,
+    0.0001,
+    0.0001,
+    1e-05,
+    1e-05
+  ],
   "observed_min_positions": [
-    -9.227039576842344e-09,
+    -4.458893698711108e-09,
     -1.5708212852478027,
     -1.0999042987823486,
     2.0507222870946862e-05,
-    -8.641564619438213e-08,
-    -2.7915316991311556e-07,
-    0.019999966025352478,
-    0.020000005140900612
+    -7.594045570158414e-08,
+    -2.846280722224037e-07,
+    0.019999992102384567,
+    0.020000001415610313
   ],
   "observed_max_positions": [
-    9.403510858874142e-08,
-    -0.6999610662460327,
+    2.769884055453531e-08,
+    -0.6999788880348206,
     -0.017418265342712402,
-    0.00022808030189480633,
-    2.871585422781209e-07,
+    0.00023298383166547865,
+    2.9106101351317193e-07,
     -3.49688633605183e-09,
     0.019999999552965164,
-    0.020000113174319267
+    0.020000111311674118
   ],
   "positions_within_limits": true,
   "start_positions": [
@@ -126,76 +166,141 @@
     0.02,
     0.02
   ],
-  "hold_settle_steps": 250,
-  "hold_measurement_steps": 250,
+  "hold_settle_physics_steps": 223,
+  "settle_max_physics_steps": 10000,
+  "settle_consecutive_steps_required": 100,
+  "settling_converged": true,
+  "settle_error_tolerances": [
+    0.005,
+    0.005,
+    0.005,
+    0.005,
+    0.005,
+    0.005,
+    0.00025,
+    0.00025
+  ],
+  "hold_measurement_physics_steps": 500,
   "hold_start_positions": [
-    -3.726543289013466e-17,
-    -0.6999897360801697,
-    -1.0999042987823486,
-    0.0002005873975576833,
-    -6.997943557962572e-08,
-    -2.633486246850225e-07,
-    0.019999997690320015,
-    0.02000000700354576
+    3.0913540616239743e-09,
+    -0.6999999284744263,
+    -1.0998544692993164,
+    0.00019905364024452865,
+    -7.015879077698628e-08,
+    -2.609333478176268e-07,
+    0.019999992102384567,
+    0.020000001415610313
   ],
   "hold_end_positions": [
-    -3.723033396238281e-17,
+    7.289369303477289e-13,
     -0.6999897360801697,
     -1.0999042987823486,
     0.0002005873975576833,
-    -6.997943557962572e-08,
-    -2.633486246850225e-07,
-    0.019999997690320015,
-    0.02000000700354576
+    -6.99792863656512e-08,
+    -2.6334686253903783e-07,
+    0.019999992102384567,
+    0.020000001415610313
   ],
-  "hold_abs_error": [
-    3.723033396238281e-17,
-    1.0263919830277857e-05,
-    9.5701217651456e-05,
+  "hold_min_positions": [
+    7.289369303477289e-13,
+    -0.6999999284744263,
+    -1.0999042987823486,
+    0.00019905364024452865,
+    -7.015879077698628e-08,
+    -2.6334686253903783e-07,
+    0.019999992102384567,
+    0.020000001415610313
+  ],
+  "hold_max_positions": [
+    3.0913540616239743e-09,
+    -0.6999897360801697,
+    -1.0998544692993164,
     0.0002005873975576833,
-    6.997943557962572e-08,
-    2.633486246850225e-07,
-    2.3096799854627204e-09,
-    7.003545760692065e-09
+    -6.99792863656512e-08,
+    -2.609333478176268e-07,
+    0.019999992102384567,
+    0.020000001415610313
   ],
-  "hold_max_abs_error": 0.0002005873975576833,
-  "hold_drift": [
-    3.509892775185007e-20,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
+  "hold_max_abs_error_by_dof": [
+    3.0913540616239743e-09,
+    1.0263919830277857e-05,
+    0.00014553070068368257,
+    0.0002005873975576833,
+    7.015879077698628e-08,
+    2.6334686253903783e-07,
+    7.897615433155591e-09,
+    1.4156103129991937e-09
+  ],
+  "hold_max_excursion_by_dof": [
+    3.0906250891860054e-09,
+    1.0192394256591797e-05,
+    4.982948303222656e-05,
+    1.5337573131546378e-06,
+    1.795044113350741e-10,
+    2.4135147214110475e-09,
     0.0,
     0.0
   ],
-  "hold_max_drift": 3.509892775185007e-20,
+  "hold_error_tolerances": [
+    0.01,
+    0.01,
+    0.01,
+    0.01,
+    0.01,
+    0.01,
+    0.0005,
+    0.0005
+  ],
+  "hold_excursion_tolerances": [
+    0.01,
+    0.01,
+    0.01,
+    0.01,
+    0.01,
+    0.01,
+    0.0005,
+    0.0005
+  ],
+  "max_angular_hold_error_rad": 0.0002005873975576833,
+  "max_linear_hold_error_m": 7.897615433155591e-09,
+  "max_angular_hold_excursion_rad": 4.982948303222656e-05,
+  "max_linear_hold_excursion_m": 0.0,
   "passive_probe_joint": "joint3",
-  "passive_probe_steps": 10,
-  "passive_probe_duration_s": 0.02,
+  "passive_probe_physics_steps": 10,
+  "passive_probe_simulation_time_s": 0.019999999999999574,
   "passive_start_velocity": [
-    7.028743657910022e-20,
-    1.447642262064619e-05,
-    -2.8938073228346184e-05,
-    3.543173754394502e-09,
-    1.7497994156054353e-12,
-    -6.863060033474033e-12,
-    -3.14332197604017e-07,
-    -3.328960644921608e-07
+    -6.180291521606929e-12,
+    1.4476416254183277e-05,
+    -2.8938084142282605e-05,
+    3.5653351382336496e-09,
+    1.7324705038623822e-12,
+    -1.455313647369394e-11,
+    -1.6532051461126684e-07,
+    -2.1368686020650784e-07
+  ],
+  "rest_velocity_tolerances": [
+    0.01,
+    0.01,
+    0.01,
+    0.01,
+    0.01,
+    0.01,
+    0.001,
+    0.001
   ],
   "passive_probe_positions_joint3": [
     -1.0999042987823486,
-    -1.0999042987823486,
-    -1.0999042987823486,
-    -1.0854384899139404,
-    -1.0854384899139404,
-    -1.0854384899139404,
-    -1.0430736541748047,
-    -1.0430736541748047,
-    -1.0430736541748047,
-    -0.9718599319458008,
-    -0.9718599319458008
+    -1.0998406410217285,
+    -1.0997145175933838,
+    -1.099526047706604,
+    -1.0992752313613892,
+    -1.0989619493484497,
+    -1.0985863208770752,
+    -1.098148226737976,
+    -1.0976476669311523,
+    -1.0970845222473145,
+    -1.096458911895752
   ],
-  "passive_motion_joint3": 0.12804436683654785,
+  "passive_motion_joint3_rad": 0.0034453868865966797,
   "passed": true
 }

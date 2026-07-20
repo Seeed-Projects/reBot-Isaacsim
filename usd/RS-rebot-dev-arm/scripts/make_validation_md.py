@@ -5,6 +5,7 @@ RS-rebot-dev-arm asset, plus the gravity-comp impact of the PR#3 mass update.
 Run: python3 make_validation_md.py   (stdlib only)
 """
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -38,6 +39,67 @@ grav = load(EV / "gravity_droop.json")
 fidelity = load(EV / "physics_fidelity_validation.json")
 dynamic_newton = load(EV / "physics_fidelity_dynamic_newton.json")
 dynamic_physx = load(EV / "physics_fidelity_dynamic_physx.json")
+
+
+def sha256_file(path):
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def sha256_asset_package(root_asset):
+    root_asset = Path(root_asset)
+    package_root = root_asset.parent
+    paths = sorted(
+        path
+        for path in package_root.rglob("*")
+        if path.is_file() and path.suffix.lower() in {".usd", ".usda", ".usdc"}
+    )
+    digest = hashlib.sha256()
+    for path in paths:
+        digest.update(path.relative_to(package_root).as_posix().encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(path.read_bytes())
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
+def validate_dynamic_evidence(report, expected_engine):
+    expected_asset = "usd/RS-rebot-dev-arm/00-arm-rs_asm-v3.usda"
+    if not report or not report.get("passed"):
+        raise RuntimeError(f"missing or failing {expected_engine} dynamic evidence")
+    if report.get("asset") != expected_asset:
+        raise RuntimeError(f"unexpected {expected_engine} asset: {report.get('asset')}")
+    if report.get("requested_engine") != expected_engine:
+        raise RuntimeError(f"unexpected requested engine in {expected_engine} evidence")
+    if report.get("active_engine") != expected_engine:
+        raise RuntimeError(f"unexpected active engine in {expected_engine} evidence")
+    if report.get("physics_timestep_s") != 0.002 or report.get("device") != "cuda:0":
+        raise RuntimeError(f"unexpected dt/device in {expected_engine} evidence")
+    if report.get("dof_position_units") != ["rad"] * 6 + ["m"] * 2:
+        raise RuntimeError(f"unexpected position units in {expected_engine} evidence")
+    if not report.get("settling_converged"):
+        raise RuntimeError(f"settling did not converge in {expected_engine} evidence")
+    validator = PKG / "scripts/validate_dynamic_physics.py"
+    if report.get("validator_sha256") != sha256_file(validator):
+        raise RuntimeError(f"stale {expected_engine} evidence: validator hash mismatch")
+    asset = PKG / "00-arm-rs_asm-v3.usda"
+    if report.get("asset_package_sha256") != sha256_asset_package(asset):
+        raise RuntimeError(f"stale {expected_engine} evidence: asset hash mismatch")
+    if not report.get("physics_step_contract_passed"):
+        raise RuntimeError(f"failed physics-step contract in {expected_engine} evidence")
+
+
+if dynamic_newton is None or dynamic_physx is None:
+    raise RuntimeError("missing Newton/PhysX dynamic evidence")
+validate_dynamic_evidence(dynamic_newton, "newton")
+validate_dynamic_evidence(dynamic_physx, "physx")
+if dynamic_newton["isaac_sim_version"] != dynamic_physx["isaac_sim_version"]:
+    raise RuntimeError("Newton/PhysX evidence uses different Isaac Sim versions")
+if not fidelity or not fidelity.get("passed"):
+    raise RuntimeError("missing or failing static fidelity evidence")
 
 lines = []
 A = lines.append
@@ -119,15 +181,27 @@ A("The static validator checks all 10 URDF/USD/MJCF inertials, all 8 drive effor
 A("Newton and PhysX velocity attributes, startup target/state agreement, articulation schemas,")
 A("self-collision overrides, and standalone PhysicsScene composition.")
 A("")
-if fidelity and dynamic_newton and dynamic_physx:
+if fidelity:
     A(f"- Static fidelity: **{'PASS' if fidelity['passed'] else 'FAIL'}**, {fidelity['links_checked']} links / {fidelity['joints_checked']} joints.")
-    A(f"- Newton dynamic: **{'PASS' if dynamic_newton['passed'] else 'FAIL'}**, hold error {dynamic_newton['hold_max_abs_error']:.3e} rad, steady drift {dynamic_newton['hold_max_drift']:.3e} rad.")
-    A(f"- PhysX dynamic: **{'PASS' if dynamic_physx['passed'] else 'FAIL'}**, hold error {dynamic_physx['hold_max_abs_error']:.3e} rad, steady drift {dynamic_physx['hold_max_drift']:.3e} rad.")
+for label, report in (("Newton", dynamic_newton), ("PhysX", dynamic_physx)):
+    A(
+        f"- {label} dynamic: **PASS**, max hold error "
+        f"{report['max_angular_hold_error_rad']:.3e} rad / "
+        f"{report['max_linear_hold_error_m']:.3e} m; max measured-window excursion "
+        f"{report['max_angular_hold_excursion_rad']:.3e} rad / "
+        f"{report['max_linear_hold_excursion_m']:.3e} m; "
+        f"{report['physics_steps_advanced']} discrete physics steps."
+    )
 A("")
-A("The dynamic smoke runs at dt=0.002 on `cuda:0`. It verifies runtime ingestion/readback of effort and")
-A("velocity limits, one composed scene, steady hold, a short passive-motion response, and that every")
-A("position observed by the smoke remains inside the URDF limits. It does **not** claim torque/velocity")
-A("saturation enforcement, hard-stop enforcement, or quantitative Newton/PhysX trajectory parity.")
+A("The dynamic smoke runs at physics dt=0.002 on `cuda:0`. During measured phases it advances no")
+A("application frames: each sample follows one `SimulationManager.step(steps=1)` call, a verified +1")
+A("physics-step counter increment, and backend Fabric synchronization (explicit for Newton). It verifies")
+A("runtime ingestion/readback of effort and velocity limits, one composed scene, convergence before")
+A("measurement, bounded error/excursion over the complete hold window, a short passive response, and")
+A("limits at every discrete physics step advanced by the harness. It does **not** observe solver-internal")
+A("substeps or claim torque/velocity saturation enforcement, hard-stop enforcement, or quantitative")
+A("Newton/PhysX trajectory parity.")
+A("Evidence generation records and checks the exact validator and USD-package SHA-256 values.")
 A("")
 A("From the repository root, with `ISAACSIM_PATH` set to the Isaac Sim release directory:")
 A("")
