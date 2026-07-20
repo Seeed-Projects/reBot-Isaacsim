@@ -52,4 +52,5 @@ for name, q6 in POSES.items():
 
 res["max_diff_all"] = round(max(p["max_abs_diff"] for p in res["poses"].values()), 8)
 print(f"\n>>> MAX over all poses = {res['max_diff_all']:.3e} N.m")
-json.dump(res, open(HERE / "parity_mujoco_vs_pinocchio.json", "w"), indent=1)
+out = HERE / "parity_mujoco_vs_pinocchio.json"
+out.write_text(json.dumps(res, indent=1) + "\n")

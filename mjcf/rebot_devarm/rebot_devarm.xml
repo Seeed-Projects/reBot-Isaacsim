@@ -21,9 +21,6 @@
         <position kp="100" kv="4" forcerange="-500 500" />
       </default>
     </default>
-    <default class="floor">
-      <geom type="plane" size="0 0 0.05" material="groundplane" />
-    </default>
   </default>
   <compiler angle="radian" meshdir="assets" balanceinertia="true" autolimits="true" />
   <option integrator="implicitfast" cone="elliptic" impratio="10" />
@@ -93,35 +90,35 @@
   <asset>
     <material name="default_material" rgba="0.7 0.7 0.7 1" />
     <mesh name="base_link_base_link" file="base_link.STL" />
-    <mesh name="link1_link1" file="link1.STL" />
-    <mesh name="link6_link6" file="link6.STL" />
     <mesh name="base_link_convex" file="base_link_convex.stl" />
-    <mesh name="link6_convex" file="link6_convex.stl" />
-    <mesh name="gripper_left_convex" file="gripper_left_convex.stl" />
+    <mesh name="link1_link1" file="link1.STL" />
     <mesh name="link1_convex" file="link1_convex.stl" />
-    <mesh name="link2_convex" file="link2_convex.stl" />
-    <mesh name="gripper_end_convex" file="gripper_end_convex.stl" />
-    <mesh name="link3_convex" file="link3_convex.stl" />
-    <mesh name="link5_convex" file="link5_convex.stl" />
-    <mesh name="gripper_right_convex" file="gripper_right_convex.stl" />
-    <mesh name="link4_convex" file="link4_convex.stl" />
     <mesh name="link2_merged_link2" file="link2_merged_link2.obj" />
+    <mesh name="link2_convex" file="link2_convex.stl" />
     <mesh name="link3_merged_link3" file="link3_merged_link3.obj" />
+    <mesh name="link3_convex" file="link3_convex.stl" />
     <mesh name="link4_merged_link4" file="link4_merged_link4.obj" />
+    <mesh name="link4_convex" file="link4_convex.stl" />
     <mesh name="link5_merged_link5" file="link5_merged_link5.obj" />
+    <mesh name="link5_convex" file="link5_convex.stl" />
+    <mesh name="link6_link6" file="link6.STL" />
+    <mesh name="link6_convex" file="link6_convex.stl" />
     <mesh name="gripper_end_merged_gripper" file="gripper_end_merged_gripper.obj" />
+    <mesh name="gripper_end_convex" file="gripper_end_convex.stl" />
     <mesh name="gripper_left_merged_gripper" file="gripper_left_merged_gripper.obj" />
+    <mesh name="gripper_left_convex" file="gripper_left_convex.stl" />
     <mesh name="gripper_right_merged_gripper" file="gripper_right_merged_gripper.obj" />
+    <mesh name="gripper_right_convex" file="gripper_right_convex.stl" />
   </asset>
   <actuator>
-    <position class="rs06" name="joint1" joint="joint1" />
-    <position class="rs06" name="joint2" joint="joint2" />
-    <position class="rs06" name="joint3" joint="joint3" />
-    <position class="rs00" name="joint4" joint="joint4" />
-    <position class="rs00" name="joint5" joint="joint5" />
-    <position class="rs00" name="joint6" joint="joint6" />
-    <position class="gripper" name="joint_left" joint="joint_left" />
-    <position class="gripper" name="joint_right" joint="joint_right" />
+    <position class="rs06" name="joint1" joint="joint1" ctrlrange="-2.8 2.8" />
+    <position class="rs06" name="joint2" joint="joint2" ctrlrange="-3.14 0" />
+    <position class="rs06" name="joint3" joint="joint3" ctrlrange="-3.14 0" />
+    <position class="rs00" name="joint4" joint="joint4" ctrlrange="-1.79 1.69" />
+    <position class="rs00" name="joint5" joint="joint5" ctrlrange="-1.57 1.57" />
+    <position class="rs00" name="joint6" joint="joint6" ctrlrange="-3.14 3.14" />
+    <position class="gripper" name="joint_left" joint="joint_left" ctrlrange="0 0.05" />
+    <position class="gripper" name="joint_right" joint="joint_right" ctrlrange="0 0.0715" />
   </actuator>
   <keyframe>
     <key name="home" qpos="0 0 0 0 0 0 0 0" ctrl="0 0 0 0 0 0 0 0" />

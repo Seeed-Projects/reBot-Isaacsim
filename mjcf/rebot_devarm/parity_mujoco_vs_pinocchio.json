@@ -1,7 +1,7 @@
 {
  "engines": {
   "mujoco": "3.10.0",
-  "pinocchio": "3.4.0 (ref, matches Isaac PhysX+Newton & real arm)"
+  "pinocchio": "3.4.0"
  },
  "unit": "N.m",
  "poses": {
