@@ -32,7 +32,7 @@ def Scope "Instances"
         {
             def Material "material_1" (
                 instanceable = true
-                prepend references = @./materials.usda@</Materials/mat_alu>
+                prepend references = @./materials.usda@</Materials/mat_red>
             )
             {
             }
