@@ -59,7 +59,7 @@ reBot-Isaacsim/
 │       └── ...
 └── usd/
     └── RS-rebot-dev-arm/
-        └── 00-arm-rs_asm-v3.usda            # Isaac Sim robot asset
+        └── RS-rebot-dev-arm.usda            # Isaac Sim robot asset
 ```
 
 ## Dependencies and Prerequisites
@@ -250,7 +250,7 @@ The receiver applies the received `gripper_position` directly as the position ta
 | `DEFAULT_PORT` | 5005 | UDP port |
 | `DEFAULT_RENDER_HZ` | 120.0 | Simulation render frequency (Hz) |
 | `ROBOT_PRIM_PATH` | `/World/reBotArm` | Robot Prim path inside Isaac Sim |
-| `ASSET_RELATIVE_PATH` | `usd/RS-rebot-dev-arm/00-arm-rs_asm-v3.usda` | USD asset path relative to the repo root |
+| `ASSET_RELATIVE_PATH` | `usd/RS-rebot-dev-arm/RS-rebot-dev-arm.usda` | USD asset path relative to the repo root |
 
 ## Troubleshooting
 
@@ -271,7 +271,7 @@ kill <PID>
 Confirm the USD asset path exists, or check that `REPO_ROOT` is correct:
 
 ```bash
-ls usd/RS-rebot-dev-arm/00-arm-rs_asm-v3.usda
+ls usd/RS-rebot-dev-arm/RS-rebot-dev-arm.usda
 ```
 
 ### CAN bus not ready

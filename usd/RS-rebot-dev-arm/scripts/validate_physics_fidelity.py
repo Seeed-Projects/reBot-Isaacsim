@@ -33,7 +33,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 PACKAGE_DIR = SCRIPT_DIR.parent
 REPO_ROOT = PACKAGE_DIR.parents[1]
 URDF_PATH = REPO_ROOT / "urdf/00-arm-rs_asm-v3/urdf/00-arm-rs_asm-v3.urdf"
-USD_PATH = PACKAGE_DIR / "00-arm-rs_asm-v3.usda"
+USD_PATH = PACKAGE_DIR / "RS-rebot-dev-arm.usda"
 MJCF_PATH = REPO_ROOT / "mjcf/rebot_devarm/rebot_devarm.xml"
 
 MASS_ATOL = 1e-7
