@@ -58,7 +58,7 @@ def Xform "tn__00armrs_asmv3_hJ6D" (
                 quatf xformOp:orient = (1, 0, 0, 0)
                 float3 xformOp:scale = (1, 1, 1)
                 double3 xformOp:translate = (-0.00034283, -0.00098683, 0.075)
-                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+                uniform token[] xformOpOrder = ["!resetXformStack!", "xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
                 def Xform "link1" (
                     instanceable = true
@@ -78,8 +78,8 @@ def Xform "tn__00armrs_asmv3_hJ6D" (
                     double[] newton:inertia = [0.000577466775, 0.00988484698, 0.0100847496, -3.3841785e-7, 0.00000669752535, 0.00000100738337]
                     quatf xformOp:orient = (-0.70710546, 0.7071081, 0, 0)
                     float3 xformOp:scale = (1, 1, 1)
-                    double3 xformOp:translate = (0.020343, 0.027237, 0.07)
-                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+                    double3 xformOp:translate = (0.02000017, 0.02625017, 0.14500000000000002)
+                    uniform token[] xformOpOrder = ["!resetXformStack!", "xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
                     def Xform "motor_2_3" (
                         instanceable = true
@@ -130,10 +130,10 @@ def Xform "tn__00armrs_asmv3_hJ6D" (
                     )
                     {
                         double[] newton:inertia = [0.000551811337, 0.00745889021, 0.00764192742, -0.0000407430508, -0.0000502214689, 7.07344633e-8]
-                        quatf xformOp:orient = (1, 0, 0, 0)
+                        quatf xformOp:orient = (-0.70710546, 0.7071081, 0, 0)
                         float3 xformOp:scale = (1, 1, 1)
-                        double3 xformOp:translate = (-0.236, 0, 0)
-                        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+                        double3 xformOp:translate = (-0.21599982999999998, 0.02625017, 0.14500000000000002)
+                        uniform token[] xformOpOrder = ["!resetXformStack!", "xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
                         def Xform "cnc3" (
                             instanceable = true
@@ -184,10 +184,10 @@ def Xform "tn__00armrs_asmv3_hJ6D" (
                         )
                         {
                             double[] newton:inertia = [0.000320508485, 0.000524525455, 0.000465171515, 0.000168799091, -0, -0]
-                            quatf xformOp:orient = (1, 0, 0, 0)
+                            quatf xformOp:orient = (-0.70710546, 0.7071081, 0, 0)
                             float3 xformOp:scale = (1, 1, 1)
-                            double3 xformOp:translate = (0.228, -0.072746, 0.0045)
-                            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+                            double3 xformOp:translate = (0.012000170000000032, 0.030750442298991626, 0.21774598315532573)
+                            uniform token[] xformOpOrder = ["!resetXformStack!", "xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
                             def Xform "motor_5" (
                                 instanceable = true
@@ -216,10 +216,10 @@ def Xform "tn__00armrs_asmv3_hJ6D" (
                             )
                             {
                                 double[] newton:inertia = [0.0000984090046, 0.0000739220615, 0.0000710245279, 1.81878283e-8, -0.00000115016294, -1.77912637e-8]
-                                quatf xformOp:orient = (-0.70710546, 0.7071081, 0, 0)
+                                quatf xformOp:orient = (0.0000037431478, 1, 0, 0)
                                 float3 xformOp:scale = (1, 1, 1)
-                                double3 xformOp:translate = (0.087, -0.048, -0.03075)
-                                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+                                double3 xformOp:translate = (0.09900017000000003, 6.21970297015606e-7, 0.26574609825678147)
+                                uniform token[] xformOpOrder = ["!resetXformStack!", "xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
                                 def Xform "motor_6" (
                                     instanceable = true
@@ -259,10 +259,10 @@ def Xform "tn__00armrs_asmv3_hJ6D" (
                                 )
                                 {
                                     double[] newton:inertia = [0.0000147424612, 0.0000145728507, 0.000028476646, 1.05586155e-11, 5.06176061e-10, -7.39546725e-12]
-                                    quatf xformOp:orient = (0.70710546, 0, 0.7071081, 0)
+                                    quatf xformOp:orient = (0.0000026468, 0.70710546, 0.0000026468101, 0.7071081)
                                     float3 xformOp:scale = (1, 1, 1)
-                                    double3 xformOp:translate = (0.0365, 0, 0.048)
-                                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+                                    double3 xformOp:translate = (0.13550017000000003, 2.6262811707019316e-7, 0.21774609825812652)
+                                    uniform token[] xformOpOrder = ["!resetXformStack!", "xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
                                     def Xform "link6" (
                                         instanceable = true
@@ -280,10 +280,10 @@ def Xform "tn__00armrs_asmv3_hJ6D" (
                                     )
                                     {
                                         double[] newton:inertia = [0.00037354, 0.0001583, 0.00045353, -1.1e-7, 5e-7, 0.00000348]
-                                        quatf xformOp:orient = (-0.0000025973434, 0.70710546, 0.000002597353, 0.7071081)
+                                        quatf xformOp:orient = (1, -6.941601e-8, -1.6983629e-8, 1.5360498e-13)
                                         float3 xformOp:scale = (1, 1, 1)
-                                        double3 xformOp:translate = (0, 0, 0.16621)
-                                        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+                                        double3 xformOp:translate = (0.30171016999883565, 2.6263277465825976e-7, 0.2177467204067071)
+                                        uniform token[] xformOpOrder = ["!resetXformStack!", "xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
                                         def Xform "pla7_green" (
                                             instanceable = true
@@ -323,10 +323,10 @@ def Xform "tn__00armrs_asmv3_hJ6D" (
                                         )
                                         {
                                             double[] newton:inertia = [0.0000109877964176176, 0.00000950146036720166, 0.00000930779991911125, 0, 0, 0]
-                                            quatf xformOp:orient = (0.49999815, 0.5, -0.5, 0.50000185)
+                                            quatf xformOp:orient = (0.49999818, 0.49999997, -0.49999997, 0.5000019)
                                             float3 xformOp:scale = (1, 1, 1)
-                                            double3 xformOp:translate = (-0.041939, -0.000073385, 0)
-                                            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+                                            double3 xformOp:translate = (0.2597711699988357, -0.00007312236723842333, 0.21774671898161133)
+                                            uniform token[] xformOpOrder = ["!resetXformStack!", "xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
                                             def Xform "pla_left" (
                                                 instanceable = true
@@ -356,10 +356,10 @@ def Xform "tn__00armrs_asmv3_hJ6D" (
                                         )
                                         {
                                             double[] newton:inertia = [0.0000109877964176176, 0.00000950146036720166, 0.00000930779991911125, 0, 0, 0]
-                                            quatf xformOp:orient = (-0.49999815, 0.5, 0.5, 0.50000185)
+                                            quatf xformOp:orient = (-0.49999812, 0.5, 0.50000006, 0.50000185)
                                             float3 xformOp:scale = (1, 1, 1)
-                                            double3 xformOp:translate = (-0.041939, 0.000073385, 0)
-                                            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+                                            double3 xformOp:translate = (0.25977116999883565, 0.0000736476327615754, 0.21774671896108036)
+                                            uniform token[] xformOpOrder = ["!resetXformStack!", "xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
                                             def Xform "pla_right" (
                                                 instanceable = true

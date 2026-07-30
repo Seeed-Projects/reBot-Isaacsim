@@ -59,7 +59,7 @@ reBot-Isaacsim/
 │       └── ...
 └── usd/
     └── RS-rebot-dev-arm/
-        └── 00-arm-rs_asm-v3.usda            # Isaac Sim 机械臂资产
+        └── RS-rebot-dev-arm.usda            # Isaac Sim 机械臂资产
 ```
 
 ## 依赖与前提条件
@@ -250,7 +250,7 @@ UDP JSON，端口 `127.0.0.1:5005`。
 | `DEFAULT_PORT` | 5005 | UDP 端口 |
 | `DEFAULT_RENDER_HZ` | 120.0 | 仿真渲染频率（Hz） |
 | `ROBOT_PRIM_PATH` | `/World/reBotArm` | Isaac Sim 中的机械臂 Prim 路径 |
-| `ASSET_RELATIVE_PATH` | `usd/RS-rebot-dev-arm/00-arm-rs_asm-v3.usda` | USD 资产相对路径 |
+| `ASSET_RELATIVE_PATH` | `usd/RS-rebot-dev-arm/RS-rebot-dev-arm.usda` | USD 资产相对路径 |
 
 ## 常见问题
 
@@ -271,7 +271,7 @@ kill <PID>
 确认 USD 资产路径存在，或检查 `REPO_ROOT` 是否正确：
 
 ```bash
-ls usd/RS-rebot-dev-arm/00-arm-rs_asm-v3.usda
+ls usd/RS-rebot-dev-arm/RS-rebot-dev-arm.usda
 ```
 
 ### CAN 总线未就绪
