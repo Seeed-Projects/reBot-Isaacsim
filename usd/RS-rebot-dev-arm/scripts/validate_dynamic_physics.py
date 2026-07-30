@@ -5,7 +5,7 @@ Run from the repo root with the Isaac Sim Python launcher:
 
     export ISAACSIM_PATH=...   # Isaac Sim install (contains python.sh + apps/)
     "$ISAACSIM_PATH"/python.sh usd/RS-rebot-dev-arm/scripts/validate_dynamic_physics.py \\
-        usd/RS-rebot-dev-arm/RS-rebot-dev-arm.usda newton \\
+        usd/RS-rebot-dev-arm/00-arm-rs_asm-v3.usda newton \\
         usd/RS-rebot-dev-arm/evidence/physics_fidelity_dynamic_newton.json
 """
 

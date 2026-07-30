@@ -35,7 +35,7 @@ from pathlib import Path
 from pxr import Sdf, Usd, UsdPhysics
 
 ASSET_DIR = Path(__file__).resolve().parent.parent
-TOP = ASSET_DIR / "RS-rebot-dev-arm.usda"
+TOP = ASSET_DIR / "00-arm-rs_asm-v3.usda"
 BASE = ASSET_DIR / "payloads" / "base.usda"
 ROBOT = ASSET_DIR / "payloads" / "robot.usda"
 INSTANCES = ASSET_DIR / "payloads" / "instances.usda"

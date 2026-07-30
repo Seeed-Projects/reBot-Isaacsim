@@ -15,15 +15,6 @@ Generated from Composed Stage of root layer urdf/00-arm-rs_asm-v3 (asset transfo
     upAxis = "Z"
 )
 
-def PhysicsScene "PhysicsScene" (
-    "Explicit gravity so non-Newton engines (PhysX) get a valid field. Without these, PhysX reads an undefined/degenerate gravity (observed as magnitude = -inf with direction (0,0,0)), which sends every rigid body tunnelling through the ground on the first step. Newton derives gravity from NewtonSceneAPI defaults, but PhysX needs the standard USD Physics attributes set here. -Z, 9.81 m/s^2 matches the MuJoCo/Newton parity."
-    prepend apiSchemas = ["NewtonSceneAPI", "MjcSceneAPI"]
-)
-{
-    vector3f physics:gravityDirection = (0, 0, -1)
-    float physics:gravityMagnitude = 9.81
-}
-
 over "tn__00armrs_asmv3_hJ6D"
 {
     over "Geometry"
@@ -118,7 +109,7 @@ over "tn__00armrs_asmv3_hJ6D"
 
                                             def Xform "gripper_left" (
                                                 instanceable = true
-                                                prepend references = @./instances.usda@</Instances/gripper_left>
+                                                prepend references = @../instances.usda@</Instances/gripper_left>
                                             )
                                             {
                                                 quatd xformOp:orient = (1, 0, 0, 0)
@@ -139,7 +130,7 @@ over "tn__00armrs_asmv3_hJ6D"
 
                                             def Xform "gripper_right" (
                                                 instanceable = true
-                                                prepend references = @./instances.usda@</Instances/gripper_right>
+                                                prepend references = @../instances.usda@</Instances/gripper_right>
                                             )
                                             {
                                                 quatd xformOp:orient = (1, 0, 0, 0)
@@ -151,7 +142,7 @@ over "tn__00armrs_asmv3_hJ6D"
 
                                         def Xform "gripper_end" (
                                             instanceable = true
-                                            prepend references = @./instances.usda@</Instances/gripper_end>
+                                            prepend references = @../instances.usda@</Instances/gripper_end>
                                         )
                                         {
                                             quatd xformOp:orient = (1, 0, 0, 0)
@@ -164,7 +155,7 @@ over "tn__00armrs_asmv3_hJ6D"
                                     def Xform "link6_1" (
                                         displayName = "link6"
                                         instanceable = true
-                                        prepend references = @./instances.usda@</Instances/link6_1>
+                                        prepend references = @../instances.usda@</Instances/link6_1>
                                     )
                                     {
                                         quatd xformOp:orient = (1, 0, 0, 0)
@@ -176,7 +167,7 @@ over "tn__00armrs_asmv3_hJ6D"
 
                                 def Xform "link5" (
                                     instanceable = true
-                                    prepend references = @./instances.usda@</Instances/link5>
+                                    prepend references = @../instances.usda@</Instances/link5>
                                 )
                                 {
                                     quatd xformOp:orient = (1, 0, 0, 0)
@@ -188,7 +179,7 @@ over "tn__00armrs_asmv3_hJ6D"
 
                             def Xform "link4" (
                                 instanceable = true
-                                prepend references = @./instances.usda@</Instances/link4>
+                                prepend references = @../instances.usda@</Instances/link4>
                             )
                             {
                                 quatd xformOp:orient = (1, 0, 0, 0)
@@ -200,7 +191,7 @@ over "tn__00armrs_asmv3_hJ6D"
 
                         def Xform "link3" (
                             instanceable = true
-                            prepend references = @./instances.usda@</Instances/link3>
+                            prepend references = @../instances.usda@</Instances/link3>
                         )
                         {
                             quatd xformOp:orient = (1, 0, 0, 0)
@@ -212,7 +203,7 @@ over "tn__00armrs_asmv3_hJ6D"
 
                     def Xform "link2" (
                         instanceable = true
-                        prepend references = @./instances.usda@</Instances/link2>
+                        prepend references = @../instances.usda@</Instances/link2>
                     )
                     {
                         quatd xformOp:orient = (1, 0, 0, 0)
@@ -225,7 +216,7 @@ over "tn__00armrs_asmv3_hJ6D"
                 def Xform "link1_1" (
                     displayName = "link1"
                     instanceable = true
-                    prepend references = @./instances.usda@</Instances/link1_1>
+                    prepend references = @../instances.usda@</Instances/link1_1>
                 )
                 {
                     quatd xformOp:orient = (1, 0, 0, 0)
@@ -238,7 +229,7 @@ over "tn__00armrs_asmv3_hJ6D"
             def Xform "base_link_1" (
                 displayName = "base_link"
                 instanceable = true
-                prepend references = @./instances.usda@</Instances/base_link_1>
+                prepend references = @../instances.usda@</Instances/base_link_1>
             )
             {
                 quatd xformOp:orient = (1, 0, 0, 0)
@@ -286,7 +277,7 @@ over "tn__00armrs_asmv3_hJ6D"
             float drive:angular:physics:damping = 96
             float drive:angular:physics:maxForce = 36
             float drive:angular:physics:stiffness = 1500
-            float drive:angular:physics:targetPosition = 0
+            float drive:angular:physics:targetPosition = -90
             uniform token drive:angular:physics:type = "force"
             float newton:angular:limitDamping = 1.74533
             float newton:angular:limitStiffness = 174.533
@@ -303,7 +294,7 @@ over "tn__00armrs_asmv3_hJ6D"
             float physics:lowerLimit = -179.90875
             float physics:upperLimit = 0
             float physxJoint:maxJointVelocity = 2864.789
-            float state:angular:physics:position = 0
+            float state:angular:physics:position = -90
             custom float urdf:limit:effort = 36
         }
 
@@ -314,7 +305,7 @@ over "tn__00armrs_asmv3_hJ6D"
             float drive:angular:physics:damping = 76
             float drive:angular:physics:maxForce = 36
             float drive:angular:physics:stiffness = 1000
-            float drive:angular:physics:targetPosition = 0
+            float drive:angular:physics:targetPosition = -1
             uniform token drive:angular:physics:type = "force"
             float newton:angular:limitDamping = 1.74533
             float newton:angular:limitStiffness = 174.533
@@ -331,7 +322,7 @@ over "tn__00armrs_asmv3_hJ6D"
             float physics:lowerLimit = -179.90875
             float physics:upperLimit = 0
             float physxJoint:maxJointVelocity = 2864.789
-            float state:angular:physics:position = 0
+            float state:angular:physics:position = -1
             custom float urdf:limit:effort = 36
         }
 
@@ -426,7 +417,7 @@ over "tn__00armrs_asmv3_hJ6D"
             float drive:linear:physics:damping = 4
             float drive:linear:physics:maxForce = 500
             float drive:linear:physics:stiffness = 100
-            float drive:linear:physics:targetPosition = 0
+            float drive:linear:physics:targetPosition = 0.02
             uniform token drive:linear:physics:type = "force"
             float newton:linear:limitDamping = 100
             float newton:linear:limitStiffness = 10000
@@ -443,7 +434,7 @@ over "tn__00armrs_asmv3_hJ6D"
             float physics:lowerLimit = 0
             float physics:upperLimit = 0.05
             float physxJoint:maxJointVelocity = 10
-            float state:linear:physics:position = 0
+            float state:linear:physics:position = 0.02
             custom float urdf:limit:effort = 500
         }
 
@@ -454,7 +445,7 @@ over "tn__00armrs_asmv3_hJ6D"
             float drive:linear:physics:damping = 4
             float drive:linear:physics:maxForce = 500
             float drive:linear:physics:stiffness = 100
-            float drive:linear:physics:targetPosition = 0
+            float drive:linear:physics:targetPosition = 0.02
             uniform token drive:linear:physics:type = "force"
             float newton:linear:limitDamping = 100
             float newton:linear:limitStiffness = 10000
@@ -471,7 +462,7 @@ over "tn__00armrs_asmv3_hJ6D"
             float physics:lowerLimit = 0
             float physics:upperLimit = 0.0715
             float physxJoint:maxJointVelocity = 10
-            float state:linear:physics:position = 0
+            float state:linear:physics:position = 0.02
             custom float urdf:limit:effort = 500
         }
 
