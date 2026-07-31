@@ -423,9 +423,9 @@ over "tn__00armrs_asmv3_hJ6D"
             prepend apiSchemas = ["PhysicsDriveAPI:linear", "PhysicsJointStateAPI:linear", "PhysxJointAPI"]
         )
         {
-            float drive:linear:physics:damping = 4
+            float drive:linear:physics:damping = 40
             float drive:linear:physics:maxForce = 500
-            float drive:linear:physics:stiffness = 100
+            float drive:linear:physics:stiffness = 1000
             float drive:linear:physics:targetPosition = 0
             uniform token drive:linear:physics:type = "force"
             float newton:linear:limitDamping = 100
@@ -451,9 +451,9 @@ over "tn__00armrs_asmv3_hJ6D"
             prepend apiSchemas = ["PhysicsDriveAPI:linear", "PhysicsJointStateAPI:linear", "PhysxJointAPI"]
         )
         {
-            float drive:linear:physics:damping = 4
+            float drive:linear:physics:damping = 40
             float drive:linear:physics:maxForce = 500
-            float drive:linear:physics:stiffness = 100
+            float drive:linear:physics:stiffness = 1000
             float drive:linear:physics:targetPosition = 0
             uniform token drive:linear:physics:type = "force"
             float newton:linear:limitDamping = 100

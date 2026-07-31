@@ -46,6 +46,16 @@ ROOT = "/tn__00armrs_asmv3_hJ6D"
 
 # joint -> (drive kind, stiffness, damping). Validated 2026-07-07 (8/8 pass,
 # errors ~1e-5 rad, Newton/PhysX parity; gt_analysis_2026-07-07/joint_drives.csv).
+#
+# The gripper pair was re-tuned 2026-07-31. At (100, 4) the fingers do not hold
+# their commanded opening while the arm accelerates: measured in Isaac Sim they
+# drift 3.8 mm off target during an arm sweep and STAY there, which reads as a
+# gripper swinging freely. Error scales as 1/stiffness (2.92 -> 0.92 -> 0.21 mm
+# for k = 100 -> 300 -> 1000), so the drive is soft rather than saturating
+# (maxForce is 500 N; holding a 0.0752 kg finger needs ~0.74 N, and x = mg/k =
+# 7.4 mm of droop was baked in). (1000, 40) matches the reference Panda gripper
+# for a comparable finger mass and measures 0.36 mm; damping rises with
+# stiffness to preserve the damping ratio so droop does not become ringing.
 GAINS = {
     "joint1": ("angular", 500.0, 60.0),
     "joint2": ("angular", 1500.0, 96.0),
@@ -53,8 +63,8 @@ GAINS = {
     "joint4": ("angular", 150.0, 18.0),
     "joint5": ("angular", 80.0, 10.0),
     "joint6": ("angular", 50.0, 7.0),
-    "joint_left": ("linear", 100.0, 4.0),
-    "joint_right": ("linear", 100.0, 4.0),
+    "joint_left": ("linear", 1000.0, 40.0),
+    "joint_right": ("linear", 1000.0, 40.0),
 }
 
 # joint -> (URDF effort, velocity in USD units). Revolute velocity is deg/s;

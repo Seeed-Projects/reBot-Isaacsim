@@ -18,7 +18,7 @@
       </default>
       <default class="gripper">
         <joint damping="1" />
-        <position kp="100" kv="4" forcerange="-500 500" />
+        <position kp="1000" kv="40" forcerange="-500 500" />
       </default>
     </default>
   </default>

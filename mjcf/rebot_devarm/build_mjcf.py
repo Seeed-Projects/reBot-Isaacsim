@@ -33,10 +33,21 @@ OUT = HERE / "rebot_devarm.xml"
 INERTIA_KEYS = ("ixx", "iyy", "izz", "ixy", "ixz", "iyz")
 JOINT_TYPES = {"revolute": "hinge", "prismatic": "slide"}
 # class -> (joint damping, kp, kv, forcerange): hardware-validated PD gains
+#
+# The gripper gains are NOT hardware-validated in the same sense as rs06/rs00:
+# they set how hard the simulated fingers hold their commanded opening. kp=100
+# against a 0.0752 kg finger leaves x = mg/k = 7.4 mm of droop at worst
+# orientation, and measured in Isaac Sim the fingers drifted 3.8 mm during an
+# arm sweep and stayed there -- the gripper reads as swinging freely. Error
+# scales as 1/kp (2.92 -> 0.92 -> 0.21 mm for kp = 100 -> 300 -> 1000), i.e. a
+# soft drive rather than force saturation (forcerange is +-500 N; holding a
+# finger needs ~0.74 N). kp=1000 matches the reference Panda gripper for a
+# comparable finger mass; kv rises with it to keep the damping ratio so the
+# droop does not become ringing.
 DYNAMICS = {
     "rs06": ("5", "900", "60", "-36 36"),
     "rs00": ("2", "120", "10", "-14 14"),
-    "gripper": ("1", "100", "4", "-500 500"),
+    "gripper": ("1", "1000", "40", "-500 500"),
 }
 JOINT_CLASS = {
     "joint1": "rs06",
