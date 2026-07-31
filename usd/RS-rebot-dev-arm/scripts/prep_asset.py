@@ -249,7 +249,19 @@ def author_physics_layer() -> dict:
     )
     ensure_comment(flag, SELF_COLLISION_COMMENT)
     ensure_attr(base, "newton:selfCollisionEnabled", Sdf.ValueTypeNames.Bool, False)
-    ensure_attr(base, "newton:solver:nconmax", Sdf.ValueTypeNames.Int, 8192, custom=True)
+    # nconmax must stay BELOW what Newton allocates for this asset, not just
+    # above the peak contact count. Newton sizes `contacts.rigid_contact_max`
+    # from the geometry -- measured 7020 for this arm on a bare tabletop scene
+    # with stock Isaac Sim 6.0.1 -- and a solver nconmax above that allocation
+    # fails EVERY step with
+    #
+    #   MuJoCo naconmax (8192) exceeds contacts.rigid_contact_max (7020).
+    #
+    # driving the articulation to NaN. 8192 was sized for the patched
+    # newton_stage build in evidence/analysis_2026-07-07; on stock builds it
+    # is unusable. 4600 sits under the allocation and is still ~2.7x the
+    # measured peak during a grasp (1695).
+    ensure_attr(base, "newton:solver:nconmax", Sdf.ValueTypeNames.Int, 4600, custom=True)
     ensure_attr(base, "newton:solver:njmax", Sdf.ValueTypeNames.Int, 32768, custom=True)
 
     drives = 0
@@ -474,7 +486,7 @@ def verify(states: dict) -> None:
     flag = base.GetAttribute("physxArticulation:enabledSelfCollisions")
     assert flag.Get() is False and flag.GetMetadata("comment") == SELF_COLLISION_COMMENT
     assert base.GetAttribute("newton:selfCollisionEnabled").Get() is False
-    assert base.GetAttribute("newton:solver:nconmax").Get() == 8192
+    assert base.GetAttribute("newton:solver:nconmax").Get() == 4600
     assert base.GetAttribute("newton:solver:njmax").Get() == 32768
 
     root = stage.GetPrimAtPath(ROOT)

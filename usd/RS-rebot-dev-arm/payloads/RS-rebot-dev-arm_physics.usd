@@ -34,7 +34,7 @@ over "tn__00armrs_asmv3_hJ6D"
         {
             double[] newton:inertia = [0.0013304, 0.00213119, 0.00275877, 1e-8, 0, 0]
             bool newton:selfCollisionEnabled = 0
-            custom int newton:solver:nconmax = 8192
+            custom int newton:solver:nconmax = 4600
             custom int newton:solver:njmax = 32768
             point3f physics:centerOfMass = (0.0000028764189, -0.00012230249, 0.024337612)
             float3 physics:diagonalInertia = (0.0013304, 0.00213119, 0.00275877)
