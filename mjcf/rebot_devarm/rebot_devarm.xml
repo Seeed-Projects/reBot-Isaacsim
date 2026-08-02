@@ -18,7 +18,7 @@
       </default>
       <default class="gripper">
         <joint damping="1" />
-        <position kp="100" kv="4" forcerange="-500 500" />
+        <position kp="5000" kv="41.28" forcerange="-1904 1904" />
       </default>
     </default>
   </default>
@@ -74,7 +74,7 @@
                     </body>
                     <body name="gripper_right" pos="-0.041939 7.3385E-05 0" quat="0.5 -0.5 -0.5 -0.5">
                       <inertial pos="0.00218008703135955 -0.018709035593418 0.00932188568692151" mass="0.0752" fullinertia="1.09877964176176E-05 9.50146036720166E-06 9.30779991911125E-06 0 0 0" />
-                      <joint name="joint_right" type="slide" range="0 0.0715" axis="0 0 1" class="gripper" />
+                      <joint name="joint_right" type="slide" range="0 0.05" axis="0 0 1" class="gripper" />
                       <geom name="gripper_right_visual_0" type="mesh" mesh="gripper_right_merged_gripper" material="default_material" class="visual" pos="0 0 0" />
                       <geom type="mesh" class="collision" name="gripper_right_collision_gripper_right_convex" mesh="gripper_right_convex" />
                     </body>
@@ -118,8 +118,11 @@
     <position class="rs00" name="joint5" joint="joint5" ctrlrange="-1.57 1.57" />
     <position class="rs00" name="joint6" joint="joint6" ctrlrange="-3.14 3.14" />
     <position class="gripper" name="joint_left" joint="joint_left" ctrlrange="0 0.05" />
-    <position class="gripper" name="joint_right" joint="joint_right" ctrlrange="0 0.0715" />
+    <position class="gripper" name="joint_right" joint="joint_right" ctrlrange="0 0.05" />
   </actuator>
+  <equality>
+    <joint joint1="joint_left" joint2="joint_right" polycoef="0 1 0 0 0" solref="0.004 1" solimp="0.9999 0.99999 0.001 0.5 2" />
+  </equality>
   <keyframe>
     <key name="home" qpos="0 0 0 0 0 0 0 0" ctrl="0 0 0 0 0 0 0 0" />
     <key name="raised" qpos="0 -0.7 -1.1 0 0 0 0 0" ctrl="0 -0.7 -1.1 0 0 0 0 0" />

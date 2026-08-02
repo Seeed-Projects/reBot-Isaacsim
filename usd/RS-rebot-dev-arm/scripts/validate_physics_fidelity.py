@@ -461,27 +461,21 @@ def check_usd_variant(selection, urdf_links, urdf_joints, failures, metrics):
                 f"!= expected {expected_velocity}"
             )
 
+    # The asset deliberately authors no PhysicsScene: gravity belongs to the
+    # stage that loads the robot, not to the robot. SimReady RC.005 rejects
+    # physics attributes authored in the interface layer, and the reference
+    # SimReady robot (Robotiq 2F-85) ships without one too. Assert its absence
+    # so a future re-export cannot quietly reintroduce a hardcoded gravity that
+    # would fight the host scene.
     scenes = [
         prim for prim in stage.Traverse() if prim.GetTypeName() == "PhysicsScene"
     ]
-    if len(scenes) != 1:
+    if scenes:
         failures.append(
-            f"{context}: expected one composed PhysicsScene, got {len(scenes)}"
+            f"{context}: asset must not author a PhysicsScene, got "
+            f"{[str(p.GetPath()) for p in scenes]}"
         )
-        return
-    scene = scenes[0]
-    gravity_direction = attr_value(
-        scene, "physics:gravityDirection", failures, context
-    )
-    gravity_magnitude = attr_value(
-        scene, "physics:gravityMagnitude", failures, context
-    )
-    if gravity_direction is not None and not np.allclose(
-        np.asarray(gravity_direction, dtype=float), [0, 0, -1], atol=1e-7
-    ):
-        failures.append(f"{context}: unexpected gravity direction {gravity_direction}")
-    if gravity_magnitude is not None and abs(float(gravity_magnitude) - 9.81) > 1e-6:
-        failures.append(f"{context}: unexpected gravity magnitude {gravity_magnitude}")
+    return
 
 
 def validate() -> dict:

@@ -18,8 +18,8 @@ Generated from Composed Stage of root layer urdf/00-arm-rs_asm-v3 (asset transfo
 def Xform "tn__00armrs_asmv3_hJ6D" (
     prepend apiSchemas = ["IsaacRobotAPI"]
     kind = "component"
-    prepend references = @./payloads/RS-rebot-dev-arm_base.usd@
     prepend payload = @./payloads/RS-rebot-dev-arm_physics.usd@
+    prepend references = @./payloads/RS-rebot-dev-arm_base.usd@
     variants = {
         string Physics = "physics"
     }
@@ -59,6 +59,124 @@ def Xform "tn__00armrs_asmv3_hJ6D" (
 
         }
         "none" {
+            over "Physics" (
+                active = false
+            )
+            {
+            }
+
+            over "Geometry"
+            {
+                over "base_link" (
+                    apiSchemas = None
+                )
+                {
+                    over "base_link_1" (
+                        active = false
+                    )
+                    {
+                    }
+
+                    over "link1" (
+                        apiSchemas = None
+                    )
+                    {
+                        over "link1_1" (
+                            active = false
+                        )
+                        {
+                        }
+
+                        over "link2" (
+                            apiSchemas = None
+                        )
+                        {
+                            over "link2" (
+                                active = false
+                            )
+                            {
+                            }
+
+                            over "link3" (
+                                apiSchemas = None
+                            )
+                            {
+                                over "link3" (
+                                    active = false
+                                )
+                                {
+                                }
+
+                                over "link4" (
+                                    apiSchemas = None
+                                )
+                                {
+                                    over "link4" (
+                                        active = false
+                                    )
+                                    {
+                                    }
+
+                                    over "link5" (
+                                        apiSchemas = None
+                                    )
+                                    {
+                                        over "link5" (
+                                            active = false
+                                        )
+                                        {
+                                        }
+
+                                        over "link6" (
+                                            apiSchemas = None
+                                        )
+                                        {
+                                            over "link6_1" (
+                                                active = false
+                                            )
+                                            {
+                                            }
+
+                                            over "gripper_end" (
+                                                apiSchemas = None
+                                            )
+                                            {
+                                                over "gripper_end" (
+                                                    active = false
+                                                )
+                                                {
+                                                }
+
+                                                over "gripper_left" (
+                                                    apiSchemas = None
+                                                )
+                                                {
+                                                    over "gripper_left" (
+                                                        active = false
+                                                    )
+                                                    {
+                                                    }
+                                                }
+
+                                                over "gripper_right" (
+                                                    apiSchemas = None
+                                                )
+                                                {
+                                                    over "gripper_right" (
+                                                        active = false
+                                                    )
+                                                    {
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
 
         }
         "physics" (

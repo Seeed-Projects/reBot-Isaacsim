@@ -36,7 +36,15 @@ JOINT_TYPES = {"revolute": "hinge", "prismatic": "slide"}
 DYNAMICS = {
     "rs06": ("5", "900", "60", "-36 36"),
     "rs00": ("2", "120", "10", "-14 14"),
-    "gripper": ("1", "100", "4", "-500 500"),
+    # Gripper gains come from the physical actuator, not from a tuned guess.
+    # Motor 7 (RobStride, limit_torque = 14 Nm read from firmware) drives both
+    # racks through one pinion of r = 7.353 mm/rad, so it presents
+    # K = kp_motor / r^2 = 50 / 0.007353^2 = 925 kN/m and 14 / 0.007353 = 1904 N
+    # at the finger. kp is capped at the stiffest value that stays stable at the
+    # solver step; kv gives a damping ratio of 1 against the 0.0752 kg finger.
+    # The previous (100, 4, 500) left the fingers at zeta = 0.685 -- underdamped,
+    # f_n = 5.45 Hz -- so they swung whenever the arm moved.
+    "gripper": ("1", "5000", "41.28", "-1904 1904"),
 }
 JOINT_CLASS = {
     "joint1": "rs06",
@@ -270,6 +278,27 @@ class Builder:
                 "ctrlrange": range_,
             }
             ET.SubElement(actuator, "position", attrs)
+
+        # The two fingers are one mechanism, not two: a single motor drives two
+        # opposed racks through one pinion (hardware BOM: 02_Rack.step x2), so
+        # their travel is rigidly 1:1. Modelling them as independent prismatic
+        # joints let the jaws drift apart whenever the arm accelerated.
+        # solref uses the standard positive (timeconst, dampratio) form with
+        # timeconst = 2*dt. Direct constraint gains (negative solref) couple
+        # ~11x tighter in MuJoCo but make Newton's SolverMuJoCo diverge to NaN,
+        # and this model is published for both engines.
+        equality = ET.SubElement(root, "equality")
+        ET.SubElement(
+            equality,
+            "joint",
+            {
+                "joint1": "joint_left",
+                "joint2": "joint_right",
+                "polycoef": "0 1 0 0 0",
+                "solref": "0.004 1",
+                "solimp": "0.9999 0.99999 0.001 0.5 2",
+            },
+        )
 
         keyframe = ET.SubElement(root, "keyframe")
         for name, qpos in KEYFRAMES:

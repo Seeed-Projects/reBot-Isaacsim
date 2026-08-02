@@ -75,3 +75,10 @@ Evidence: `evidence/gt_pj_new_newton.json`, `evidence/gt_pj_new_physx.json`, `ev
 `evidence/physics_fidelity_dynamic_physx.json`, and logs alongside. Harnesses:
 `scripts/gaintuner_perjoint_361.py`, `scripts/run_full_matrix.sh`,
 `scripts/validate_physics_fidelity.py`, and `scripts/validate_dynamic_physics.py`.
+
+See [`GRIPPER_RESIDUAL_MOTION.md`](GRIPPER_RESIDUAL_MOTION.md) for why the jaws
+still deflect slightly while the arm slews even though one motor holds them: the
+residual is integration error, not drive compliance or coupling softness, and at
+the real motor's reflected stiffness it falls below the physical encoder noise
+floor. That note also gives the timestep guidance for anyone needing sub-0.01 mm
+fidelity.
