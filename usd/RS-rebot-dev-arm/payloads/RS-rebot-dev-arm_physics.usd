@@ -15,16 +15,7 @@ Generated from Composed Stage of root layer urdf/00-arm-rs_asm-v3 (asset transfo
     upAxis = "Z"
 )
 
-def PhysicsScene "PhysicsScene" (
-    "Explicit gravity so non-Newton engines (PhysX) get a valid field. Without these, PhysX reads an undefined/degenerate gravity (observed as magnitude = -inf with direction (0,0,0)), which sends every rigid body tunnelling through the ground on the first step. Newton derives gravity from NewtonSceneAPI defaults, but PhysX needs the standard USD Physics attributes set here. -Z, 9.81 m/s^2 matches the MuJoCo/Newton parity."
-    prepend apiSchemas = ["NewtonSceneAPI", "MjcSceneAPI"]
-)
-{
-    vector3f physics:gravityDirection = (0, 0, -1)
-    float physics:gravityMagnitude = 9.81
-}
-
-over "tn__00armrs_asmv3_hJ6D"
+def "tn__00armrs_asmv3_hJ6D"
 {
     over "Geometry"
     {
@@ -423,14 +414,14 @@ over "tn__00armrs_asmv3_hJ6D"
             prepend apiSchemas = ["PhysicsDriveAPI:linear", "PhysicsJointStateAPI:linear", "PhysxJointAPI"]
         )
         {
-            float drive:linear:physics:damping = 4
-            float drive:linear:physics:maxForce = 500
-            float drive:linear:physics:stiffness = 100
+            float drive:linear:physics:damping = 41.28
+            float drive:linear:physics:maxForce = 1904
+            float drive:linear:physics:stiffness = 5000
             float drive:linear:physics:targetPosition = 0
             uniform token drive:linear:physics:type = "force"
             float newton:linear:limitDamping = 100
             float newton:linear:limitStiffness = 10000
-            float newton:velocityLimit = 10
+            float newton:velocityLimit = 0.243
             uniform token physics:axis = "Z"
             custom rel physics:body0
             prepend rel physics:body0 = </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end>
@@ -442,23 +433,23 @@ over "tn__00armrs_asmv3_hJ6D"
             quatf physics:localRot1 = (1, 0, 0, 0)
             float physics:lowerLimit = 0
             float physics:upperLimit = 0.05
-            float physxJoint:maxJointVelocity = 10
+            float physxJoint:maxJointVelocity = 0.243
             float state:linear:physics:position = 0
-            custom float urdf:limit:effort = 500
+            custom float urdf:limit:effort = 1904
         }
 
         def PhysicsPrismaticJoint "joint_right" (
-            prepend apiSchemas = ["PhysicsDriveAPI:linear", "PhysicsJointStateAPI:linear", "PhysxJointAPI"]
+            prepend apiSchemas = ["PhysicsDriveAPI:linear", "PhysicsJointStateAPI:linear", "PhysxJointAPI", "PhysxMimicJointAPI:Z"]
         )
         {
-            float drive:linear:physics:damping = 4
-            float drive:linear:physics:maxForce = 500
-            float drive:linear:physics:stiffness = 100
+            float drive:linear:physics:damping = 41.28
+            float drive:linear:physics:maxForce = 1904
+            float drive:linear:physics:stiffness = 5000
             float drive:linear:physics:targetPosition = 0
             uniform token drive:linear:physics:type = "force"
             float newton:linear:limitDamping = 100
             float newton:linear:limitStiffness = 10000
-            float newton:velocityLimit = 10
+            float newton:velocityLimit = 0.243
             uniform token physics:axis = "Z"
             custom rel physics:body0
             prepend rel physics:body0 = </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end>
@@ -470,9 +461,13 @@ over "tn__00armrs_asmv3_hJ6D"
             quatf physics:localRot1 = (1, 0, 0, 0)
             float physics:lowerLimit = 0
             float physics:upperLimit = 0.0715
-            float physxJoint:maxJointVelocity = 10
+            float physxJoint:maxJointVelocity = 0.243
+            float physxMimicJoint:Z:gearing = -1
+            float physxMimicJoint:Z:offset = 0
+            rel physxMimicJoint:Z:referenceJoint = </tn__00armrs_asmv3_hJ6D/Physics/joint_left>
+            uniform token physxMimicJoint:Z:referenceJointAxis = "Z"
             float state:linear:physics:position = 0
-            custom float urdf:limit:effort = 500
+            custom float urdf:limit:effort = 1904
         }
 
         def PhysicsFixedJoint "root_joint"
