@@ -50,7 +50,7 @@ published hardware spec are documented here, never silently corrected in the mod
 | J2/J3 range | 180° span ([-180°, 0]) | 220° span | model narrower than spec |
 | J4 range | [-102.6°, +96.8°] | ±90° (vendor URDF and spec agree) | repo URDF is the outlier — recommend reading the firmware limit registers to settle it |
 | wrist velocity (J4–J6) | 40 rad/s | RS-00 no-load 33 rad/s | limit above achievable no-load speed |
-| gripper | 2 independent 500 N prismatic fingers, strokes 0.05 / 0.0715 m | 1 RS-00 driving both fingers via a rack | downstream consumers command both fingers; asymmetric strokes come from CAD |
+| gripper | 2 mimic-coupled 500 N prismatic fingers, stroke 0.05 m each | 1 RS-00 driving both racks from a single pinion | joint_right mimics joint_left with gearing -1 (opposed joint frames), matching the measured 1:1 travel |
 | total mass | 6.009 kg | 6.5–6.7 kg | modeled mass ≈8% light |
 
 ## Known deltas vs the uploaded `usd/RS-rebot-dev-arm`
