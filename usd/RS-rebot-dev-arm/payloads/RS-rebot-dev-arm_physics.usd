@@ -460,7 +460,7 @@ def "tn__00armrs_asmv3_hJ6D"
             quatf physics:localRot0 = (-0.49999815, 0.5, 0.5, 0.50000185)
             quatf physics:localRot1 = (1, 0, 0, 0)
             float physics:lowerLimit = 0
-            float physics:upperLimit = 0.0715
+            float physics:upperLimit = 0.05
             float physxJoint:maxJointVelocity = 0.243
             float physxMimicJoint:Z:gearing = -1
             float physxMimicJoint:Z:offset = 0
