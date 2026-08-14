@@ -110,7 +110,7 @@ uv sync
 
 ### 3. Switch the hardware config to RS
 
-This repo's Isaac Sim asset is RS (`usd/RS-rebot-dev-arm`). Upstream `rebotarm.yaml` defaults to DM. `gravity_joint_sender.py` uses `RebotArm()`, so both the motor protocol and Pinocchio `g(q)` follow this file; leave it on DM and CAN/motors will not match, and gravity compensation will have the wrong sign. This only dirties the submodule working tree — do not commit it:
+This repo's Isaac Sim asset is RS (`usd/RS-rebot-dev-arm`). Upstream `rebotarm.yaml` defaults to DM. Both `RebotArm()` and `load_robot_model()` follow this file, so gravity compensation, joint-reader, IK, and Traj all need RS first; leave it on DM and the motor protocol will not match, and Pinocchio will load the DM URDF. This only dirties the submodule working tree — do not commit it:
 
 ```bash
 cd reBotArm_Isaacsim
@@ -159,10 +159,11 @@ python set_hw_rs.py
 
 #### ② Inverse Kinematics Mode (`isaacsim_ik_sender`)
 
-Input end-effector pose (position/orientation), solve via IK and drive the Isaac Sim arm. Run directly with `uv run` from `reBotArm_Isaacsim/`:
+Input end-effector pose (position/orientation), solve via IK and drive the Isaac Sim arm. `load_robot_model()` reads the submodule `rebotarm.yaml`, so switch to RS first:
 
 ```bash
 cd reBotArm_Isaacsim
+python set_hw_rs.py
 uv run python isaacsim_ik_sender.py
 ```
 
@@ -176,10 +177,11 @@ gripper <0~1>                # update gripper only
 
 #### ③ Trajectory Planning Mode (`isaacsim_traj_sender`)
 
-IK plus joint-space trajectory planning (MIN_JERK) for smooth motion. Run directly with `uv run` from `reBotArm_Isaacsim/`:
+IK plus joint-space trajectory planning (MIN_JERK) for smooth motion. It also uses `load_robot_model()` against that YAML, so switch to RS first:
 
 ```bash
 cd reBotArm_Isaacsim
+python set_hw_rs.py
 uv run python isaacsim_traj_sender.py
 ```
 
@@ -202,18 +204,20 @@ cd reBotArm_Isaacsim
 uv run python isaacsim_joint_test_sender.py
 ```
 
-The test sender loops through a few preset joint poses with slow interpolation; no CAN connection is required.
+The test sender loops through a few preset joint poses with slow interpolation; it does not read the hardware YAML, so neither `set_hw_rs.py` nor CAN is required.
 
 #### ⑤ Real-to-Sim Mapping Mode (`joint_reader_sender`)
 
-Read-only joint angles mapped to Isaac Sim; suitable for use while the physical arm is running other tasks (simultaneous visualization). Run directly with `uv run` from `reBotArm_Isaacsim/`:
+Read-only joint angles mapped to Isaac Sim; suitable for use while the physical arm is running other tasks (simultaneous visualization). `RebotArm()` reads the submodule `rebotarm.yaml`, so switch to RS first:
 
 ```bash
 cd reBotArm_Isaacsim
+python set_hw_rs.py
 uv run python joint_reader_sender.py
 ```
 
 **Expected behavior:**
+- `set_hw_rs.py` switches the motor config to RS (local change; do not commit)
 - Joint angles are read in passive feedback mode only (no control commands are sent)
 - Joint angles are streamed over UDP at 60 Hz
 - When the physical arm is being controlled by another project, this still mirrors its motion into Isaac Sim for visualization

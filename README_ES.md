@@ -110,7 +110,7 @@ uv sync
 
 ### 3. Cambiar la configuración de hardware a RS
 
-El asset de Isaac Sim de este repo es RS (`usd/RS-rebot-dev-arm`). El `rebotarm.yaml` upstream usa DM por defecto. `gravity_joint_sender.py` usa `RebotArm()`, así que el protocolo de motores y el `g(q)` de Pinocchio leen este archivo; si se deja en DM, CAN/motores no coincidirán y la compensación de gravedad tendrá el signo invertido. Solo ensucia el working tree del submodule: no hagas commit:
+El asset de Isaac Sim de este repo es RS (`usd/RS-rebot-dev-arm`). El `rebotarm.yaml` upstream usa DM por defecto. Tanto `RebotArm()` como `load_robot_model()` leen este archivo, así que compensación de gravedad, mapeo de solo lectura, IK y Traj necesitan RS primero; si se deja en DM, el protocolo de motores no coincidirá y Pinocchio cargará el URDF de DM. Solo ensucia el working tree del submodule: no hagas commit:
 
 ```bash
 cd reBotArm_Isaacsim
@@ -159,10 +159,11 @@ python set_hw_rs.py
 
 #### 2. Modo de cinemática inversa (`isaacsim_ik_sender`)
 
-Introduce la pose del efector final (posición/orientación); el sistema la resuelve mediante IK y mueve el brazo en Isaac Sim. Ejecuta directamente con `uv run` desde `reBotArm_Isaacsim/`:
+Introduce la pose del efector final (posición/orientación); el sistema la resuelve mediante IK y mueve el brazo en Isaac Sim. `load_robot_model()` lee el `rebotarm.yaml` del submodule, así que cambia a RS primero:
 
 ```bash
 cd reBotArm_Isaacsim
+python set_hw_rs.py
 uv run python isaacsim_ik_sender.py
 ```
 
@@ -176,10 +177,11 @@ gripper <0–1>                # actualiza solo la pinza
 
 #### 3. Modo de planificación de trayectorias (`isaacsim_traj_sender`)
 
-IK más planificación de trayectorias en el espacio articular (MIN_JERK) para un movimiento suave. Ejecuta directamente con `uv run` desde `reBotArm_Isaacsim/`:
+IK más planificación de trayectorias en el espacio articular (MIN_JERK) para un movimiento suave. También usa `load_robot_model()` contra ese YAML, así que cambia a RS primero:
 
 ```bash
 cd reBotArm_Isaacsim
+python set_hw_rs.py
 uv run python isaacsim_traj_sender.py
 ```
 
@@ -202,18 +204,20 @@ cd reBotArm_Isaacsim
 uv run python isaacsim_joint_test_sender.py
 ```
 
-El emisor de prueba recorre en bucle varias poses articulares predefinidas con interpolación lenta; no se necesita conexión CAN.
+El emisor de prueba recorre en bucle varias poses articulares predefinidas con interpolación lenta; no lee el YAML de hardware, así que no hacen falta `set_hw_rs.py` ni CAN.
 
 #### 5. Modo de mapeo Real-to-Sim (`joint_reader_sender`)
 
-Ángulos articulares de solo lectura mapeados a Isaac Sim; adecuado para usarlo mientras el brazo físico ejecuta otras tareas (visualización simultánea). Ejecuta directamente con `uv run` desde `reBotArm_Isaacsim/`:
+Ángulos articulares de solo lectura mapeados a Isaac Sim; adecuado para usarlo mientras el brazo físico ejecuta otras tareas (visualización simultánea). `RebotArm()` lee el `rebotarm.yaml` del submodule, así que cambia a RS primero:
 
 ```bash
 cd reBotArm_Isaacsim
+python set_hw_rs.py
 uv run python joint_reader_sender.py
 ```
 
 **Comportamiento esperado:**
+- `set_hw_rs.py` cambia la configuración de motores a RS (cambio local; no hacer commit)
 - Los ángulos articulares se leen únicamente en modo de realimentación pasiva (no se envía ningún comando de control)
 - Los ángulos articulares se envían por UDP a 60 Hz
 - Cuando el brazo físico está controlado por otro proyecto, su movimiento se sigue reflejando en Isaac Sim para visualizarlo

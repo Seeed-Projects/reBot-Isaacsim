@@ -110,7 +110,7 @@ uv sync
 
 ### 3. 将硬件配置切到 RS
 
-本仓 Isaac Sim 资产是 RS（`usd/RS-rebot-dev-arm`）。上游 `rebotarm.yaml` 默认是 DM。`gravity_joint_sender.py` 使用 `RebotArm()`，电机协议和 Pinocchio `g(q)` 都读这一份；不切到 RS，CAN/电机会对不上，重力补偿符号也会反。只改 submodule 工作区，不要提交：
+本仓 Isaac Sim 资产是 RS（`usd/RS-rebot-dev-arm`）。上游 `rebotarm.yaml` 默认是 DM。`RebotArm()` 和 `load_robot_model()` 都读这一份，所以重力补偿、只读映射、IK、Traj 都要先切到 RS；不切的话电机协议会对不上，Pinocchio 也会用 DM URDF。只改 submodule 工作区，不要提交：
 
 ```bash
 cd reBotArm_Isaacsim
@@ -159,10 +159,11 @@ python set_hw_rs.py
 
 #### ② 逆运动学模式（`isaacsim_ik_sender`）
 
-输入末端位姿（位置/姿态），IK 求解后驱动 Isaac Sim 仿真机械臂。在 `reBotArm_Isaacsim/` 目录下直接 `uv run`：
+输入末端位姿（位置/姿态），IK 求解后驱动 Isaac Sim 仿真机械臂。`load_robot_model()` 读 submodule 的 `rebotarm.yaml`，需先切到 RS：
 
 ```bash
 cd reBotArm_Isaacsim
+python set_hw_rs.py
 uv run python isaacsim_ik_sender.py
 ```
 
@@ -176,10 +177,11 @@ gripper <0~1>                # 单独更新夹爪
 
 #### ③ 轨迹规划模式（`isaacsim_traj_sender`）
 
-在 IK 基础上增加关节空间轨迹规划（MIN_JERK），实现平滑运动。在 `reBotArm_Isaacsim/` 目录下直接 `uv run`：
+在 IK 基础上增加关节空间轨迹规划（MIN_JERK），实现平滑运动。同样通过 `load_robot_model()` 读那份 YAML，需先切到 RS：
 
 ```bash
 cd reBotArm_Isaacsim
+python set_hw_rs.py
 uv run python isaacsim_traj_sender.py
 ```
 
@@ -202,18 +204,20 @@ cd reBotArm_Isaacsim
 uv run python isaacsim_joint_test_sender.py
 ```
 
-测试发送端在几个预设关节姿态之间缓慢插值循环发送，无需 CAN 连接。
+测试发送端在几个预设关节姿态之间缓慢插值循环发送，不读硬件 YAML，无需 `set_hw_rs.py` 或 CAN。
 
 #### ⑤ Real-to-Sim 映射模式（`joint_reader_sender`）
 
-只读关节角并映射到 Isaac Sim，适合实际机械臂在运行其他任务时同步映射可视化。在 `reBotArm_Isaacsim/` 目录下直接 `uv run`：
+只读关节角并映射到 Isaac Sim，适合实际机械臂在运行其他任务时同步映射可视化。`RebotArm()` 读 submodule 的 `rebotarm.yaml`，需先切到 RS：
 
 ```bash
 cd reBotArm_Isaacsim
+python set_hw_rs.py
 uv run python joint_reader_sender.py
 ```
 
 **预期行为：**
+- `set_hw_rs.py` 把电机配置切到 RS（本机改动，勿提交）
 - 仅读取关节角（被动反馈模式），不发送任何控制指令
 - 关节角以 60 Hz 持续通过 UDP 发送
 - 实际机械臂由其他项目控制时，可同时在 Isaac Sim 中可视化
