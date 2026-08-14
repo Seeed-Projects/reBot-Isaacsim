@@ -110,7 +110,7 @@ uv sync
 
 ### 3. Cambiar la configuración de hardware a RS
 
-El asset de Isaac Sim de este repo es RS (`usd/RS-rebot-dev-arm`). El `rebotarm.yaml` upstream usa DM por defecto; hay que ponerlo en RS en esta máquina o la compensación de gravedad tendrá el signo invertido. Solo ensucia el working tree del submodule: no hagas commit:
+El asset de Isaac Sim de este repo es RS (`usd/RS-rebot-dev-arm`). El `rebotarm.yaml` upstream usa DM por defecto. `gravity_joint_sender.py` usa `RebotArm()`, así que el protocolo de motores y el `g(q)` de Pinocchio leen este archivo; si se deja en DM, CAN/motores no coincidirán y la compensación de gravedad tendrá el signo invertido. Solo ensucia el working tree del submodule: no hagas commit:
 
 ```bash
 cd reBotArm_Isaacsim
@@ -151,7 +151,7 @@ python set_hw_rs.py
 ```
 
 **Comportamiento esperado:**
-- `set_hw_rs.py` apunta el `rebotarm.yaml` del submodule a `rebotarm_rs.yaml` (cambio local; no hacer commit)
+- `set_hw_rs.py` apunta el `rebotarm.yaml` del submodule a `rebotarm_rs.yaml` para que motores y el modelo de gravedad usen el mismo YAML (cambio local; no hacer commit)
 - Se conecta el brazo físico y arranca el `GravityCompensation` upstream (mismo MIT + feed-forward `g(q)` que `example/9`)
 - El brazo puede moverse libremente con la mano
 - Este script solo envía los ángulos articulares a Isaac Sim por UDP a 60 Hz
@@ -256,6 +256,7 @@ El receptor aplica el `gripper_position` recibido directamente como objetivo de 
 
 | Parámetro | Valor por defecto | Descripción |
 |------|--------|------|
+| YAML de hardware | `set_hw_rs.py` → `rebotarm_rs.yaml` | `RebotArm()` lee `config/rebotarm.yaml` del submodule; motores y Pinocchio lo comparten |
 | `ARM_JOINT_COUNT` | 6 | Número de articulaciones |
 | `DEFAULT_PORT` | 5005 | Puerto UDP |
 | `DEFAULT_SEND_HZ` | 60.0 | Frecuencia de envío (Hz) |

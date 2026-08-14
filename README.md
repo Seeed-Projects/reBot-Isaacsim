@@ -110,7 +110,7 @@ uv sync
 
 ### 3. 将硬件配置切到 RS
 
-本仓 Isaac Sim 资产是 RS（`usd/RS-rebot-dev-arm`）。上游 `rebotarm.yaml` 默认是 DM，需要在本机改成 RS，否则重力补偿符号会反。只改 submodule 工作区，不要提交：
+本仓 Isaac Sim 资产是 RS（`usd/RS-rebot-dev-arm`）。上游 `rebotarm.yaml` 默认是 DM。`gravity_joint_sender.py` 使用 `RebotArm()`，电机协议和 Pinocchio `g(q)` 都读这一份；不切到 RS，CAN/电机会对不上，重力补偿符号也会反。只改 submodule 工作区，不要提交：
 
 ```bash
 cd reBotArm_Isaacsim
@@ -151,7 +151,7 @@ python set_hw_rs.py
 ```
 
 **预期行为：**
-- `set_hw_rs.py` 把 submodule 的 `rebotarm.yaml` 指到 `rebotarm_rs.yaml`（本机改动，勿提交）
+- `set_hw_rs.py` 把 submodule 的 `rebotarm.yaml` 指到 `rebotarm_rs.yaml`，电机和重力模型共用这一份（本机改动，勿提交）
 - 连接真实机械臂，启动上游 `GravityCompensation`（与 `example/9` 同一套 MIT + `g(q)` 前馈）
 - 机械臂可自由掰动
 - 本脚本只把关节角以 60 Hz 通过 UDP 发给 Isaac Sim
@@ -256,6 +256,7 @@ UDP JSON，端口 `127.0.0.1:5005`。
 
 | 参数 | 默认值 | 说明 |
 |------|--------|------|
+| 硬件 YAML | `set_hw_rs.py` → `rebotarm_rs.yaml` | `RebotArm()` 读取 submodule `config/rebotarm.yaml`；电机与 Pinocchio 共用 |
 | `ARM_JOINT_COUNT` | 6 | 关节数 |
 | `DEFAULT_PORT` | 5005 | UDP 端口 |
 | `DEFAULT_SEND_HZ` | 60.0 | 发送频率（Hz） |

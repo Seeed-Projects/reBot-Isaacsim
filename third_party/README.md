@@ -29,6 +29,7 @@ git add third_party/reBotArm_control_py
 Do not commit machine-local edits such as `config/rebotarm.yaml`
 (`rebotarm_rs.yaml` vs `rebotarm_dm.yaml`) into this parent repository.
 To switch this machine to RS (matches `usd/RS-rebot-dev-arm`), run
-`python reBotArm_Isaacsim/set_hw_rs.py`.
+`python reBotArm_Isaacsim/set_hw_rs.py`. Senders that call `RebotArm()` use
+that file for both motors and Pinocchio.
 `.gitmodules` sets `ignore = dirty` so those local YAML edits do not show up
 in the parent `git status` (a different submodule HEAD still will).
