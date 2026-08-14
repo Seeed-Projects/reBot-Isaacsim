@@ -752,8 +752,8 @@
     <limit
       lower="0"
       upper="0.05"
-      effort="500"
-      velocity="10" />
+      effort="1904"
+      velocity="0.243" />
   </joint>
   <link
     name="gripper_right">
@@ -837,8 +837,8 @@
       xyz="0 0 1" />
     <limit
       lower="0"
-      upper="0.0715"
-      effort="500"
-      velocity="10" />
+      upper="0.05"
+      effort="1904"
+      velocity="0.243" />
   </joint>
 </robot>

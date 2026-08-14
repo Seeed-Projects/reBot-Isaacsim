@@ -7,7 +7,7 @@
     defaultPrim = "tn__00armrs_asmv3_hJ6D"
     doc = """Physics=mujoco alias of Physics=physics.
 
-This layer sublayers physics.usda and currently adds no opinions of its own.
+This layer sublayers RS-rebot-dev-arm_physics.usd and currently adds no opinions of its own.
 A payload arc maps only the defaultPrim subtree, so scene-level MuJoCo
 opinions (MjcSceneAPI on /PhysicsScene) cannot vary per variant; MjcSceneAPI
 is applied unconditionally on the scene in the asset root layer instead. The
@@ -18,7 +18,7 @@ defaultPrim subtree, where they will compose only for Physics=mujoco.
     kilogramsPerUnit = 1
     metersPerUnit = 1
     subLayers = [
-        @./physics.usda@
+        @../RS-rebot-dev-arm_physics.usd@
     ]
     upAxis = "Z"
 )

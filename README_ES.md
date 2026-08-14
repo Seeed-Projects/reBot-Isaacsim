@@ -59,7 +59,7 @@ reBot-Isaacsim/
 │   └── reBotArm_control_py/                 # git submodule: biblioteca de control upstream
 └── usd/
     └── RS-rebot-dev-arm/
-        └── 00-arm-rs_asm-v3.usda            # Asset del robot para Isaac Sim
+        └── RS-rebot-dev-arm.usda            # Asset del robot para Isaac Sim
 ```
 
 ## Dependencias y requisitos previos
@@ -241,7 +241,7 @@ JSON sobre UDP en `127.0.0.1:5005`.
 | `gripper_position` | float | Objetivo de posición de los dedos de la pinza (m); cada emisor lo calcula con su propia conversión (véase más abajo) |
 
 **Cadena de control de la pinza:**
-El receptor aplica el `gripper_position` recibido directamente como objetivo de posición de las dos articulaciones prismáticas de los dedos, recortado por dedo a `[0, límite superior]` (límites superiores del USD: `joint_left` 0,05 m, `joint_right` 0,0715 m). El receptor no aplica ninguna escala adicional. Los emisores convierten su entrada a `gripper_position` de la siguiente manera:
+El receptor aplica el `gripper_position` recibido directamente como objetivo de posición de las dos articulaciones prismáticas de los dedos, recortado por dedo a `[0, límite superior]` (límite superior del USD: 0,05 m en ambos dedos; un solo motor mueve los dos a través de un único piñón, por lo que su recorrido es rígidamente 1:1). El receptor no aplica ninguna escala adicional. Los emisores convierten su entrada a `gripper_position` de la siguiente manera:
 
 | Emisor | Conversión a `gripper_position` (m) |
 |------|------|
@@ -270,7 +270,7 @@ El receptor aplica el `gripper_position` recibido directamente como objetivo de 
 | `DEFAULT_PORT` | 5005 | Puerto UDP |
 | `DEFAULT_RENDER_HZ` | 120.0 | Frecuencia de renderizado de la simulación (Hz) |
 | `ROBOT_PRIM_PATH` | `/World/reBotArm` | Ruta del Prim del robot dentro de Isaac Sim |
-| `ASSET_RELATIVE_PATH` | `usd/RS-rebot-dev-arm/00-arm-rs_asm-v3.usda` | Ruta del asset USD relativa a la raíz del repositorio |
+| `ASSET_RELATIVE_PATH` | `usd/RS-rebot-dev-arm/RS-rebot-dev-arm.usda` | Ruta del asset USD relativa a la raíz del repositorio |
 
 ## Resolución de problemas
 
@@ -291,7 +291,7 @@ kill <PID>
 Confirma que la ruta del asset USD existe o comprueba que `REPO_ROOT` es correcto:
 
 ```bash
-ls usd/RS-rebot-dev-arm/00-arm-rs_asm-v3.usda
+ls usd/RS-rebot-dev-arm/RS-rebot-dev-arm.usda
 ```
 
 ### El bus CAN no está listo

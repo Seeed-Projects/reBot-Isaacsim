@@ -59,7 +59,7 @@ reBot-Isaacsim/
 │   └── reBotArm_control_py/                 # git submodule：上游控制库
 └── usd/
     └── RS-rebot-dev-arm/
-        └── 00-arm-rs_asm-v3.usda            # Isaac Sim 机械臂资产
+        └── RS-rebot-dev-arm.usda            # Isaac Sim 机械臂资产
 ```
 
 ## 依赖与前提条件
@@ -241,7 +241,7 @@ UDP JSON，端口 `127.0.0.1:5005`。
 | `gripper_position` | float | 夹爪指位置目标（m），各发送端有各自的换算方式（见下表） |
 
 **夹爪控制链：**
-接收端将收到的 `gripper_position` 直接作为左右两个滑动关节的位置目标，并按各指裁剪到 `[0, 上限]`（USD 上限：`joint_left` 0.05 m，`joint_right` 0.0715 m）。接收端不做额外缩放。各发送端到 `gripper_position` 的换算如下：
+接收端将收到的 `gripper_position` 直接作为左右两个滑动关节的位置目标，并按各指裁剪到 `[0, 上限]`（USD 上限：两指均为 0.05 m；两指由同一电机通过单个小齿轮驱动，行程严格 1:1）。接收端不做额外缩放。各发送端到 `gripper_position` 的换算如下：
 
 | 发送端 | 到 `gripper_position`（m）的换算 |
 |------|------|
@@ -270,7 +270,7 @@ UDP JSON，端口 `127.0.0.1:5005`。
 | `DEFAULT_PORT` | 5005 | UDP 端口 |
 | `DEFAULT_RENDER_HZ` | 120.0 | 仿真渲染频率（Hz） |
 | `ROBOT_PRIM_PATH` | `/World/reBotArm` | Isaac Sim 中的机械臂 Prim 路径 |
-| `ASSET_RELATIVE_PATH` | `usd/RS-rebot-dev-arm/00-arm-rs_asm-v3.usda` | USD 资产相对路径 |
+| `ASSET_RELATIVE_PATH` | `usd/RS-rebot-dev-arm/RS-rebot-dev-arm.usda` | USD 资产相对路径 |
 
 ## 常见问题
 
@@ -291,7 +291,7 @@ kill <PID>
 确认 USD 资产路径存在，或检查 `REPO_ROOT` 是否正确：
 
 ```bash
-ls usd/RS-rebot-dev-arm/00-arm-rs_asm-v3.usda
+ls usd/RS-rebot-dev-arm/RS-rebot-dev-arm.usda
 ```
 
 ### CAN 总线未就绪

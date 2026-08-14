@@ -6,7 +6,7 @@ set -uo pipefail
 
 : "${ISAACSIM_PATH:?set ISAACSIM_PATH to your Isaac Sim release dir}"
 PKG="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-USD=$PKG/00-arm-rs_asm-v3.usda
+USD=$PKG/RS-rebot-dev-arm.usda
 EV=$PKG/evidence
 
 for engine in newton physx; do

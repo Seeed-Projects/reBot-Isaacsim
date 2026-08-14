@@ -32,14 +32,14 @@ Run with any python that has pxr (usd-core):
 import math
 from pathlib import Path
 
-from pxr import Sdf, Usd, UsdPhysics
+from pxr import Gf, PhysxSchema, Sdf, Usd, UsdPhysics
 
 ASSET_DIR = Path(__file__).resolve().parent.parent
-TOP = ASSET_DIR / "00-arm-rs_asm-v3.usda"
-BASE = ASSET_DIR / "payloads" / "base.usda"
+TOP = ASSET_DIR / "RS-rebot-dev-arm.usda"
+BASE = ASSET_DIR / "payloads" / "RS-rebot-dev-arm_base.usd"
 ROBOT = ASSET_DIR / "payloads" / "robot.usda"
 INSTANCES = ASSET_DIR / "payloads" / "instances.usda"
-PHYSICS = ASSET_DIR / "payloads" / "Physics" / "physics.usda"
+PHYSICS = ASSET_DIR / "payloads" / "RS-rebot-dev-arm_physics.usd"
 MUJOCO = ASSET_DIR / "payloads" / "Physics" / "mujoco.usda"
 
 ROOT = "/tn__00armrs_asmv3_hJ6D"
@@ -53,8 +53,27 @@ GAINS = {
     "joint4": ("angular", 150.0, 18.0),
     "joint5": ("angular", 80.0, 10.0),
     "joint6": ("angular", 50.0, 7.0),
-    "joint_left": ("linear", 100.0, 4.0),
-    "joint_right": ("linear", 100.0, 4.0),
+    # Finger drives re-derived 2026-08-01 from the physical actuator instead of
+    # the original placeholder (100, 4), which left the fingers at zeta = 0.685
+    # -- underdamped, f_n = 5.45 Hz -- while every arm joint sits at zeta 18-49.
+    # They sagged 7.4 mm under gravity and swung whenever the arm moved. Motor 7
+    # (RobStride, limit_torque = 14 Nm read live over CAN) drives both racks
+    # through one pinion of r = 7.353 mm/rad, so the actuator presents
+    # K = 50 / 0.007353^2 = 925 kN/m at the finger. That exact value is far above
+    # the solver's usable range, so the drive is capped at the stiffest gain that
+    # stays smooth at the Isaac 1/120 s step, with damping set for zeta = 1.0
+    # against the 0.0852 kg effective finger mass.
+    "joint_left": ("linear", 5000.0, 41.28),
+    # joint_right carries both the mimic and its own drive, deliberately.
+    # SimReady DJ.004 asks a mimic joint to have zero gains, and on a revolute
+    # joint that is right: PhysX enforces the constraint and the follower is
+    # carried by the leader. On a PRISMATIC joint PhysX does not enforce it --
+    # measured in Isaac Sim 6.1, removing PhysxMimicJointAPI entirely changes
+    # nothing (identical deviation to 4 decimal places), and with zero gains the
+    # fingers drift 51.5 mm, far worse than the 2.3 mm bug this asset fixes.
+    # Newton and MuJoCo do honour the coupling, so the constraint stays for
+    # them while the drive keeps PhysX correct. See DJ.004 note in the PR.
+    "joint_right": ("linear", 5000.0, 41.28),
 }
 
 # joint -> (URDF effort, velocity in USD units). Revolute velocity is deg/s;
@@ -66,9 +85,23 @@ LIMITS = {
     "joint4": (14.0, 2291.8313),
     "joint5": (14.0, 2291.8313),
     "joint6": (14.0, 2291.8313),
-    "joint_left": (500.0, 10.0),
-    "joint_right": (500.0, 10.0),
+    # Finger force/speed limits are the motor's own envelope reflected through
+    # the pinion: 14 Nm / 0.007353 m = 1904 N, 33 rad/s * 0.007353 m = 0.243 m/s.
+    # The previous (500 N, 10 m/s) pair was arbitrary -- 10 m/s is ~41x faster
+    # than the hardware can drive the fingers.
+    "joint_left": (1904.0, 0.243),
+    "joint_right": (1904.0, 0.243),
 }
+
+# The two fingers are not independent on the real arm: a single pinion on motor 7
+# drives two opposed racks (hardware BOM: 02_Rack.step x2), so their travel is
+# rigidly 1:1. Modelling them as two free prismatic joints let them drift apart.
+# PhysX constrains q_follower + gearing * q_leader + offset = 0, so gearing = -1
+# is what makes the two joint coordinates EQUAL (their travel axes are already
+# antiparallel in the parent frame: axis_left . axis_right = -1). Using +1 gives
+# q_right = -q_left and the jaws collapse instead of holding their opening.
+MIMIC = {"follower": "joint_right", "leader": "joint_left",
+         "gearing": -1.0, "offset": 0.0}
 
 # Newton enforces UsdPhysics joint limits as SOFT penalty springs and defaults
 # joint_limit_ke=100 N*m/rad / kd=1, which gravity blows straight through
@@ -112,6 +145,17 @@ COLLISION_INSTANCES = {
     "gripper_right": "gripper_right",
 }
 
+# Body-level physics API schemas removed inside the Physics=none variant, so
+# the "no physics" selection composes to plain geometry even though the physics
+# payload is attached to the root prim (required by SimReady ISA.001).
+NEUTRAL_STRIPPED_APIS = (
+    "PhysicsRigidBodyAPI",
+    "PhysicsMassAPI",
+    "NewtonMassAPI",
+    "PhysicsArticulationRootAPI",
+    "PhysxArticulationAPI",
+)
+
 SELF_COLLISION_COMMENT = (
     "PhysX needs PhysxArticulationAPI applied for the self-collision flag to"
     " take effect. Newton reads newton:selfCollisionEnabled, but under PhysX"
@@ -136,7 +180,7 @@ MUJOCO_VARIANT_COMMENT = (
 
 MUJOCO_DOC = """Physics=mujoco alias of Physics=physics.
 
-This layer sublayers physics.usda and currently adds no opinions of its own.
+This layer sublayers RS-rebot-dev-arm_physics.usd and currently adds no opinions of its own.
 A payload arc maps only the defaultPrim subtree, so scene-level MuJoCo
 opinions (MjcSceneAPI on /PhysicsScene) cannot vary per variant; MjcSceneAPI
 is applied unconditionally on the scene in the asset root layer instead. The
@@ -213,7 +257,7 @@ def move_collision_instances() -> None:
             moved += 1
         assert physics.GetPrimAtPath(path), f"collision instance missing: {path}"
         for ref in physics.GetPrimAtPath(path).referenceList.prependedItems:
-            assert ref.assetPath == "../instances.usda", f"bad anchor on {path}"
+            assert ref.assetPath == "./instances.usda", f"bad anchor on {path}"
     base.Save()
     physics.Save()
     print(f"[base.usda -> physics.usda] collision instances moved={moved}")
@@ -292,8 +336,32 @@ def author_physics_layer() -> dict:
         ensure_attr(prim, f"newton:{kind}:limitDamping", float_type, limit_kd)
         drives += 1
     assert drives == 8, f"expected 8 drives, authored {drives}"
+
+    # Couple the fingers: one pinion, two opposed racks, 1:1 travel.
+    follower = next(
+        prim for prim in stage.TraverseAll()
+        if prim.GetName() == MIMIC["follower"]
+        and prim.GetTypeName() == "PhysicsPrismaticJoint"
+    )
+    leader = next(
+        prim for prim in stage.TraverseAll()
+        if prim.GetName() == MIMIC["leader"]
+        and prim.GetTypeName() == "PhysicsPrismaticJoint"
+    )
+    axis = follower.GetAttribute("physics:axis").Get()
+    mimic = PhysxSchema.PhysxMimicJointAPI.Apply(follower, axis)
+    mimic.CreateReferenceJointRel().SetTargets([leader.GetPath()])
+    mimic.CreateReferenceJointAxisAttr().Set(
+        leader.GetAttribute("physics:axis").Get()
+    )
+    mimic.CreateGearingAttr().Set(MIMIC["gearing"])
+    mimic.CreateOffsetAttr().Set(MIMIC["offset"])
+
     layer.Save()
-    print(f"[physics.usda] drives={drives}, limit gains authored, dead scene removed")
+    print(
+        f"[physics.usda] drives={drives}, limit gains authored, dead scene removed, "
+        f"mimic {MIMIC['follower']}->{MIMIC['leader']} gearing={MIMIC['gearing']}"
+    )
     return states
 
 
@@ -359,14 +427,14 @@ def author_mujoco_layer() -> None:
     layer = Sdf.Layer.FindOrOpen(str(MUJOCO))
     for name in [prim.name for prim in layer.rootPrims]:
         del layer.rootPrims[name]
-    if list(layer.subLayerPaths) != ["./physics.usda"]:
+    if list(layer.subLayerPaths) != ["../RS-rebot-dev-arm_physics.usd"]:
         layer.subLayerPaths.clear()
-        layer.subLayerPaths.append("./physics.usda")
+        layer.subLayerPaths.append("../RS-rebot-dev-arm_physics.usd")
     if layer.documentation != MUJOCO_DOC:
         layer.documentation = MUJOCO_DOC
     Sdf.CreatePrimInLayer(layer, ROOT)
     layer.Save()
-    print("[mujoco.usda] regenerated as documented alias of physics.usda")
+    print("[mujoco.usda] regenerated as documented alias of the physics layer")
 
 
 def author_top_layer() -> None:
@@ -374,20 +442,82 @@ def author_top_layer() -> None:
     layer = stage.GetRootLayer()
     assert stage.GetEditTarget().GetLayer() == layer
 
-    scene = UsdPhysics.Scene.Define(stage, "/PhysicsScene")
-    scene.CreateGravityDirectionAttr().Set((0.0, 0.0, -1.0))
-    scene.CreateGravityMagnitudeAttr().Set(9.81)
-    scene_prim = scene.GetPrim()
-    ensure_api_schema(scene_prim, "NewtonSceneAPI")
-    ensure_api_schema(scene_prim, "MjcSceneAPI")
-    ensure_comment(scene_prim, GRAVITY_COMMENT)
+    # No PhysicsScene is authored here, deliberately. Gravity belongs to the
+    # consuming stage, not to a robot asset: SimReady's own reference robot
+    # (sample_content/.../Robotiq/2F-85/simready_isaac_usd) authors none, and
+    # RC.005 fails any physics attribute authored in the interface layer.
+    # Measured placements, none of which satisfy every constraint:
+    #     interface layer /PhysicsScene   composes, but fails RC.005
+    #     physics layer   /PhysicsScene   never composes (payload maps only the
+    #                                     defaultPrim subtree)
+    #     physics layer   <robot>/PhysicsScene  composes and passes RC.005, but
+    #                                     leaks into any stage referencing the
+    #                                     robot, which verify() forbids
+    # Isaac Sim, Newton and MuJoCo all supply gravity from the scene they load
+    # the robot into, so authoring it in the asset only risks fighting the host.
+    # SimReady ISA.001 requires the physics payload on the default prim in THIS
+    # layer: isaac_sim/composition/validation.py reads prim_spec.payloadList
+    # directly, so the payload authored inside the Physics=physics variant does
+    # not satisfy it. A root-prim payload composes under every selection, which
+    # is why author_neutral_variant() below subtracts it again inside
+    # Physics=none.
+    root_spec = layer.GetPrimAtPath(ROOT)
+    payload = Sdf.Payload(f"./payloads/{PHYSICS.name}")
+    if payload not in root_spec.payloadList.prependedItems:
+        root_spec.payloadList.prependedItems.append(payload)
 
     variant = layer.GetPrimAtPath(ROOT).variantSets["Physics"].variants["mujoco"]
     if variant.primSpec.comment != MUJOCO_VARIANT_COMMENT:
         variant.primSpec.comment = MUJOCO_VARIANT_COMMENT
 
+    author_neutral_variant(stage, layer)
+
     layer.Save()
     print("[top layer] physics scene + variant docs authored")
+
+
+def author_neutral_variant(stage, layer) -> None:
+    """Subtract the physics payload inside Physics=none so it is really neutral.
+
+    SimReady ISA.001 requires the _physics.usd payload on the default prim in
+    the ROOT layer -- isaac_sim/composition/validation.py reads
+    prim_spec.payloadList directly, so a payload authored inside a variant does
+    not satisfy it. But a root-prim payload composes under every variant
+    selection, which left Physics=none carrying the whole physics stack: 10
+    colliders, 10 rigid bodies and 10 joints. That is the condition verify()
+    already asserted against, and a SimReady Robot-Body Neutral requirement.
+
+    Both hold at once if the variant subtracts what the payload adds: deactivate
+    the /Physics scope and the collision-instance prims, and drop the
+    body-level physics API schemas off the links. The payload stays where
+    ISA.001 wants it; the neutral selection composes to plain geometry.
+    """
+    variant = layer.GetPrimAtPath(ROOT).variantSets["Physics"].variants["none"]
+    root_path = Sdf.Path(ROOT)
+
+    def under_variant(path):
+        return variant.primSpec.path.AppendPath(path.MakeRelativePath(root_path))
+
+    Sdf.CreatePrimInLayer(layer, under_variant(Sdf.Path(f"{ROOT}/Physics"))).active = False
+
+    for link, child in COLLISION_INSTANCES.items():
+        path = Sdf.Path(f"{link_path(link)}/{child}")
+        Sdf.CreatePrimInLayer(layer, under_variant(path)).active = False
+
+    variant_set = stage.GetPrimAtPath(ROOT).GetVariantSets().GetVariantSet("Physics")
+    restore = variant_set.GetVariantSelection()
+    assert variant_set.SetVariantSelection("physics")
+    bodies = [p.GetPath() for p in stage.Traverse() if p.HasAPI(UsdPhysics.RigidBodyAPI)]
+    assert variant_set.SetVariantSelection(restore)
+
+    for path in bodies:
+        spec = Sdf.CreatePrimInLayer(layer, under_variant(path))
+        authored = spec.GetInfo("apiSchemas") if spec.HasInfo("apiSchemas") else None
+        kept = [s for s in (list(authored.prependedItems) if authored else [])
+                if s not in NEUTRAL_STRIPPED_APIS]
+        listop = Sdf.TokenListOp()
+        listop.explicitItems = kept
+        spec.SetInfo("apiSchemas", listop)
 
 
 def _colliders(stage) -> dict:
@@ -405,11 +535,13 @@ def verify(states: dict) -> None:
     stage = Usd.Stage.Open(str(TOP))
     stage.SetEditTarget(stage.GetSessionLayer())
 
+    # A robot asset must not carry its own PhysicsScene: gravity belongs to the
+    # stage that loads it. SimReady RC.005 rejects physics attributes authored
+    # in the interface layer, and the reference SimReady robot (Robotiq 2F-85)
+    # authors none either. Consumers that need gravity define it themselves --
+    # mjcf/rebot_devarm/scene.xml and the Isaac/Newton harnesses all do.
     scenes = [p for p in stage.TraverseAll() if p.GetTypeName() == "PhysicsScene"]
-    assert len(scenes) == 1, f"expected exactly 1 PhysicsScene, got {scenes}"
-    gravity = scenes[0].GetAttribute("physics:gravityMagnitude").Get()
-    assert math.isclose(gravity, 9.81, rel_tol=1e-6)
-    assert scenes[0].GetMetadata("comment") == GRAVITY_COMMENT
+    assert not scenes, f"asset must not author a PhysicsScene, got {scenes}"
 
     scratch = Usd.Stage.CreateInMemory()
     holder = scratch.DefinePrim("/robot")
@@ -420,7 +552,22 @@ def verify(states: dict) -> None:
     variant_set = stage.GetPrimAtPath(ROOT).GetVariantSets().GetVariantSet("Physics")
     assert variant_set.GetVariantSelection() == "physics"
     mujoco_layer = Sdf.Layer.FindOrOpen(str(MUJOCO))
-    assert list(mujoco_layer.subLayerPaths) == ["./physics.usda"]
+    assert list(mujoco_layer.subLayerPaths) == ["../RS-rebot-dev-arm_physics.usd"]
+
+    # The finger coupling must survive regeneration: without it the two
+    # prismatic joints are independent DOFs again and the jaws drift apart.
+    follower = stage.GetPrimAtPath(f"{ROOT}/Physics/{MIMIC['follower']}")
+    axis = follower.GetAttribute("physics:axis").Get()
+    assert follower.HasAPI(PhysxSchema.PhysxMimicJointAPI, axis), (
+        f"{MIMIC['follower']} lost PhysxMimicJointAPI:{axis}"
+    )
+    mimic = PhysxSchema.PhysxMimicJointAPI(follower, axis)
+    targets = mimic.GetReferenceJointRel().GetTargets()
+    assert len(targets) == 1 and targets[0].name == MIMIC["leader"], (
+        f"mimic reference joint is {targets}, expected {MIMIC['leader']}"
+    )
+    assert math.isclose(mimic.GetGearingAttr().Get(), MIMIC["gearing"], rel_tol=1e-6)
+    assert math.isclose(mimic.GetOffsetAttr().Get(), MIMIC["offset"], abs_tol=1e-9)
 
     for selection in ("physics", "mujoco"):
         assert variant_set.SetVariantSelection(selection)
@@ -431,8 +578,15 @@ def verify(states: dict) -> None:
 
             def get(attr, prim=prim):
                 return prim.GetAttribute(attr).Get()
-            assert get(f"drive:{kind}:physics:stiffness") == stiffness
-            assert get(f"drive:{kind}:physics:damping") == damping
+            # USD stores drive gains as float32, so an authored decimal such as
+            # 41.28 reads back as 41.279998779296875. Compare with a tolerance
+            # instead of ==, which only held while every gain was integral.
+            assert math.isclose(
+                get(f"drive:{kind}:physics:stiffness"), stiffness, rel_tol=1e-6
+            )
+            assert math.isclose(
+                get(f"drive:{kind}:physics:damping"), damping, rel_tol=1e-6
+            )
             target = get(f"drive:{kind}:physics:targetPosition")
             state = get(f"state:{kind}:physics:position")
             assert target == state, f"{name}: target {target} != state {state}"
@@ -453,7 +607,7 @@ def verify(states: dict) -> None:
             assert math.isclose(
                 get(f"newton:{kind}:limitDamping"), limit_kd, rel_tol=1e-6
             ), f"{name}: limitDamping"
-        assert sorted(max_forces) == [14.0] * 3 + [36.0] * 3 + [500.0] * 2
+        assert sorted(max_forces) == [14.0] * 3 + [36.0] * 3 + [1904.0] * 2
         counts = _colliders(stage)
         assert counts == {"convexHull": 7, "convexDecomposition": 3}, (
             f"[{selection}] colliders {counts}"

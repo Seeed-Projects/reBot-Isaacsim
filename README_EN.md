@@ -59,7 +59,7 @@ reBot-Isaacsim/
 │   └── reBotArm_control_py/                 # git submodule: upstream control library
 └── usd/
     └── RS-rebot-dev-arm/
-        └── 00-arm-rs_asm-v3.usda            # Isaac Sim robot asset
+        └── RS-rebot-dev-arm.usda            # Isaac Sim robot asset
 ```
 
 ## Dependencies and Prerequisites
@@ -241,7 +241,7 @@ UDP JSON on `127.0.0.1:5005`.
 | `gripper_position` | float | Gripper finger position target (m); each sender computes it with its own mapping (see below) |
 
 **Gripper control chain:**
-The receiver applies the received `gripper_position` directly as the position target of both prismatic finger joints, clipped per finger to `[0, upper limit]` (USD upper limits: `joint_left` 0.05 m, `joint_right` 0.0715 m). There is no extra scaling on the receiver side. The senders map their input to `gripper_position` as follows:
+The receiver applies the received `gripper_position` directly as the position target of both prismatic finger joints, clipped per finger to `[0, upper limit]` (USD upper limit: 0.05 m on both fingers; a single motor drives both through one pinion, so their travel is rigidly 1:1). There is no extra scaling on the receiver side. The senders map their input to `gripper_position` as follows:
 
 | Sender | Mapping to `gripper_position` (m) |
 |------|------|
@@ -270,7 +270,7 @@ The receiver applies the received `gripper_position` directly as the position ta
 | `DEFAULT_PORT` | 5005 | UDP port |
 | `DEFAULT_RENDER_HZ` | 120.0 | Simulation render frequency (Hz) |
 | `ROBOT_PRIM_PATH` | `/World/reBotArm` | Robot Prim path inside Isaac Sim |
-| `ASSET_RELATIVE_PATH` | `usd/RS-rebot-dev-arm/00-arm-rs_asm-v3.usda` | USD asset path relative to the repo root |
+| `ASSET_RELATIVE_PATH` | `usd/RS-rebot-dev-arm/RS-rebot-dev-arm.usda` | USD asset path relative to the repo root |
 
 ## Troubleshooting
 
@@ -291,7 +291,7 @@ kill <PID>
 Confirm the USD asset path exists, or check that `REPO_ROOT` is correct:
 
 ```bash
-ls usd/RS-rebot-dev-arm/00-arm-rs_asm-v3.usda
+ls usd/RS-rebot-dev-arm/RS-rebot-dev-arm.usda
 ```
 
 ### CAN bus not ready
