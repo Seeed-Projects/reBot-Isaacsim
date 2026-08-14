@@ -10,7 +10,7 @@ This project provides multiple sender components to cover different use cases:
 
 | Component | Description |
 |------|------|
-| `gravity_joint_sender` | **Gravity Compensation + Handle Mode**: For modified robot arms (gripper removed, handle attached), using gravity compensation mode to allow manual manipulation, real-time joint angle sync to Isaac Sim |
+| `gravity_joint_sender` | **Gravity Compensation + Handle Mode**: For modified robot arms (gripper removed, handle attached), hand-guided; compensation comes from upstream `GravityCompensation`, this repo only mirrors joint angles to Isaac Sim |
 | `isaacsim_ik_sender` | **Inverse Kinematics (IK) Mode**: Input end-effector pose, compute joint angles via IK solver, send to Isaac Sim |
 | `isaacsim_traj_sender` | **Trajectory Planning (Traj) Mode**: Based on IK, adds joint-space trajectory planning (MIN_JERK profile) for smooth motion control |
 | `isaacsim_joint_test_sender` | **Joint Test Mode**: No physical arm required, sends preset joint angle trajectories to verify Isaac Sim receiver and communication |
@@ -44,19 +44,19 @@ reBot-Isaacsim/
 ├── README_EN.md                             # English version of this README
 ├── README_ES.md                             # Spanish version of this README
 ├── reBotArm_Isaacsim/                       # Main example directory
-│   ├── gravity_joint_sender.py              # Gravity comp + handle mode (modified arm, hand-guided)
+│   ├── gravity_joint_sender.py              # Gravity-comp handle mode (upstream GravityCompensation + UDP)
 │   ├── isaacsim_ik_sender.py                # Inverse kinematics mode (IK control)
 │   ├── isaacsim_traj_sender.py              # Trajectory planning mode (IK + joint-space trajectory)
 │   ├── isaacsim_joint_test_sender.py        # Joint test mode (preset trajectory, no hardware)
 │   ├── joint_reader_sender.py                # Real-to-Sim mapping mode (read-only, sync visualization)
 │   ├── isaacsim_joint_receiver.py           # Isaac Sim receiver (joint-angle sync)
 │   ├── live_sync.py                         # Launch-instructions helper script
+│   ├── set_hw_rs.py                         # Point submodule hardware YAML at RS (local; do not commit)
 │   ├── run_sender.sh                        # Launch the sender
 │   └── run_isaacsim_receiver.sh             # Launch the Isaac Sim receiver
+├── .gitmodules
 ├── third_party/
-│   └── reBotArm_control_py/                 # Core control library (independent uv env)
-│       ├── pyproject.toml
-│       └── ...
+│   └── reBotArm_control_py/                 # git submodule: upstream control library
 └── usd/
     └── RS-rebot-dev-arm/
         └── 00-arm-rs_asm-v3.usda            # Isaac Sim robot asset
@@ -71,7 +71,7 @@ reBot-Isaacsim/
 | CAN interface | `can0` is up with a bitrate of 1 Mbps (`can_restart can0`) |
 | Python | 3.10+ |
 | uv | Recommended for managing Python environments |
-| reBotArm_control_py | `uv sync` has been run inside `third_party/reBotArm_control_py` |
+| reBotArm_control_py | git submodule has been `update --init`, and `uv sync` has been run in that directory |
 
 ### Check the CAN interface
 
@@ -97,10 +97,27 @@ export ISAACSIM_ROOT=/home/seeed/IsaacSim/_build/linux-x86_64/release
 
 ### 2. reBotArm_control_py environment
 
+This repo references the upstream control library as a git submodule. Fetch it first, then install dependencies:
+
 ```bash
+git clone --recurse-submodules <this-repo>
+# already cloned:
+git submodule update --init --recursive
+
 cd third_party/reBotArm_control_py
 uv sync
 ```
+
+### 3. Switch the hardware config to RS
+
+This repo's Isaac Sim asset is RS (`usd/RS-rebot-dev-arm`). Upstream `rebotarm.yaml` defaults to DM; set it to RS on this machine or gravity compensation will have the wrong sign. This only dirties the submodule working tree — do not commit it:
+
+```bash
+cd reBotArm_Isaacsim
+python set_hw_rs.py
+```
+
+On success it prints `.../config/rebotarm.yaml -> rebotarm_rs.yaml`.
 
 ## Launch (Two-Terminal Mode)
 
@@ -129,13 +146,16 @@ For modified robot arms (gripper removed, handle attached), allows manual hand-g
 
 ```bash
 cd reBotArm_Isaacsim
+python set_hw_rs.py
 ./run_sender.sh
 ```
 
 **Expected behavior:**
-- The physical arm connects and MIT + gravity feed-forward compensation is enabled
+- `set_hw_rs.py` points the submodule `rebotarm.yaml` at `rebotarm_rs.yaml` (local change; do not commit)
+- The physical arm connects and starts upstream `GravityCompensation` (same MIT + `g(q)` feed-forward as `example/9`)
 - The arm can be moved freely by hand
-- Joint angles are streamed over UDP at 60 Hz
+- This script only forwards joint angles to Isaac Sim over UDP at 60 Hz
+- Do not also run upstream `example/9` at the same time; the two processes would contend for CAN
 
 #### ② Inverse Kinematics Mode (`isaacsim_ik_sender`)
 

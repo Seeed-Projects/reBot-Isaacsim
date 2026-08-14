@@ -3,10 +3,10 @@ name = "rebot-isaacsim"
 version = "0.1.0"
 description = "reBotArm + Isaac Sim real-to-simulation joint mirror"
 requires-python = ">=3.10"
-# third_party/reBotArm_control_py is a vendored snapshot without a build backend,
-# so it cannot be installed as a package; the senders import it via sys.path.
-# This list mirrors third_party/reBotArm_control_py/pyproject.toml dependencies
-# so that `uv sync` / `uv run` anywhere in the workspace provides the sender env.
+# third_party/reBotArm_control_py is a git submodule of
+# https://github.com/Seeed-Projects/reBotArm_control_py (no installable build
+# backend); senders import it via sys.path. This list mirrors that submodule's
+# pyproject.toml so `uv sync` / `uv run` provides the sender env.
 dependencies = [
     "meshcat>=0.3.2",
     "pin>=3.9.0",

@@ -1,0 +1,4 @@
+[submodule "third_party/reBotArm_control_py"]
+	path = third_party/reBotArm_control_py
+	url = https://github.com/Seeed-Projects/reBotArm_control_py.git
+	ignore = dirty

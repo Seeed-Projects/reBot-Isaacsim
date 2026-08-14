@@ -1,26 +1,19 @@
 #!/usr/bin/env python3
 """reBotArm 重力补偿 + 关节角 UDP 发送端 / Gravity compensation + joint-angle UDP sender.
 
-功能概述：
-1. 在当前工程 `uv` 环境中连接真实机械臂。
-2. 启动 MIT + 重力前馈补偿，允许用户手动掰动。
-3. 将前 6 个关节角通过 UDP JSON 持续发送给 Isaac Sim 接收端。
+重力补偿由 ``reBotArm_control_py.controllers.GravityCompensation`` 提供
+（与上游 ``example/9_gravity_compensation.py`` 同一套控制律）。
+本脚本只负责把关节角镜像到 Isaac Sim。
 
-推荐运行方式：
-- 直接使用当前工程的 `uv` 环境运行本脚本。
-- 再单独使用 Isaac 官方 `python.sh` 启动 `isaacsim_joint_receiver.py`。
+Gravity compensation is provided by
+``reBotArm_control_py.controllers.GravityCompensation`` (same control law as
+upstream ``example/9_gravity_compensation.py``). This script only mirrors joint
+angles to Isaac Sim.
 
-Overview:
-1. Connect to the physical robot arm using the current project's `uv` environment.
-2. Enable MIT control with gravity feed-forward compensation so the arm can be
-   moved freely by hand.
-3. Continuously send the first 6 joint angles to the Isaac Sim receiver over
-   UDP as JSON packets.
-
-Recommended usage:
-- Run this script inside the current project's `uv` environment.
-- Separately start `isaacsim_joint_receiver.py` with the official Isaac
-  `python.sh` launcher.
+推荐运行方式 / Recommended usage:
+- 本脚本：连接真实机械臂并发送 UDP。
+- 另开终端：用 Isaac 官方 ``python.sh`` 启动 ``isaacsim_joint_receiver.py``。
+- 不要同时再跑上游 ``example/9``，以免两个进程抢 CAN。
 """
 
 from __future__ import annotations
@@ -38,8 +31,16 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 _THIRD_PARTY = REPO_ROOT / "third_party" / "reBotArm_control_py"
 sys.path.insert(0, str(_THIRD_PARTY))
 
-from reBotArm_control_py.actuator import RebotArm  # noqa: E402
-from reBotArm_control_py.dynamics import compute_generalized_gravity  # noqa: E402
+try:
+    from reBotArm_control_py.actuator import RebotArm  # noqa: E402
+    from reBotArm_control_py.controllers import GravityCompensation  # noqa: E402
+except ImportError as exc:
+    raise ImportError(
+        "未找到 GravityCompensation，请先初始化 submodule:\n"
+        "  git submodule update --init --recursive\n"
+        "GravityCompensation not found; initialize the submodule first:\n"
+        "  git submodule update --init --recursive"
+    ) from exc
 
 ARM_JOINT_COUNT = 6
 DEFAULT_HOST = "127.0.0.1"
@@ -63,15 +64,18 @@ signal.signal(signal.SIGINT, _sigint_handler)
 
 
 class GravityCompensationSender:
-    """真实机械臂重力补偿与关节角发送。
+    """启动上游重力补偿，并将关节角 UDP 发给 Isaac Sim。
 
-    Gravity compensation and joint-angle sender for the physical robot arm.
+    Starts upstream gravity compensation and forwards joint angles to Isaac Sim.
     """
 
     def __init__(self, host: str = DEFAULT_HOST, port: int = DEFAULT_PORT) -> None:
         self.host = host
         self.port = port
+        # 硬件 YAML 由 set_hw_rs.py 写入 submodule config/rebotarm.yaml。
+        # Hardware YAML is set by set_hw_rs.py in submodule config/rebotarm.yaml.
         self.rebotarm = RebotArm()
+        self.ctrl = GravityCompensation(self.rebotarm)
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sequence = 0
         self.latest_q = np.zeros(ARM_JOINT_COUNT, dtype=np.float64)
@@ -90,69 +94,30 @@ class GravityCompensationSender:
     def _gripper_q_to_position(gripper_q: float) -> float:
         return float(gripper_q * GRIPPER_POSITION_SCALE)
 
-    def setup_hardware(self) -> None:
-        self.rebotarm.connect()
-        self.rebotarm.arm.mode_mit()
-        if self.rebotarm.has_gripper:
-            self.rebotarm.gripper.mode_mit()
-        self.rebotarm.disable_all()
-        time.sleep(0.1)
-        self.rebotarm.enable_all()
-
-        q0 = self.rebotarm.arm.get_positions(request_feedback=True)
-        if q0.shape[0] < ARM_JOINT_COUNT:
+    def _snapshot_positions(self, *, filter_position: bool) -> None:
+        q = self.rebotarm.arm.get_positions()
+        if q.shape[0] < ARM_JOINT_COUNT:
             raise RuntimeError(
-                f"arm 组关节数不足 {ARM_JOINT_COUNT}，当前仅 {q0.shape[0]} 个 / "
-                f"arm joint count is less than {ARM_JOINT_COUNT}, only {q0.shape[0]} available"
+                f"arm 组关节数不足 {ARM_JOINT_COUNT}，当前仅 {q.shape[0]} 个 / "
+                f"arm joint count is less than {ARM_JOINT_COUNT}, only {q.shape[0]} available"
             )
-        # latest_q 保存仿真坐标（q_sim = -q_motor），latest_q_raw 保存电机坐标。
-        # latest_q holds the sim frame (q_sim = -q_motor); latest_q_raw holds the motor frame.
-        self.latest_q[:] = -q0[:ARM_JOINT_COUNT]
-        self.latest_q_raw[:] = q0[:ARM_JOINT_COUNT]
-        if self.rebotarm.has_gripper:
-            gripper_q0 = self.rebotarm.gripper.get_positions(request_feedback=True)
-            if gripper_q0.size > 0:
-                self.latest_gripper_q = float(gripper_q0[0])
-                self.latest_gripper_position = self._gripper_q_to_position(self.latest_gripper_q)
-
-    def start(self) -> None:
-        self.rebotarm.start_control_loop(self._gravity_controller, rate=self.rebotarm.rate)
-
-    def _gravity_controller(self, robot: RebotArm, dt: float) -> None:
-        del dt
-        q = robot.arm.get_positions(request_feedback=True)
         q_arm = q[:ARM_JOINT_COUNT]
-        tau_g = compute_generalized_gravity(q=q_arm)
-
-        tau_g[1] *= 1.3  # joint2 额外补偿 / additional compensation for joint 2
-        tau_g[2] *= 1.6  # joint3 额外补偿 / additional compensation for joint 3
-
-        pad_len = max(robot.arm.num_joints - ARM_JOINT_COUNT, 0)
-        tau_cmd = np.concatenate([tau_g, np.zeros(pad_len, dtype=np.float64)])
-
-        robot.arm.send_mit(
-            pos=q,
-            vel=np.zeros(robot.arm.num_joints, dtype=np.float64),
-            kp=np.full(robot.arm.num_joints, 1.0, dtype=np.float64),
-            kd=np.full(robot.arm.num_joints, 0.5, dtype=np.float64),
-            tau=tau_cmd,
-        )
-        if robot.has_gripper:
-            gripper_q = robot.gripper.get_positions(request_feedback=False)
-            robot.gripper.send_mit(
-                pos=gripper_q,
-                vel=np.zeros(robot.gripper.num_joints, dtype=np.float64),
-                kp=np.zeros(robot.gripper.num_joints, dtype=np.float64),
-                kd=np.zeros(robot.gripper.num_joints, dtype=np.float64),
-                tau=np.zeros(robot.gripper.num_joints, dtype=np.float64),
-            )
+        self.latest_q_raw[:] = q_arm
+        if filter_position:
+            filtered_q = (1.0 - self.position_alpha) * (-self.latest_q) + self.position_alpha * q_arm
+            self.latest_q[:] = -filtered_q
+        else:
+            # latest_q 是仿真坐标（q_sim = -q_motor）。
+            self.latest_q[:] = -q_arm
+        if self.rebotarm.has_gripper:
+            gripper_q = self.rebotarm.gripper.get_positions()
             if gripper_q.size > 0:
                 self.latest_gripper_q = float(gripper_q[0])
                 self.latest_gripper_position = self._gripper_q_to_position(self.latest_gripper_q)
 
-        self.latest_q_raw[:] = q_arm
-        filtered_q = (1.0 - self.position_alpha) * (-self.latest_q) + self.position_alpha * q_arm
-        self.latest_q[:] = -filtered_q
+    def start(self) -> None:
+        self.ctrl.start()
+        self._snapshot_positions(filter_position=False)
 
     def run(self, send_hz: float = DEFAULT_SEND_HZ) -> None:
         if send_hz <= 0:
@@ -167,6 +132,8 @@ class GravityCompensationSender:
             if now - last_send_time < send_period:
                 time.sleep(send_period * 0.25)
                 continue
+
+            self._snapshot_positions(filter_position=True)
 
             payload = {
                 "sequence": self.sequence,
@@ -190,7 +157,7 @@ class GravityCompensationSender:
 
     def shutdown(self) -> None:
         try:
-            self.rebotarm.disconnect()
+            self.ctrl.end()
         finally:
             self.socket.close()
 
@@ -198,6 +165,7 @@ class GravityCompensationSender:
 def main() -> None:
     print("=" * 72)
     print("  reBotArm 重力补偿 + 关节角 UDP 发送端")
+    print("  补偿: reBotArm_control_py.controllers.GravityCompensation")
     print("  预计行为: 用户可自由掰动真实机械臂，关节角持续发送给 Isaac Sim")
     print("  停止方式: Ctrl+C")
     print("=" * 72)
@@ -207,6 +175,7 @@ def main() -> None:
     print()
     print("=" * 72)
     print("  reBotArm gravity compensation + joint-angle UDP sender")
+    print("  compensation: reBotArm_control_py.controllers.GravityCompensation")
     print("  Expected behavior: the user can freely move the physical arm;")
     print("  joint angles are continuously sent to Isaac Sim.")
     print("  To stop: press Ctrl+C")
@@ -215,13 +184,14 @@ def main() -> None:
     print(f"[joints] first {ARM_JOINT_COUNT} arm joints")
 
     sender = GravityCompensationSender()
+    print(f"[硬件] {sender.rebotarm.hardware_yaml}")
+    print(f"[hardware] {sender.rebotarm.hardware_yaml}")
     try:
-        sender.setup_hardware()
+        sender.start()
         print(f"[硬件] 已连接，控制频率 {sender.rebotarm.rate:.1f} Hz")
         print(f"[hardware] connected, control rate {sender.rebotarm.rate:.1f} Hz")
-        sender.start()
-        print("[控制] 已启动重力补偿")
-        print("[control] gravity compensation started")
+        print("[控制] 已启动上游重力补偿")
+        print("[control] upstream gravity compensation started")
         sender.run()
     finally:
         print("[停止] 正在关闭控制与发送...")
@@ -229,6 +199,7 @@ def main() -> None:
         sender.shutdown()
         print("[完成] 已安全退出")
         print("[done] exited safely")
+
 
 if __name__ == "__main__":
     main()

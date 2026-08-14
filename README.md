@@ -10,7 +10,7 @@ reBot-Isaacsim 是一个专为 reBotArm 设计的 NVIDIA Isaac Sim 仿真项目�
 
 | 组件 | 说明 |
 |------|------|
-| `gravity_joint_sender` | **重力补偿手柄模式**：改装机械臂（拆卸夹爪，加装手柄），通过重力补偿模式允许手动掰动，实时同步关节角到 Isaac Sim |
+| `gravity_joint_sender` | **重力补偿手柄模式**：改装机械臂（拆卸夹爪，加装手柄），手动掰动；补偿由上游 `GravityCompensation` 提供，本仓只镜像关节角到 Isaac Sim |
 | `isaacsim_ik_sender` | **逆运动学（IK）模式**：输入末端位姿，通过 IK 求解器得到关节角，发送到 Isaac Sim |
 | `isaacsim_traj_sender` | **轨迹规划（Traj）模式**：在 IK 基础上增加关节空间轨迹规划（MIN_JERK 时间剖面），实现平滑运动控制 |
 | `isaacsim_joint_test_sender` | **关节测试模式**：无需真实机械臂，发送预设关节角轨迹，用于验证 Isaac Sim 接收端和通讯是否正常 |
@@ -44,19 +44,19 @@ reBot-Isaacsim/
 ├── README_EN.md
 ├── README_ES.md
 ├── reBotArm_Isaacsim/                       # 主示例目录
-│   ├── gravity_joint_sender.py              # 重力补偿手柄模式（改装机械臂，手动掰动）
+│   ├── gravity_joint_sender.py              # 重力补偿手柄模式（调用上游 GravityCompensation + UDP）
 │   ├── isaacsim_ik_sender.py                # 逆运动学模式（IK 控制）
 │   ├── isaacsim_traj_sender.py              # 轨迹规划模式（IK + 关节空间轨迹）
 │   ├── isaacsim_joint_test_sender.py        # 关节测试模式（预设轨迹，无需硬件）
 │   ├── joint_reader_sender.py                # Real-to-Sim 映射模式（只读关节，同步可视化）
 │   ├── isaacsim_joint_receiver.py           # Isaac Sim 接收端（关节角同步）
 │   ├── live_sync.py                         # 启动说明脚本
+│   ├── set_hw_rs.py                         # 将 submodule 硬件配置切到 RS（本机，勿提交）
 │   ├── run_sender.sh                        # 启动发送端
 │   └── run_isaacsim_receiver.sh             # 启动 Isaac Sim 接收端
+├── .gitmodules
 ├── third_party/
-│   └── reBotArm_control_py/                 # 核心控制库（独立 uv 环境）
-│       ├── pyproject.toml
-│       └── ...
+│   └── reBotArm_control_py/                 # git submodule：上游控制库
 └── usd/
     └── RS-rebot-dev-arm/
         └── 00-arm-rs_asm-v3.usda            # Isaac Sim 机械臂资产
@@ -71,7 +71,7 @@ reBot-Isaacsim/
 | CAN 接口 | `can0` 已 up 且 bitrate 为 1 Mbps（`can_restart can0`） |
 | Python | 3.10+ |
 | uv | 推荐使用 uv 管理 Python 环境 |
-| reBotArm_control_py | 已在 `third_party/reBotArm_control_py` 中运行 `uv sync` |
+| reBotArm_control_py | git submodule 已 `update --init`，并已在该目录运行 `uv sync` |
 
 ### 检查 CAN 接口
 
@@ -97,10 +97,27 @@ export ISAACSIM_ROOT=/home/seeed/IsaacSim/_build/linux-x86_64/release
 
 ### 2. reBotArm_control_py 环境
 
+本仓通过 git submodule 引用上游控制库。先拉取子仓，再安装依赖：
+
 ```bash
+git clone --recurse-submodules <this-repo>
+# 若已经 clone 过：
+git submodule update --init --recursive
+
 cd third_party/reBotArm_control_py
 uv sync
 ```
+
+### 3. 将硬件配置切到 RS
+
+本仓 Isaac Sim 资产是 RS（`usd/RS-rebot-dev-arm`）。上游 `rebotarm.yaml` 默认是 DM，需要在本机改成 RS，否则重力补偿符号会反。只改 submodule 工作区，不要提交：
+
+```bash
+cd reBotArm_Isaacsim
+python set_hw_rs.py
+```
+
+成功时会打印 `.../config/rebotarm.yaml -> rebotarm_rs.yaml`。
 
 ## 启动（双终端模式）
 
@@ -129,13 +146,16 @@ cd reBotArm_Isaacsim
 
 ```bash
 cd reBotArm_Isaacsim
+python set_hw_rs.py
 ./run_sender.sh
 ```
 
 **预期行为：**
-- 连接真实机械臂，启用 MIT + 重力前馈补偿
+- `set_hw_rs.py` 把 submodule 的 `rebotarm.yaml` 指到 `rebotarm_rs.yaml`（本机改动，勿提交）
+- 连接真实机械臂，启动上游 `GravityCompensation`（与 `example/9` 同一套 MIT + `g(q)` 前馈）
 - 机械臂可自由掰动
-- 关节角以 60 Hz 持续通过 UDP 发送
+- 本脚本只把关节角以 60 Hz 通过 UDP 发给 Isaac Sim
+- 不要同时再运行上游 `example/9`，以免抢 CAN
 
 #### ② 逆运动学模式（`isaacsim_ik_sender`）
 

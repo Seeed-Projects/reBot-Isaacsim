@@ -3,32 +3,32 @@
 ## reBotArm_control_py
 
 - **Upstream**: <https://github.com/Seeed-Projects/reBotArm_control_py>
-- **Vendoring method**: plain file snapshot (not a git submodule / subtree); the
-  exact upstream base commit was not recorded at vendoring time.
+- **Vendoring method**: git submodule (not a file snapshot)
+- **Pinned commit**: `5ba28ac`
+  (Seeed-Projects `main`, merge of PR #26 `feat/gravity-compensation-api`),
+  which provides `reBotArm_control_py.controllers.GravityCompensation`
 
-### Local divergence from upstream
+Clone or update:
 
-This snapshot is **not** a pristine copy. Known local modifications:
+```bash
+git clone --recurse-submodules <this-repo>
+# already cloned:
+git submodule update --init --recursive
+```
 
-1. **Live `get_positions` for RobStride joints**
-   (`reBotArm_control_py/actuator/rebotarm.py`, `get_positions`): reads the
-   live `mechPos` parameter (`0x7019`) per RobStride joint after a
-   `request_feedback` poll, instead of the cached `get_state()` value, which
-   freezes at its first (or zero) value on RobStride firmware. This is the fix
-   from reBot-Isaacsim PR #5.
-2. **RobStride velocity caveat**
-   (`reBotArm_control_py/actuator/rebotarm.py`, `get_velocities`): documents
-   that the `mechVel` parameter (`0x701A`) is not rad/s on RS firmware
-   (measured 2026-07-17); live velocity should be finite-differenced from
-   `get_positions()`.
-3. **Gravity calibration notes**: `docs/gravity_calibration_rs_2026-07-17.md`.
+Bump to a newer upstream commit from the repo root:
 
-### Snapshot quirks
+```bash
+cd third_party/reBotArm_control_py
+git fetch origin
+git checkout <sha>
+cd ../..
+git add third_party/reBotArm_control_py
+```
 
-The snapshot's own `README.md` describes Isaac Sim live-mirror example scripts
-(`example/11a_gravity_joint_sender.py`, `example/11b_isaacsim_joint_receiver.py`,
-...) that are not present in `example/`; the maintained versions of those
-scripts live in this repo at `reBotArm_Isaacsim/`.
-
-Before re-syncing this directory from upstream, verify these modifications are
-either already merged upstream or re-applied on top of the new snapshot.
+Do not commit machine-local edits such as `config/rebotarm.yaml`
+(`rebotarm_rs.yaml` vs `rebotarm_dm.yaml`) into this parent repository.
+To switch this machine to RS (matches `usd/RS-rebot-dev-arm`), run
+`python reBotArm_Isaacsim/set_hw_rs.py`.
+`.gitmodules` sets `ignore = dirty` so those local YAML edits do not show up
+in the parent `git status` (a different submodule HEAD still will).
