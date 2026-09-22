@@ -22,7 +22,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 import numpy as np
-from pxr import Sdf, Usd, UsdPhysics
+from pxr import Sdf, Usd, UsdGeom, UsdPhysics
 
 try:
     import mujoco
@@ -130,9 +130,12 @@ def parse_urdf(path: Path, failures: list[str]):
     for joint in root.findall("joint"):
         name = joint.get("name")
         origin = joint.find("origin")
+        parent = joint.find("parent")
         child = joint.find("child")
         if child is not None:
             frames[child.get("link")] = {
+                "joint": name,
+                "parent": parent.get("link") if parent is not None else None,
                 "pos": vector(origin.get("xyz") if origin is not None else None),
                 "rotation": rpy_matrix(
                     vector(origin.get("rpy") if origin is not None else None)
@@ -361,7 +364,69 @@ def authored_schemas(prim: Usd.Prim) -> set[str]:
     return schemas
 
 
-def check_usd_variant(selection, urdf_links, urdf_joints, failures, metrics):
+def rigid_transform(rotation, position) -> np.ndarray:
+    transform = np.eye(4)
+    transform[:3, :3] = rotation
+    transform[:3, 3] = position
+    return transform
+
+
+def check_usd_pose(stage, urdf_frames, usd_links, failures, metrics, context):
+    """Check the shipped zero pose, including fixed joints and reset stacks.
+
+    USD stores these bodies in world coordinates with resetXformStack. Use
+    composed world transforms instead of multiplying their nested local ops.
+    Joint frames independently predict parent-to-child at zero as A * B^-1.
+    """
+    cache = UsdGeom.XformCache(Usd.TimeCode.Default())
+    joints = {
+        prim.GetName(): UsdPhysics.Joint(prim)
+        for prim in stage.Traverse() if UsdPhysics.Joint(prim)
+    }
+    for child, reference in urdf_frames.items():
+        parent_prim = usd_links.get(reference["parent"])
+        child_prim = usd_links.get(child)
+        joint = joints.get(reference["joint"])
+        joint_context = f"{context}: {reference['joint']}"
+        if parent_prim is None or child_prim is None or joint is None:
+            failures.append(f"{joint_context}: missing USD body or joint for pose check")
+            continue
+        if (joint.GetBody0Rel().GetTargets() != [parent_prim.GetPath()]
+                or joint.GetBody1Rel().GetTargets() != [child_prim.GetPath()]):
+            failures.append(f"{joint_context}: USD parent/child relationships differ from URDF")
+            continue
+
+        # Gf matrices use row vectors; the reference math uses column vectors.
+        parent_world = np.asarray(cache.GetLocalToWorldTransform(parent_prim)).T
+        child_world = np.asarray(cache.GetLocalToWorldTransform(child_prim)).T
+        body_pose = np.linalg.inv(parent_world) @ child_world
+        frames = []
+        for rotation, position in (
+            (joint.GetLocalRot0Attr().Get(), joint.GetLocalPos0Attr().Get()),
+            (joint.GetLocalRot1Attr().Get(), joint.GetLocalPos1Attr().Get()),
+        ):
+            frames.append(rigid_transform(
+                quaternion_matrix([rotation.GetReal(), *rotation.GetImaginary()]),
+                np.asarray(position),
+            ))
+        joint_pose = frames[0] @ np.linalg.inv(frames[1])
+        for source, pose in (("body", body_pose), ("joint", joint_pose)):
+            if not np.isfinite(pose).all():
+                failures.append(f"{joint_context}: USD {source} zero-pose frame is non-finite")
+                continue
+            pos_error = float(np.max(np.abs(pose[:3, 3] - reference["pos"])))
+            rot_error = float(np.max(np.abs(pose[:3, :3] - reference["rotation"])))
+            for suffix, error in (("pos_error_m", pos_error), ("rotation_error", rot_error)):
+                key = f"max_usd_{source}_frame_{suffix}"
+                metrics[key] = max(metrics.get(key, 0.0), error)
+            if pos_error > FRAME_POS_ATOL or rot_error > FRAME_ROT_ATOL:
+                failures.append(
+                    f"{joint_context}: USD {source} zero-pose frame differs from URDF "
+                    f"position={pos_error:.3e} m, rotation={rot_error:.3e}"
+                )
+
+
+def check_usd_variant(selection, urdf_links, urdf_joints, urdf_frames, failures, metrics):
     try:
         stage = open_variant(USD_PATH, selection)
     except RuntimeError as error:
@@ -380,6 +445,7 @@ def check_usd_variant(selection, urdf_links, urdf_joints, failures, metrics):
             f"{context}: USD link set differs: expected {sorted(urdf_links)}, "
             f"got {sorted(usd_links)}"
         )
+    check_usd_pose(stage, urdf_frames, usd_links, failures, metrics, context)
 
     for name, reference in urdf_links.items():
         prim = usd_links.get(name)
@@ -532,7 +598,7 @@ def validate() -> dict:
         )
     result["physics_variants_checked"] = variants
     for selection in variants:
-        check_usd_variant(selection, urdf_links, urdf_joints, failures, metrics)
+        check_usd_variant(selection, urdf_links, urdf_joints, urdf_frames, failures, metrics)
 
     result["passed"] = not failures
     return result

@@ -7,6 +7,35 @@ Methodology: per-joint `SnapToLimitsTest` (hold 1.0 s, tolerance 0.01), self-col
 hybrid colliders (convexHull arm / convexDecomposition gripper), validated July gains unchanged.
 July-07 baseline columns read the committed snapshots in `evidence/baselines/` (provenance in its README).
 
+## Offline initial-pose and gripper-frame validation
+
+The current RS assets have consistent gripper transforms. At the authored zero
+pose, `gripper_end` +X points forward in the base frame and +Y is the jaw-opening
+direction. Application startup targets are separate from that authored pose:
+for example, asset joint angles `[0, -1.2, -1.2, 0, 0, 0]` raise the elbow while
+keeping the gripper facing forward. Setting joint5 to `-0.75` at that pose yaws
+the gripper sideways by about 43 degrees. Apply the application's joint-sign
+mapping when interpreting its home settings; a sideways startup pose does not
+by itself establish a mesh or fixed-joint error.
+
+`validate_physics_fidelity.py` checks both the composed USD body transforms and
+the zero-pose transforms implied by the physics joint frames against the URDF.
+This includes fixed `j_gripper_end` and both fingers under every physics-bearing
+variant. Composed world transforms account for the bodies' `resetXformStack`
+operations. The offline checks do not certify runtime motion or physical-arm
+calibration, and do not change asset transforms or receiver startup targets.
+
+Run from the repository root with NumPy and `usd-core` installed:
+
+```bash
+python usd/RS-rebot-dev-arm/scripts/validate_physics_fidelity.py
+python -m unittest discover -s usd/RS-rebot-dev-arm/scripts -p test_usd_pose.py
+```
+
+The regression tests turn the gripper body and its fixed-joint frame by 90
+degrees independently in anonymous session layers. Both mutations must fail;
+the unmodified `physics` and `mujoco` variants must pass.
+
 ## Per-joint snap-to-limits (max of lower/upper hold error)
 
 | joint | gains K/D | Newton 3.6.1 (new) | PhysX 3.6.1 (new) | Newton 3.5.3 Jul-07 baseline | PhysX 3.5.3 Jul-07 baseline |
