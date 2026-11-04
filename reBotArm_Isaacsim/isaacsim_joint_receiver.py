@@ -76,6 +76,9 @@ DEFAULT_CAMERA_EYE = np.array([0.595, 0.532, 0.636], dtype=np.float64)
 DEFAULT_CAMERA_TARGET = np.array([0.0, 0.0, 0.35], dtype=np.float64)
 GRIPPER_JOINT_NAMES = ("joint_left", "joint_right")
 TEXTURE_SYMLINK_ENV = "REBOT_TEXTURE_SYMLINK"
+GROUND_TEXTURE_ENV = "REBOT_GROUND_TEXTURE"
+GROUND_PLANE_COLOR = np.array([0.96, 0.96, 0.96], dtype=np.float64)
+RENDER_WARMUP_STEPS = 30
 
 _running = True
 
@@ -170,9 +173,15 @@ class IsaacJointMirror:
 
     @staticmethod
     def _add_local_ground_plane(world) -> None:
-        """Create a local physics ground plane with an Isaac-style grid texture."""
-        from isaacsim.core.api.materials.omni_pbr import OmniPBR
+        """Create a local physics ground plane with a visual material.
+
+        Uses PreviewSurface (UsdPreviewSurface) by default to avoid the
+        omni.rtx.materials MDL-snapshot timeout that OmniPBR triggers on
+        some Isaac Sim builds. Set the env var REBOT_GROUND_TEXTURE=1 to opt
+        back into the OmniPBR grid-texture material.
+        """
         from isaacsim.core.api.materials.physics_material import PhysicsMaterial
+        from isaacsim.core.api.materials.preview_surface import PreviewSurface
         from isaacsim.core.api.objects import GroundPlane
         from isaacsim.core.utils.prims import is_prim_path_valid
         from isaacsim.core.utils.string import find_unique_string_name
@@ -191,13 +200,35 @@ class IsaacJointMirror:
             initial_name="/World/Looks/grid_ground_material",
             is_unique_fn=lambda x: not is_prim_path_valid(x),
         )
-        grid_texture = IsaacJointMirror._ensure_grid_texture()
-        visual_material = OmniPBR(
-            prim_path=visual_material_path,
-            texture_path=str(grid_texture),
-            texture_scale=GRID_TEXTURE_SCALE,
-            color=np.array([1.0, 1.0, 1.0], dtype=np.float64),
-        )
+
+        if os.environ.get(GROUND_TEXTURE_ENV) == "1":
+            from isaacsim.core.api.materials.omni_pbr import OmniPBR
+
+            grid_texture = IsaacJointMirror._ensure_grid_texture()
+            visual_material = OmniPBR(
+                prim_path=visual_material_path,
+                texture_path=str(grid_texture),
+                texture_scale=GRID_TEXTURE_SCALE,
+                color=np.array([1.0, 1.0, 1.0], dtype=np.float64),
+            )
+            print(
+                "[recv-setup] 地面使用 OmniPBR 网格纹理 "
+                f"({GROUND_TEXTURE_ENV}=1) / ground plane using OmniPBR grid texture"
+            )
+        else:
+            visual_material = PreviewSurface(
+                prim_path=visual_material_path,
+                color=GROUND_PLANE_COLOR,
+                roughness=0.7,
+                metallic=0.0,
+            )
+            print(
+                "[recv-setup] 地面使用 PreviewSurface 纯色材质 "
+                f"(避免 MDL 材质编译超时; 设 {GROUND_TEXTURE_ENV}=1 可切回网格纹理) / "
+                "ground plane using PreviewSurface solid color "
+                f"(avoids MDL snapshot timeout; set {GROUND_TEXTURE_ENV}=1 for grid texture)"
+            )
+
         ground_plane = GroundPlane(
             prim_path=GROUND_PLANE_PRIM_PATH,
             name="default_ground_plane",
@@ -373,6 +404,11 @@ class IsaacJointMirror:
         )
         self._apply_gripper_target(self.gripper_target_position)
         self._set_viewport_camera(self.sim_app)
+
+        print("[recv-setup] 渲染器预热中 / warming up renderer...")
+        for _ in range(RENDER_WARMUP_STEPS):
+            self.sim_app.update()
+        print("[recv-setup] 渲染器预热完成 / renderer warmup complete")
 
     def _setup_gripper_mapping(self, dof_names: list[str]) -> None:
         missing_joints = [name for name in GRIPPER_JOINT_NAMES if name not in dof_names]
