@@ -29,73 +29,73 @@ over "reBot_B601_DM"
         )
         {
             bool newton:selfCollisionEnabled = 0
-            point3f physics:centerOfMass = (-0.0000027052313, -0.000007701343, 0.028980834)
-            float3 physics:diagonalInertia = (0.0010041303, 0.0016792293, 0.0024399206)
-            float physics:mass = 0.7987448
-            quatf physics:principalAxes = (0.00006290141, 0.7071078, 0.7071058, 0.000044576023)
+            point3f physics:centerOfMass = (-7.849e-06, -1.1531e-06, 0.029841)
+            float3 physics:diagonalInertia = (0.0013304, 0.00213119, 0.00275877)
+            float physics:mass = 0.8366
+            quatf physics:principalAxes = (0, -6.2438355e-06, -1, 0)
 
             over "link1" (
                 prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
             )
             {
-                point3f physics:centerOfMass = (0.000012058491, -0.0005224627, 0.01977218)
-                float3 physics:diagonalInertia = (0.000050888597, 0.00007432795, 0.00009145189)
-                float physics:mass = 0.08407365
-                quatf physics:principalAxes = (-0.31826365, 0.6314347, 0.63143075, 0.3182667)
+                point3f physics:centerOfMass = (0.00011361455, -0.00061631953, 0.023647637)
+                float3 physics:diagonalInertia = (0.00015464, 0.00021341291, 0.00027281709)
+                float physics:mass = 0.1613
+                quatf physics:principalAxes = (0.63066956, 0.31977478, 0.31977478, -0.63066956)
 
                 over "link2" (
                     prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
                 )
                 {
-                    point3f physics:centerOfMass = (-0.13224463, -0.003050316, -0.03092994)
-                    float3 physics:diagonalInertia = (0.00025002495, 0.0018600177, 0.0018632809)
-                    float physics:mass = 0.7103944
-                    quatf physics:principalAxes = (0.753329, -0.6576436, -0.0003269026, -0.00037585833)
+                    point3f physics:centerOfMass = (-0.13225622, -0.0030617036, -0.030830697)
+                    float3 physics:diagonalInertia = (0.00073373399, 0.012559864, 0.012813882)
+                    float physics:mass = 1.3266
+                    quatf physics:principalAxes = (0.0025189343, -0.99999677, -1.9105386e-05, 0.00035218599)
 
                     over "link3" (
                         prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
                     )
                     {
-                        point3f physics:centerOfMass = (0.12150751, -0.05375681, -0.031086178)
-                        float3 physics:diagonalInertia = (0.00015990717, 0.0012492861, 0.0012557008)
-                        float physics:mass = 0.5249416
-                        quatf physics:principalAxes = (0.9997847, -0.019319411, -0.0013781198, 0.007446615)
+                        point3f physics:centerOfMass = (0.12104004, -0.053621108, -0.031013785)
+                        float3 physics:diagonalInertia = (0.00046756444, 0.0063271532, 0.0064825123)
+                        float physics:mass = 0.8353
+                        quatf physics:principalAxes = (0.99998889, 0.0009913049, 0.0035441352, -0.0029454726)
 
                         over "link4" (
                             prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
                         )
                         {
-                            point3f physics:centerOfMass = (0.061238185, -0.05152295, -0.030334035)
-                            float3 physics:diagonalInertia = (0.0000689486, 0.00010113906, 0.000115772345)
-                            float physics:mass = 0.1911392
-                            quatf physics:principalAxes = (0.7062643, -0.69686615, 0.08645443, 0.089966215)
+                            point3f physics:centerOfMass = (0.060820096, -0.051171191, -0.030299459)
+                            float3 physics:diagonalInertia = (0.00032321055, 0.00066716476, 0.00088948469)
+                            float physics:mass = 0.52
+                            quatf physics:principalAxes = (0.67070157, 0.69689489, -0.17959218, 0.17956494)
 
                             over "link5" (
                                 prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
                             )
                             {
-                                point3f physics:centerOfMass = (-0.0050493306, 0.0000017460303, 0.03878663)
-                                float3 physics:diagonalInertia = (0.000051718653, 0.000053800297, 0.0000684851)
-                                float physics:mass = 0.1500041
-                                quatf physics:principalAxes = (-0.5455848, 0.449344, 0.44718722, 0.5481339)
+                                point3f physics:centerOfMass = (-0.0050280206, 1.7386621e-06, 0.038623324)
+                                float3 physics:diagonalInertia = (0.00015733464, 0.00021223668, 0.00021742868)
+                                float physics:mass = 0.383
+                                quatf physics:principalAxes = (0.36748549, -0.32780608, -0.64607762, 0.58316489)
 
                                 over "link6" (
                                     prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
                                 )
                                 {
-                                    point3f physics:centerOfMass = (-0.000017603443, 7.6144975e-9, 0.0043172254)
-                                    float3 physics:diagonalInertia = (0.0000043771274, 0.000004428012, 0.000008552497)
-                                    float physics:mass = 0.018727167
-                                    quatf physics:principalAxes = (0.000013011839, 0.70710766, 0.7071059, -0.0000130557455)
+                                    point3f physics:centerOfMass = (3.7483337e-06, -0.00010090882, 0.029646861)
+                                    float3 physics:diagonalInertia = (0.00013966, 0.00015554, 0.00015554)
+                                    float physics:mass = 0.3663
+                                    quatf physics:principalAxes = (0.5, -0.5, -0.5, 0.5)
 
                                     over "gripper_link" (
                                         prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
                                     )
                                     {
-                                        point3f physics:centerOfMass = (-0.11400456, 0.00007308093, -8.0982375e-8)
-                                        float3 physics:diagonalInertia = (0.000058508143, 0.00020521354, 0.00023238627)
-                                        float physics:mass = 0.18180016
-                                        quatf physics:principalAxes = (-0.49962616, 0.49957532, 0.5004129, 0.50038505)
+                                        point3f physics:centerOfMass = (-0.07376943, -9.5074244e-06, 6.4864498e-06)
+                                        float3 physics:diagonalInertia = (0.00013146385, 0.00031029282, 0.00037677877)
+                                        float physics:mass = 0.41534421
+                                        quatf physics:principalAxes = (0.70729427, 0.0020026596, -0.0064008371, -0.70688743)
 
                                         over "gripper_left" (
                                             prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
