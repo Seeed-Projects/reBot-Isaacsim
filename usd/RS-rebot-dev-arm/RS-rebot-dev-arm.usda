@@ -51,6 +51,60 @@ def Xform "tn__00armrs_asmv3_hJ6D" (
         </tn__00armrs_asmv3_hJ6D/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_right>,
     ]
     token isaac:robotType = "Manipulator"
+
+    over "Geometry"
+    {
+        over "base_link"
+        {
+            over "link1"
+            {
+                over "link2"
+                {
+                    double[] newton:inertia = [0.00073374, 0.01255987, 0.01281387, -4.3e-7, 0.00000851, 0.00000128]
+                    point3f physics:centerOfMass = (-0.11786481, -0.0034222642, -0.027155194)
+                    float3 physics:diagonalInertia = (0.000733734, 0.012559864, 0.012813883)
+                    float physics:mass = 1.552
+                    quatf physics:principalAxes = (0.0025189344, 0.9999968, 0.000019105386, -0.00035218598)
+
+                    over "link3"
+                    {
+                        double[] newton:inertia = [0.00046807, 0.00632695, 0.00648221, -0.00003456, -0.0000426, 6e-8]
+                        point3f physics:centerOfMass = (0.10342716, -0.06641379, -0.027106868)
+                        float3 physics:diagonalInertia = (0.00046756444, 0.006327153, 0.006482512)
+                        float physics:mass = 1.252
+                        quatf physics:principalAxes = (0.9999889, -0.0009913049, -0.0035441353, 0.0029454725)
+
+                        over "link4"
+                        {
+                            double[] newton:inertia = [0.00045986, 0.00075258, 0.00066742, 0.00024219, -0, -0]
+                            point3f physics:centerOfMass = (0.047554456, -0.04411135, -0.031411193)
+                            float3 physics:diagonalInertia = (0.00032324076, 0.00066742, 0.0008891992)
+                            float physics:mass = 0.46
+                            quatf physics:principalAxes = (0.17959702, 0.17959702, 0.6839188, 0.6839188)
+
+                            over "link5"
+                            {
+                                double[] newton:inertia = [0.0000734238025911107, 0.000055153884237714, 0.0000529920095811017, 1.35700947009798e-8, -8.58146433770359e-7, -1.32742144977931e-8]
+                                point3f physics:centerOfMass = (0.011440062, 0.000004790774, 0.038048748)
+                                float3 physics:diagonalInertia = (0.00005295596, 0.000055153945, 0.00007345979)
+                                float physics:mass = 0.20120457
+                                quatf physics:principalAxes = (0.7217615, -0.0017204558, -0.6921357, 0.0023510843)
+
+                                over "link6"
+                                {
+                                    double[] newton:inertia = [0.00000442273835852359, 0.00000437185522080034, 0.00000854299378942051, 3.16758463739482e-12, 1.51852818442002e-10, -2.21864017603015e-12]
+                                    point3f physics:centerOfMass = (0.000018019602, 2.483346e-8, 0.004348058)
+                                    float3 physics:diagonalInertia = (0.000004371855, 0.000004422738, 0.000008542994)
+                                    float physics:mass = 0.1
+                                    quatf physics:principalAxes = (0.000012841821, 0.70712876, -0.7070848, -0.000013218725)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
     variantSet "Physics" = {
         "mujoco" (
             "Composes identically to Physics=physics; see the layer doc in payloads/Physics/mujoco.usda."

@@ -178,7 +178,7 @@
         <geom class="collision" mesh="link1_col_10"/>
         <body name="link2" pos="0.020343 0.027237 0.07" quat="0.7071 -0.7071 0 0">
           <inertial pos="-0.117864812717456 -0.00342226413942967 -0.0271551938501484" mass="1.552"
-            fullinertia="0.000577466775 0.00988484698 0.0100847496 -3.3841785e-07 6.69752535e-06 1.00738337e-06"/>
+            fullinertia="0.00073374 0.01255987 0.01281387 -0.00000043 0.00000851 0.00000128"/>
           <joint name="joint2" type="hinge" range="-3.14 0" axis="0 0 -1" class="rs06"/>
           <geom class="collision" mesh="link2_col_0"/>
           <geom class="collision" mesh="link2_col_1"/>
@@ -190,7 +190,7 @@
           <geom class="collision" mesh="link2_col_7"/>
           <body name="link3" pos="-0.236 0 0">
             <inertial pos="0.103427154487799 -0.0664137912104635 -0.0271068687716704" mass="1.252"
-              fullinertia="0.000551811337 0.00745889021 0.00764192742 -4.07430508e-05 -5.02214689e-05 7.07344633e-08"/>
+              fullinertia="0.00046807 0.00632695 0.00648221 -0.00003456 -0.00004260 0.00000006"/>
             <joint name="joint3" type="hinge" range="-3.14 0" axis="0 0 1" class="rs06"/>
             <geom class="collision" mesh="link3_col_0"/>
             <geom class="collision" mesh="link3_col_1"/>
@@ -204,7 +204,7 @@
             <geom class="collision" mesh="link3_col_9"/>
             <body name="link4" pos="0.228 -0.072746 0.0045">
               <inertial pos="0.0475544540775559 -0.0441113470158517 -0.0314111924918381" mass="0.46"
-                fullinertia="0.000320508485 0.000524525455 0.000465171515 0.000168799091 0 0"/>
+                fullinertia="0.00045986 0.00075258 0.00066742 0.00024219 -0.0 -0.0"/>
               <joint name="joint4" type="hinge" range="-1.79 1.69" axis="0 0 1" class="rs00"/>
               <geom class="collision" mesh="link4_col_0"/>
               <geom class="collision" mesh="link4_col_1"/>
@@ -216,8 +216,8 @@
               <geom class="collision" mesh="link4_col_7"/>
               <geom class="collision" mesh="link4_col_8"/>
               <body name="link5" pos="0.087 -0.048 -0.03075" quat="0.7071 -0.7071 0 0">
-                <inertial pos="-0.0114400622356175 4.7907739316217E-06 0.0480487481818926" mass="0.20120457182895"
-                  fullinertia="9.84090046e-05 7.39220615e-05 7.10245279e-05 1.81878283e-08 -1.15016294e-06 -1.77912637e-08"/>
+                <inertial pos="0.0114400622356175 4.7907739316217E-06 0.0380487481818926" mass="0.20120457182895"
+                  fullinertia="7.34238025911107E-05 5.5153884237714E-05 5.29920095811017E-05 1.35700947009798E-08 -8.58146433770359E-07 -1.32742144977931E-08"/>
                 <joint name="joint5" type="hinge" range="-1.57 1.57" axis="0 0 1" class="rs00"/>
                 <geom class="collision" mesh="link5_col_0"/>
                 <geom class="collision" mesh="link5_col_1"/>
@@ -231,7 +231,7 @@
                 <geom class="collision" mesh="link5_col_9"/>
                 <body name="link6" pos="0.0365 0 0.048" quat="0.7071 0 0.7071 0">
                   <inertial pos="1.80196022567525E-05 2.48334592051007E-08 0.00434805764057547" mass="0.1"
-                    fullinertia="1.47424612e-05 1.45728507e-05 2.8476646e-05 1.05586155e-11 5.06176061e-10 -7.39546725e-12"/>
+                    fullinertia="4.42273835852359E-06 4.37185522080034E-06 8.54299378942051E-06 3.16758463739482E-12 1.51852818442002E-10 -2.21864017603015E-12"/>
                   <joint name="joint6" type="hinge" range="-3.14 3.14" axis="0 0 1" class="rs00"/>
                   <geom class="collision" mesh="link6_col_0"/>
                   <geom class="collision" mesh="link6_col_1"/>

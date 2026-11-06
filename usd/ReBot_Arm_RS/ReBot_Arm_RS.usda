@@ -186,7 +186,6 @@ def Xform "ReBot_Arm_RS" (
             float drive:linear:physics:stiffness = 5000
             float drive:linear:physics:targetPosition = 0
             uniform token drive:linear:physics:type = "force"
-            float physics:upperLimit = 0.05
         }
     }
 }

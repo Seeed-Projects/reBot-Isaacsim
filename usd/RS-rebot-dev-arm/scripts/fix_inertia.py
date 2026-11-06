@@ -8,8 +8,9 @@ information about distribution changes). Gravity compensation g(q) is
 unaffected (depends on m and CoM only); this fixes M(q)/dynamics and the
 Gain Tuner's accumulated-inertia computation.
 
-Historical one-shot: the correction is already applied to the committed
-URDF (f12e13c); re-running on it would scale the tensors a second time.
+Historical one-shot: the correction was applied in f12e13c, then the legacy
+model was synchronized back to the SDK tensor in the RS model unification.
+Do not run this script on the synchronized URDF.
 The URDF path must therefore be passed explicitly.
 
 Run: python3 fix_inertia.py PATH/TO/urdf   (rewrites it in place, prints the scaling)

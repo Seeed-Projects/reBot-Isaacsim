@@ -28,6 +28,9 @@ def Xform "ReBot_Arm_RS"
             def Mesh "base_link_1" (
                 displayName = "base_link"
                 prepend references = @./GeometryLibrary.usdc@</Geometry/base_link>
+                uiHints = {
+                    string displayName = "base_link"
+                }
             )
             {
                 uniform token purpose = "guide"
@@ -57,6 +60,9 @@ def Xform "ReBot_Arm_RS"
                 def Mesh "link1_1" (
                     displayName = "link1"
                     prepend references = @./GeometryLibrary.usdc@</Geometry/link1>
+                    uiHints = {
+                        string displayName = "link1"
+                    }
                 )
                 {
                     uniform token purpose = "guide"
@@ -308,6 +314,9 @@ def Xform "ReBot_Arm_RS"
                                     def Mesh "link6_1" (
                                         displayName = "link6"
                                         prepend references = @./GeometryLibrary.usdc@</Geometry/link6>
+                                        uiHints = {
+                                            string displayName = "link6"
+                                        }
                                     )
                                     {
                                         uniform token purpose = "guide"
