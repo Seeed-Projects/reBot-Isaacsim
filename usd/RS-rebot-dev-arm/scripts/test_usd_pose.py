@@ -44,6 +44,17 @@ class UsdPoseTests(unittest.TestCase):
                 np.testing.assert_allclose(relative[:3, 0], [1, 0, 0], atol=1e-4)
                 np.testing.assert_allclose(relative[:3, 1], [0, 1, 0], atol=1e-4)
 
+    def test_renamed_gripper_joints_are_checked_against_legacy_asset(self):
+        self.assertEqual(self.frames["gripper_left"]["joint"], "gripper_joint1")
+        self.assertEqual(self.frames["gripper_right"]["joint"], "gripper_joint2")
+        stage, links = self.open_stage("physics")
+        prim = next(p for p in stage.Traverse() if p.GetName() == "joint_left")
+        joint = UsdPhysics.Joint(prim)
+        position = joint.GetLocalPos0Attr()
+        position.Set(position.Get() + Gf.Vec3f(0.01, 0, 0))
+        failures = self.check_pose(stage, links)
+        self.assertTrue(any("gripper_joint1: USD joint zero-pose frame" in f for f in failures))
+
     def test_quarter_turn_of_gripper_body_is_rejected(self):
         stage, links = self.open_stage("physics")
         orient = links["gripper_end"].GetAttribute("xformOp:orient")

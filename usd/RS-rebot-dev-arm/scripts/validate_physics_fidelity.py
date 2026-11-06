@@ -48,6 +48,14 @@ FRAME_POS_ATOL = 1e-7
 # only match to ~1e-5.
 FRAME_ROT_ATOL = 1e-4
 
+# The committed USD and MJCF assets predate the URDF gripper-joint rename.
+# Compare those joints by their canonical URDF names without changing assets.
+LEGACY_TO_URDF_JOINT = {"joint_left": "gripper_joint1", "joint_right": "gripper_joint2"}
+URDF_TO_LEGACY_JOINT = {value: key for key, value in LEGACY_TO_URDF_JOINT.items()}
+
+def canonical_joint_name(name: str) -> str:
+    return LEGACY_TO_URDF_JOINT.get(name, name)
+
 
 def repo_label(path: Path) -> str:
     try:
@@ -304,6 +312,8 @@ def check_mjcf_model(urdf_links, urdf_joints, failures, metrics):
 
     for name, reference in urdf_joints.items():
         joint_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, name)
+        if joint_id < 0 and name in URDF_TO_LEGACY_JOINT:
+            joint_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, URDF_TO_LEGACY_JOINT[name])
         if joint_id < 0:
             failures.append(f"{name}: missing joint in compiled mjModel")
             continue
@@ -380,7 +390,7 @@ def check_usd_pose(stage, urdf_frames, usd_links, failures, metrics, context):
     """
     cache = UsdGeom.XformCache(Usd.TimeCode.Default())
     joints = {
-        prim.GetName(): UsdPhysics.Joint(prim)
+        canonical_joint_name(prim.GetName()): UsdPhysics.Joint(prim)
         for prim in stage.Traverse() if UsdPhysics.Joint(prim)
     }
     for child, reference in urdf_frames.items():
@@ -488,9 +498,9 @@ def check_usd_variant(selection, urdf_links, urdf_joints, urdf_frames, failures,
             )
 
     usd_joints = {
-        prim.GetName(): prim
+        canonical_joint_name(prim.GetName()): prim
         for prim in stage.Traverse()
-        if UsdPhysics.Joint(prim) and prim.GetName() in urdf_joints
+        if UsdPhysics.Joint(prim) and canonical_joint_name(prim.GetName()) in urdf_joints
     }
     for name, reference in urdf_joints.items():
         prim = usd_joints.get(name)
