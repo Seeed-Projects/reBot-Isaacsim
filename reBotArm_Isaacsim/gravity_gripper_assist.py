@@ -34,6 +34,8 @@ ARM_NAMES = tuple(f"joint{i}" for i in range(1, 7))
 READ_TIMEOUT_MS = 200
 MAX_SAMPLE_AGE = 0.5
 LIMIT_MARGIN = 0.12
+# Experimental reference scales; physical torque still requires calibration.
+GRAVITY_SCALE = np.array([1.0, 0.92, 0.98, 1.0, 1.0, 1.0])
 ASSIST_TORQUE = 0.04
 ASSIST_KD = 0.001
 SPEED_THRESHOLD = 0.02
@@ -176,7 +178,7 @@ class AssistedGravity(GravityCompensation):
             # change or enable command. No set-zero command is ever sent.
             self._read_snapshot(verify_start_range=True)
             q, grip, _ = self.snapshot()
-            tau = np.asarray(compute_generalized_gravity(q=q)[:6], dtype=float)
+            tau = (np.asarray(compute_generalized_gravity(q=q)[:6], dtype=float) * GRAVITY_SCALE)
             if len(tau) != 6 or not np.isfinite(tau).all():
                 raise RuntimeError("重力力矩无效")
             self._initial_kp = np.asarray(robot.arm._mit_kp, dtype=float).copy()
@@ -191,7 +193,7 @@ class AssistedGravity(GravityCompensation):
             # go stale. Refresh before preloading position-hold targets.
             self._read_snapshot(verify_start_range=True)
             q, grip, _ = self.snapshot()
-            tau = np.asarray(compute_generalized_gravity(q=q)[:6], dtype=float)
+            tau = (np.asarray(compute_generalized_gravity(q=q)[:6], dtype=float) * GRAVITY_SCALE)
             if len(tau) != 6 or not np.isfinite(tau).all():
                 raise RuntimeError("重力力矩无效")
             self._hold_q = q.copy()
@@ -227,7 +229,7 @@ class AssistedGravity(GravityCompensation):
     def _loop_cb(self, robot, dt):
         del dt
         q, grip, velocity = self.snapshot()
-        tau = np.asarray(compute_generalized_gravity(q=q)[:6], dtype=float)
+        tau = (np.asarray(compute_generalized_gravity(q=q)[:6], dtype=float) * GRAVITY_SCALE)
         if len(tau) != 6 or not np.isfinite(tau).all():
             raise RuntimeError("重力力矩无效")
         elapsed = max(0.0, time.monotonic() - self._transition_start)
@@ -353,6 +355,11 @@ def run_live(robot, closed, opened):
                         except ValueError as exc:
                             print(str(exc), flush=True)
             if seq % 60 == 0:
+                with ctrl._lock:
+                    feedback_age = time.monotonic() - ctrl._sample_time
+                model_tau = np.asarray(compute_generalized_gravity(q=q)[:6], dtype=float) * GRAVITY_SCALE
+                print("诊断 J2/J3 模型前馈(Nm):", np.round(model_tau[1:3], 3),
+                      "反馈年龄(ms):", round(feedback_age * 1000, 1), flush=True)
                 print("真机角度(deg):", np.round(np.degrees(q), 2),
                       "夹爪(rad):", round(grip, 3),
                       "夹爪速度(rad/s):", round(velocity, 3), flush=True)

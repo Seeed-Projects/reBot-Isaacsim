@@ -70,6 +70,12 @@ class FakeControlTests(unittest.TestCase):
         self.assertEqual(self.ctrl.set_gripper_mode("close"), -0.4)
         self.assertEqual(self.ctrl.set_gripper_mode("hold"), 2)
 
+    def test_reference_j2_j3_gravity_scales(self):
+        self.tick()
+        self.assertAlmostEqual(self.motors["joint2"].send_mit.call_args.args[4], 0.92)
+        self.assertAlmostEqual(self.motors["joint3"].send_mit.call_args.args[4], 1.96)
+        self.assertAlmostEqual(self.motors["joint4"].send_mit.call_args.args[4], 3.0)
+
     def test_expired_feedback_sends_no_motor_command(self):
         self.ctrl._sample_time = time.monotonic() - app.MAX_SAMPLE_AGE - 1
         with self.assertRaises(RuntimeError):
