@@ -16,6 +16,8 @@ reBot-Isaacsim 是一个专为 reBotArm 设计的 NVIDIA Isaac Sim 仿真项目�
 | `isaacsim_joint_test_sender` | **关节测试模式**：无需真实机械臂，发送预设关节角轨迹，用于验证 Isaac Sim 接收端和通讯是否正常 |
 | `joint_reader_sender` | **Real-to-Sim 映射模式**：只读关节角并映射到 Isaac Sim，适合与其他控制项目配合使用（例如：实际机械臂在运行其他任务时，同步映射到 Isaac Sim 进行可视化） |
 
+**实验性示例：** [保留夹爪的重力补偿与手动助力](./reBotArm_Isaacsim/GRAVITY_GRIPPER_ASSIST.md)。
+
 ## 系统架构
 
 ```
