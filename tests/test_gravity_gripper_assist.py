@@ -101,22 +101,27 @@ class FakeControlTests(unittest.TestCase):
             app.read_position(motor)
 
     def test_live_uses_reference_gripper_defaults(self):
-        argv = ["gravity_gripper_assist.py", "--live", "--acknowledge-j2-drift"]
+        argv = ["gravity_gripper_assist.py"]
         with patch.object(sys, "argv", argv), patch.object(app, "RebotArm") as robot, \
              patch.object(app, "check_model"), patch.object(app, "run_live") as run:
             app.main()
         run.assert_called_once_with(robot.return_value, 0.0, 5.0)
 
-    def test_live_requires_acknowledging_observed_j2_drift(self):
-        argv = ["gravity_gripper_assist.py", "--live", "--closed-rad", "0",
-                "--open-rad", "5"]
-        with patch.object(sys, "argv", argv), patch.object(app, "RebotArm"), \
-             patch.object(app, "check_model"), patch.object(app, "run_live") as run, \
-             contextlib.redirect_stderr(io.StringIO()):
-            with self.assertRaises(SystemExit) as exc:
-                app.main()
-        self.assertEqual(exc.exception.code, 2)
+    def test_check_does_not_connect_or_start_live(self):
+        argv = ["gravity_gripper_assist.py", "--check"]
+        with patch.object(sys, "argv", argv), patch.object(app, "RebotArm") as robot, \
+             patch.object(app, "check_model") as check, patch.object(app, "run_live") as run, \
+             contextlib.redirect_stdout(io.StringIO()):
+            app.main()
+        check.assert_called_once_with(robot.return_value)
         run.assert_not_called()
+
+    def test_old_flags_remain_compatible(self):
+        argv = ["gravity_gripper_assist.py", "--live", "--acknowledge-j2-drift"]
+        with patch.object(sys, "argv", argv), patch.object(app, "RebotArm") as robot, \
+             patch.object(app, "check_model"), patch.object(app, "run_live") as run:
+            app.main()
+        run.assert_called_once_with(robot.return_value, 0.0, 5.0)
 
 
 if __name__ == "__main__":

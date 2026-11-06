@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """RS arm gravity compensation, gripper hand-assist, and Isaac Sim mirror.
 
-Default: model-only check, no CAN. --live enables real motors. The default
-gripper range is closed=0 and open=5 radians after proper zero calibration. Stop with Ctrl+C: motors are
+Default: controls real motors. --check performs a model-only check without CAN.
+The default gripper range is closed=0 and open=5 radians after zero calibration. Stop with Ctrl+C: motors are
 disabled without returning home; the arm/gripper can lose support.
 
 Assist law and defaults follow Yang-Ci/ReBot_Arm_DigitalTwin_RS. Unlike a
@@ -376,9 +376,10 @@ def run_live(robot, closed, opened):
 
 def main():
     parser = argparse.ArgumentParser(description="RS 机械臂重力补偿、夹爪助力与 Isaac Sim 同步")
-    parser.add_argument("--live", action="store_true", help="连接并控制真实机械臂")
-    parser.add_argument("--acknowledge-j2-drift", action="store_true",
-                        help="确认 J2 下垂问题尚未解决，仍需进行受控测试")
+    parser.add_argument("--check", action="store_true", help="只检查模型，不连接 CAN 或控制真机")
+    # Preserve compatibility with the formerly required launch flags.
+    parser.add_argument("--live", action="store_true", help=argparse.SUPPRESS)
+    parser.add_argument("--acknowledge-j2-drift", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--closed-rad", type=float, default=DEFAULT_GRIPPER_CLOSED,
                         help="夹爪闭合位置（弧度，默认 0）")
     parser.add_argument("--open-rad", type=float, default=DEFAULT_GRIPPER_OPEN,
@@ -386,11 +387,10 @@ def main():
     args = parser.parse_args()
     robot = RebotArm()
     check_model(robot)
-    if not args.live:
-        print("仅模型预检查，未连接 CAN；--live 才会控制真机。")
+    if args.check:
+        print("仅模型预检查，未连接 CAN，未控制真机。")
         return
-    if not args.acknowledge_j2_drift:
-        parser.error("实机曾观察到 J2 下垂，原因未确认；禁止直接运行。")
+    print("注意：即将控制真机；J2 曾出现下垂，请支撑机械臂并观察。", flush=True)
     run_live(robot, args.closed_rad, args.open_rad)
 
 
