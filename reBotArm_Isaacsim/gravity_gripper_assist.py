@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """RS arm gravity compensation, gripper hand-assist, and Isaac Sim mirror.
 
-Default: model-only check, no CAN. --live enables real motors and requires
-calibrated open/closed motor positions in radians. Stop with Ctrl+C: motors are
+Default: model-only check, no CAN. --live enables real motors. The default
+gripper range is closed=0 and open=5 radians after proper zero calibration. Stop with Ctrl+C: motors are
 disabled without returning home; the arm/gripper can lose support.
 
 Assist law and defaults follow Yang-Ci/ReBot_Arm_DigitalTwin_RS. Unlike a
@@ -34,6 +34,8 @@ ARM_NAMES = tuple(f"joint{i}" for i in range(1, 7))
 READ_TIMEOUT_MS = 200
 MAX_SAMPLE_AGE = 0.5
 LIMIT_MARGIN = 0.12
+DEFAULT_GRIPPER_CLOSED = 0.0
+DEFAULT_GRIPPER_OPEN = 5.0
 # Experimental reference scales; physical torque still requires calibration.
 GRAVITY_SCALE = np.array([1.0, 0.92, 0.98, 1.0, 1.0, 1.0])
 ASSIST_TORQUE = 0.04
@@ -377,16 +379,16 @@ def main():
     parser.add_argument("--live", action="store_true", help="连接并控制真实机械臂")
     parser.add_argument("--acknowledge-j2-drift", action="store_true",
                         help="确认 J2 下垂问题尚未解决，仍需进行受控测试")
-    parser.add_argument("--closed-rad", type=float, help="真实夹爪完全闭合电机角度（弧度）")
-    parser.add_argument("--open-rad", type=float, help="真实夹爪完全打开电机角度（弧度）")
+    parser.add_argument("--closed-rad", type=float, default=DEFAULT_GRIPPER_CLOSED,
+                        help="夹爪闭合位置（弧度，默认 0）")
+    parser.add_argument("--open-rad", type=float, default=DEFAULT_GRIPPER_OPEN,
+                        help="夹爪打开位置（弧度，默认 5）")
     args = parser.parse_args()
     robot = RebotArm()
     check_model(robot)
     if not args.live:
         print("仅模型预检查，未连接 CAN；--live 才会控制真机。")
         return
-    if args.closed_rad is None or args.open_rad is None:
-        parser.error("--live 需要 --closed-rad 和 --open-rad 实测校准值")
     if not args.acknowledge_j2_drift:
         parser.error("实机曾观察到 J2 下垂，原因未确认；禁止直接运行。")
     run_live(robot, args.closed_rad, args.open_rad)

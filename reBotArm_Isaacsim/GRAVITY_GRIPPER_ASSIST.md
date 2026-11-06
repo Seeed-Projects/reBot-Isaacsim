@@ -22,15 +22,15 @@ uv run python gravity_gripper_assist.py
 
 ## 真机运行
 
-先确认 `can0` 正常、Isaac Sim 接收端已经启动、没有其他程序同时读写机械臂 CAN。参照设备的实际电机反馈，分别测量夹爪完全闭合和打开时的电机位置，单位为**弧度**；不要将另一台设备的零点直接当作本机校准值，也不要用本示例设置零点。
+先确认 `can0` 正常、Isaac Sim 接收端已经启动、没有其他程序同时读写机械臂 CAN。夹爪默认按数字孪生仓库的范围工作：闭合 0 rad，打开 5 rad。该默认范围要求夹爪已按相同约定校零；本示例不执行校零。启动前会检查实际反馈是否在范围附近，若不满足请先检查校零或使用对应的实测范围，切勿强行启用。
 
-示例使用环境变量传入本机实测端点，两个值均需先由操作者设置。`--live` 还要求 `--acknowledge-j2-drift`，明确确认实机曾观察到 J2 下垂且原因尚未解决。不要仅为绕过检查而添加该选项；应先完成诊断与受控验证：
+实机曾观察到 J2 下垂，原因尚未确认；运行时请保持支撑并观察。启动命令：
 
 ```bash
-uv run python gravity_gripper_assist.py --live \
-  --acknowledge-j2-drift \
-  --closed-rad "$GRIPPER_CLOSED_RAD" --open-rad "$GRIPPER_OPEN_RAD"
+uv run python gravity_gripper_assist.py --live --acknowledge-j2-drift
 ```
+
+需要适配不同校准时，也可通过 `--closed-rad` 和 `--open-rad` 指定端点，单位为弧度。
 
 启动时，程序读取实际位置并逐步从当前位置保持过渡到低刚度补偿。夹爪默认进入手动助力模式；它不保证夹紧物体。终端可输入：
 

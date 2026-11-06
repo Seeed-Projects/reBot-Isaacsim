@@ -100,6 +100,13 @@ class FakeControlTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "CAN timeout"):
             app.read_position(motor)
 
+    def test_live_uses_reference_gripper_defaults(self):
+        argv = ["gravity_gripper_assist.py", "--live", "--acknowledge-j2-drift"]
+        with patch.object(sys, "argv", argv), patch.object(app, "RebotArm") as robot, \
+             patch.object(app, "check_model"), patch.object(app, "run_live") as run:
+            app.main()
+        run.assert_called_once_with(robot.return_value, 0.0, 5.0)
+
     def test_live_requires_acknowledging_observed_j2_drift(self):
         argv = ["gravity_gripper_assist.py", "--live", "--closed-rad", "0",
                 "--open-rad", "5"]
