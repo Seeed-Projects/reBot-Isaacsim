@@ -58,8 +58,8 @@ reBot-Isaacsim/
 ├── third_party/
 │   └── reBotArm_control_py/                 # git submodule: biblioteca de control upstream
 └── usd/
-    └── RS-rebot-dev-arm/
-        └── RS-rebot-dev-arm.usda            # Asset del robot para Isaac Sim
+    └── ReBot_Arm_RS/
+        └── ReBot_Arm_RS.usda            # Asset del robot para Isaac Sim
 ```
 
 ## Dependencias y requisitos previos
@@ -110,7 +110,7 @@ uv sync
 
 ### 3. Cambiar la configuración de hardware a RS
 
-El asset de Isaac Sim de este repo es RS (`usd/RS-rebot-dev-arm`). El `rebotarm.yaml` upstream usa DM por defecto. Tanto `RebotArm()` como `load_robot_model()` leen este archivo, así que compensación de gravedad, mapeo de solo lectura, IK y Traj necesitan RS primero; si se deja en DM, el protocolo de motores no coincidirá y Pinocchio cargará el URDF de DM. Solo ensucia el working tree del submodule: no hagas commit:
+El asset de Isaac Sim de este repo es RS (`usd/ReBot_Arm_RS`). El SDK actual usa RS por defecto en `rebotarm.yaml`; comprueba la configuración real. Tanto `RebotArm()` como `load_robot_model()` leen este archivo, así que compensación de gravedad, mapeo de solo lectura, IK y Traj necesitan RS primero; si se deja en DM, el protocolo de motores no coincidirá y Pinocchio cargará el URDF de DM. Solo ensucia el working tree del submodule: no hagas commit:
 
 ```bash
 cd reBotArm_Isaacsim
@@ -275,7 +275,7 @@ El receptor aplica el `gripper_position` recibido directamente como objetivo de 
 | `DEFAULT_PORT` | 5005 | Puerto UDP |
 | `DEFAULT_RENDER_HZ` | 120.0 | Frecuencia de renderizado de la simulación (Hz) |
 | `ROBOT_PRIM_PATH` | `/World/reBotArm` | Ruta del Prim del robot dentro de Isaac Sim |
-| `ASSET_RELATIVE_PATH` | `usd/RS-rebot-dev-arm/RS-rebot-dev-arm.usda` | Ruta del asset USD relativa a la raíz del repositorio |
+| `ASSET_RELATIVE_PATH` | `usd/ReBot_Arm_RS/ReBot_Arm_RS.usda` | Ruta del asset USD relativa a la raíz del repositorio |
 
 ## Resolución de problemas
 
@@ -296,7 +296,7 @@ kill <PID>
 Confirma que la ruta del asset USD existe o comprueba que `REPO_ROOT` es correcto:
 
 ```bash
-ls usd/RS-rebot-dev-arm/RS-rebot-dev-arm.usda
+ls usd/ReBot_Arm_RS/ReBot_Arm_RS.usda
 ```
 
 ### El bus CAN no está listo

@@ -1,0 +1,261 @@
+#usda 1.0
+(
+    customLayerData = {
+        string creator = "URDF USD Converter v0.1.0"
+    }
+    defaultPrim = "ReBot_Arm_RS"
+    kilogramsPerUnit = 1
+    metersPerUnit = 1
+    upAxis = "Z"
+)
+
+def Xform "ReBot_Arm_RS"
+{
+    def Scope "Materials"
+    {
+        def Material "rs_base_black" (
+            prepend references = @./MaterialsLibrary.usdc@</Materials/rs_base_black>
+        )
+        {
+        }
+
+        def Material "rs_anodized_silver" (
+            prepend references = @./MaterialsLibrary.usdc@</Materials/rs_anodized_silver>
+        )
+        {
+        }
+
+        def Material "rs_motor_black" (
+            prepend references = @./MaterialsLibrary.usdc@</Materials/rs_motor_black>
+        )
+        {
+        }
+
+        def Material "rs_pla_black" (
+            prepend references = @./MaterialsLibrary.usdc@</Materials/rs_pla_black>
+        )
+        {
+        }
+
+        def Material "rs_seeed_green" (
+            prepend references = @./MaterialsLibrary.usdc@</Materials/rs_seeed_green>
+        )
+        {
+        }
+
+        def Material "rs_wordmark_black" (
+            prepend references = @./MaterialsLibrary.usdc@</Materials/rs_wordmark_black>
+        )
+        {
+        }
+    }
+
+    over "Geometry"
+    {
+        over "base_link"
+        {
+            over "base_link" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                rel material:binding = </ReBot_Arm_RS/Materials/rs_base_black>
+            }
+
+            over "link1"
+            {
+                over "link1" (
+                    prepend apiSchemas = ["MaterialBindingAPI"]
+                )
+                {
+                    rel material:binding = </ReBot_Arm_RS/Materials/rs_anodized_silver>
+                }
+
+                over "link2"
+                {
+                    over "motor_2_3" (
+                        prepend apiSchemas = ["MaterialBindingAPI"]
+                    )
+                    {
+                        rel material:binding = </ReBot_Arm_RS/Materials/rs_motor_black>
+                    }
+
+                    over "cnc2" (
+                        prepend apiSchemas = ["MaterialBindingAPI"]
+                    )
+                    {
+                        rel material:binding = </ReBot_Arm_RS/Materials/rs_anodized_silver>
+                    }
+
+                    over "pla2_black" (
+                        prepend apiSchemas = ["MaterialBindingAPI"]
+                    )
+                    {
+                        rel material:binding = </ReBot_Arm_RS/Materials/rs_pla_black>
+                    }
+
+                    over "pla2_green" (
+                        prepend apiSchemas = ["MaterialBindingAPI"]
+                    )
+                    {
+                        rel material:binding = </ReBot_Arm_RS/Materials/rs_seeed_green>
+                    }
+
+                    over "link3"
+                    {
+                        over "cnc3" (
+                            prepend apiSchemas = ["MaterialBindingAPI"]
+                        )
+                        {
+                            rel material:binding = </ReBot_Arm_RS/Materials/rs_anodized_silver>
+                        }
+
+                        over "motor_4" (
+                            prepend apiSchemas = ["MaterialBindingAPI"]
+                        )
+                        {
+                            rel material:binding = </ReBot_Arm_RS/Materials/rs_motor_black>
+                        }
+
+                        over "pla3_black_without_seeed_badge" (
+                            prepend apiSchemas = ["MaterialBindingAPI"]
+                        )
+                        {
+                            rel material:binding = </ReBot_Arm_RS/Materials/rs_pla_black>
+                        }
+
+                        over "pla3_seeed_badge_with_counters" (
+                            prepend apiSchemas = ["MaterialBindingAPI"]
+                        )
+                        {
+                            rel material:binding = </ReBot_Arm_RS/Materials/rs_seeed_green>
+                        }
+
+                        over "pla3_seeed_wordmark_backing" (
+                            prepend apiSchemas = ["MaterialBindingAPI"]
+                        )
+                        {
+                            rel material:binding = </ReBot_Arm_RS/Materials/rs_wordmark_black>
+                        }
+
+                        over "pla3_green" (
+                            prepend apiSchemas = ["MaterialBindingAPI"]
+                        )
+                        {
+                            rel material:binding = </ReBot_Arm_RS/Materials/rs_seeed_green>
+                        }
+
+                        over "link4"
+                        {
+                            over "motor_5" (
+                                prepend apiSchemas = ["MaterialBindingAPI"]
+                            )
+                            {
+                                rel material:binding = </ReBot_Arm_RS/Materials/rs_motor_black>
+                            }
+
+                            over "cnc4" (
+                                prepend apiSchemas = ["MaterialBindingAPI"]
+                            )
+                            {
+                                rel material:binding = </ReBot_Arm_RS/Materials/rs_anodized_silver>
+                            }
+
+                            over "link5"
+                            {
+                                over "motor_6" (
+                                    prepend apiSchemas = ["MaterialBindingAPI"]
+                                )
+                                {
+                                    rel material:binding = </ReBot_Arm_RS/Materials/rs_motor_black>
+                                }
+
+                                over "cnc5" (
+                                    prepend apiSchemas = ["MaterialBindingAPI"]
+                                )
+                                {
+                                    rel material:binding = </ReBot_Arm_RS/Materials/rs_anodized_silver>
+                                }
+
+                                over "pla5_green" (
+                                    prepend apiSchemas = ["MaterialBindingAPI"]
+                                )
+                                {
+                                    rel material:binding = </ReBot_Arm_RS/Materials/rs_seeed_green>
+                                }
+
+                                over "link6"
+                                {
+                                    over "link6" (
+                                        prepend apiSchemas = ["MaterialBindingAPI"]
+                                    )
+                                    {
+                                        rel material:binding = </ReBot_Arm_RS/Materials/rs_motor_black>
+                                    }
+
+                                    over "gripper_end"
+                                    {
+                                        over "pla7_green" (
+                                            prepend apiSchemas = ["MaterialBindingAPI"]
+                                        )
+                                        {
+                                            rel material:binding = </ReBot_Arm_RS/Materials/rs_seeed_green>
+                                        }
+
+                                        over "cnc7" (
+                                            prepend apiSchemas = ["MaterialBindingAPI"]
+                                        )
+                                        {
+                                            rel material:binding = </ReBot_Arm_RS/Materials/rs_anodized_silver>
+                                        }
+
+                                        over "motor_7" (
+                                            prepend apiSchemas = ["MaterialBindingAPI"]
+                                        )
+                                        {
+                                            rel material:binding = </ReBot_Arm_RS/Materials/rs_motor_black>
+                                        }
+
+                                        over "gripper_left"
+                                        {
+                                            over "pla_left" (
+                                                prepend apiSchemas = ["MaterialBindingAPI"]
+                                            )
+                                            {
+                                                rel material:binding = </ReBot_Arm_RS/Materials/rs_pla_black>
+                                            }
+
+                                            over "cnc_left" (
+                                                prepend apiSchemas = ["MaterialBindingAPI"]
+                                            )
+                                            {
+                                                rel material:binding = </ReBot_Arm_RS/Materials/rs_anodized_silver>
+                                            }
+                                        }
+
+                                        over "gripper_right"
+                                        {
+                                            over "pla_right" (
+                                                prepend apiSchemas = ["MaterialBindingAPI"]
+                                            )
+                                            {
+                                                rel material:binding = </ReBot_Arm_RS/Materials/rs_pla_black>
+                                            }
+
+                                            over "cnc_right" (
+                                                prepend apiSchemas = ["MaterialBindingAPI"]
+                                            )
+                                            {
+                                                rel material:binding = </ReBot_Arm_RS/Materials/rs_anodized_silver>
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+

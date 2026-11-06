@@ -60,8 +60,8 @@ reBot-Isaacsim/
 ├── third_party/
 │   └── reBotArm_control_py/                 # git submodule：上游控制库
 └── usd/
-    └── RS-rebot-dev-arm/
-        └── RS-rebot-dev-arm.usda            # Isaac Sim 机械臂资产
+    └── ReBot_Arm_RS/
+        └── ReBot_Arm_RS.usda            # Isaac Sim 机械臂资产
 ```
 
 ## 依赖与前提条件
@@ -112,7 +112,7 @@ uv sync
 
 ### 3. 将硬件配置切到 RS
 
-本仓 Isaac Sim 资产是 RS（`usd/RS-rebot-dev-arm`）。上游 `rebotarm.yaml` 默认是 DM。`RebotArm()` 和 `load_robot_model()` 都读这一份，所以重力补偿、只读映射、IK、Traj 都要先切到 RS；不切的话电机协议会对不上，Pinocchio 也会用 DM URDF。只改 submodule 工作区，不要提交：
+本仓 Isaac Sim 资产是 RS（`usd/ReBot_Arm_RS`）。当前 SDK 的 `rebotarm.yaml` 默认是 RS，请仍先核对实际配置。`RebotArm()` 和 `load_robot_model()` 都读这一份，所以重力补偿、只读映射、IK、Traj 都要先切到 RS；不切的话电机协议会对不上，Pinocchio 也会用 DM URDF。只改 submodule 工作区，不要提交：
 
 ```bash
 cd reBotArm_Isaacsim
@@ -277,7 +277,7 @@ UDP JSON，端口 `127.0.0.1:5005`。
 | `DEFAULT_PORT` | 5005 | UDP 端口 |
 | `DEFAULT_RENDER_HZ` | 120.0 | 仿真渲染频率（Hz） |
 | `ROBOT_PRIM_PATH` | `/World/reBotArm` | Isaac Sim 中的机械臂 Prim 路径 |
-| `ASSET_RELATIVE_PATH` | `usd/RS-rebot-dev-arm/RS-rebot-dev-arm.usda` | USD 资产相对路径 |
+| `ASSET_RELATIVE_PATH` | `usd/ReBot_Arm_RS/ReBot_Arm_RS.usda` | USD 资产相对路径 |
 
 ## 常见问题
 
@@ -298,7 +298,7 @@ kill <PID>
 确认 USD 资产路径存在，或检查 `REPO_ROOT` 是否正确：
 
 ```bash
-ls usd/RS-rebot-dev-arm/RS-rebot-dev-arm.usda
+ls usd/ReBot_Arm_RS/ReBot_Arm_RS.usda
 ```
 
 ### CAN 总线未就绪

@@ -100,6 +100,13 @@ class FakeControlTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "CAN timeout"):
             app.read_position(motor)
 
+    def test_end_disconnects_instead_of_sdk_position_hold(self):
+        self.ctrl._running = True
+        self.ctrl.rebotarm.disconnect = Mock()
+        self.ctrl.end()
+        self.ctrl.rebotarm.disconnect.assert_called_once_with()
+        self.assertFalse(self.ctrl._running)
+
     def test_live_uses_reference_gripper_defaults(self):
         argv = ["gravity_gripper_assist.py"]
         with patch.object(sys, "argv", argv), patch.object(app, "RebotArm") as robot, \

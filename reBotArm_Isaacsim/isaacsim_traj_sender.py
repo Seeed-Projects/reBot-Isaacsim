@@ -111,7 +111,7 @@ class TrajSender:
 
         # 当前关节配置（电机坐标 / URDF / Pinocchio 模型符号）。
         # IK 求解的 q_init、CLIK 跟踪的 q_start/q_end、以及广播后回填的
-        # points[-1].q 都属于同一坐标系；发送阶段才取反成仿真坐标。
+        # points[-1].q 都属于同一坐标系；发送阶段才取反成兼容的 UDP 协议坐标。
         self.q_prev = np.zeros(self.model.nq)
         self.gripper = 0.0
 
@@ -153,12 +153,10 @@ class TrajSender:
     # ---------- 关节角反馈（从仿真端回读） ----------
 
     def _request_feedback(self) -> np.ndarray:
-        """发 feedback_request 到接收端，等待回传当前关节角（仿真侧真实值）。
+        """向接收端请求最近的关节目标（不是仿真关节实测值）。
 
-        协议字段 `joint_positions` 是仿真坐标系（USD / drive）下的关节角；
-        而 URDF + Pinocchio 模型（含 IK / CLIK）使用的是电机坐标系，
-        两者满足  q_simulation = -q_motor  这一仓库既定约定。
-        因此回传后必须取反才能作为模型坐标系的 q_prev 使用。
+        UDP 协议保留旧资产约定 q_wire = -q_motor；接收端负责转换到
+        所选 USD 的关节方向。返回值取反后可作为模型坐标的 q_prev。
 
         超时则打印警告并返回当前 q_prev（不阻塞启动）。
         """
@@ -173,17 +171,17 @@ class TrajSender:
                 packet, _ = self.feedback_socket.recvfrom(65535)
                 payload = json.loads(packet.decode("utf-8"))
                 if payload.get("type") == "feedback":
-                    q_simulation = np.asarray(payload["joint_positions"], dtype=np.float64)
-                    # 仿真坐标 → 电机坐标（取反），再补零到 model.nq。
-                    q_motor = -q_simulation
+                    q_wire = np.asarray(payload["joint_positions"], dtype=np.float64)
+                    # 协议坐标 → 电机坐标（取反），再补零到 model.nq。
+                    q_motor = -q_wire
                     q_model = np.concatenate(
                         [q_motor, np.zeros(max(0, self.model.nq - ARM_JOINT_COUNT))]
                     )
                     q_rad = q_motor[:ARM_JOINT_COUNT]
                     q_deg_str = "  ".join(f"{np.degrees(v):+7.2f}" for v in q_rad)
                     print(
-                        f"[feedback] 收到仿真端关节角 (仿真坐标): "
-                        f"q_rad=[{'  '.join(f'{v:+.3f}' for v in q_simulation)}]"
+                        f"[feedback] 收到仿真端最近目标 (协议坐标): "
+                        f"q_rad=[{'  '.join(f'{v:+.3f}' for v in q_wire)}]"
                     )
                     print(
                         f"[feedback] 已转换为电机坐标: "
@@ -332,7 +330,7 @@ class TrajSender:
             # 立即广播一帧；既解决"等下次规划才生效"的延迟，也让"单独
             # 更新夹爪"的命令在不动 arm 时也能动 gripper。
             # 取上一次 joint 目标 q 的前 6 个当作静止参考（不触发任何臂规划）；
-            # q_prev 是电机坐标，广播前必须取反成仿真坐标（q_sim = -q_motor）。
+            # q_prev 是电机坐标，广播前取反成协议坐标（q_wire = -q_motor）。
             self._send(-self.q_prev[:ARM_JOINT_COUNT], gripper_m)
             return (
                 f"夹爪比例已更新为 {ratio:.2f} "
@@ -351,7 +349,7 @@ class TrajSender:
             if q_deg.shape != (ARM_JOINT_COUNT,):
                 raise ValueError(f"q 需要 {ARM_JOINT_COUNT} 个数，实际 {q_deg.shape[0]} 个")
             # 用户输入单位为度（电机坐标），直接转弧度送进 planner；
-            # 广播阶段统一取反为仿真坐标。
+            # 广播阶段统一取反为协议坐标。
             q_target_model = np.zeros(self.model.nq)
             q_target_model[:ARM_JOINT_COUNT] = np.radians(q_deg)
 

@@ -107,7 +107,7 @@ class GravityCompensationSender:
             filtered_q = (1.0 - self.position_alpha) * (-self.latest_q) + self.position_alpha * q_arm
             self.latest_q[:] = -filtered_q
         else:
-            # latest_q 是仿真坐标（q_sim = -q_motor）。
+            # latest_q 使用旧版 UDP 协议坐标（q_wire = -q_motor）；接收端转换到所选 USD。
             self.latest_q[:] = -q_arm
         if self.rebotarm.has_gripper:
             gripper_q = self.rebotarm.gripper.get_positions()
@@ -157,7 +157,9 @@ class GravityCompensationSender:
 
     def shutdown(self) -> None:
         try:
-            self.ctrl.end()
+            # Newer SDK end() holds position and leaves the motors enabled;
+            # this sender's established shutdown behavior is disconnect.
+            self.rebotarm.disconnect()
         finally:
             self.socket.close()
 

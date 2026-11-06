@@ -1,0 +1,199 @@
+#usda 1.0
+(
+    customLayerData = {
+        string creator = "URDF USD Converter v0.1.0"
+    }
+    defaultPrim = "ReBot_Arm_RS"
+    kilogramsPerUnit = 1
+    metersPerUnit = 1
+    upAxis = "Z"
+)
+
+def Xform "ReBot_Arm_RS" (
+    prepend apiSchemas = ["GeomModelAPI"]
+    assetInfo = {
+        string name = "ReBot_Arm_RS"
+    }
+    kind = "component"
+    prepend payload = @./Payload/Contents.usda@
+)
+{
+    float3[] extentsHint = [(-0.2596303, -0.1, -1.0949644e-11), (0.30171034, 0.1, 0.3207462), (3.4028235e38, 3.4028235e38, 3.4028235e38), (-3.4028235e38, -3.4028235e38, -3.4028235e38), (3.4028235e38, 3.4028235e38, 3.4028235e38), (-3.4028235e38, -3.4028235e38, -3.4028235e38), (-0.2596303, -0.1, -1.0949644e-11), (0.30171034, 0.1, 0.32074627)]
+
+    over "Geometry"
+    {
+        over "base_link"
+        {
+            float3 physics:diagonalInertia = (0.0013304, 0.00213119, 0.00275877)
+            quatf physics:principalAxes = (1, 0, 0, -0.0000062438344)
+
+            over "link1"
+            {
+                float3 physics:diagonalInertia = (0.00015464, 0.0002134129, 0.0002728171)
+                quatf physics:principalAxes = (0.63066953, -0.31977478, -0.31977478, 0.63066953)
+
+                over "link2"
+                {
+                    float3 physics:diagonalInertia = (0.000733734, 0.012559864, 0.012813883)
+                    quatf physics:principalAxes = (0.0025189344, 0.9999968, 0.000019105386, -0.00035218598)
+
+                    over "link3"
+                    {
+                        float3 physics:diagonalInertia = (0.00046756444, 0.006327153, 0.006482512)
+                        quatf physics:principalAxes = (0.9999889, -0.0009913049, -0.0035441353, 0.0029454725)
+
+                        over "link4"
+                        {
+                            float3 physics:diagonalInertia = (0.00032324076, 0.00066742, 0.0008891992)
+                            quatf physics:principalAxes = (0.17959702, 0.17959702, 0.6839188, 0.6839188)
+
+                            over "link5"
+                            {
+                                float3 physics:diagonalInertia = (0.00005295596, 0.000055153945, 0.00007345979)
+                                quatf physics:principalAxes = (0.7217615, -0.0017204558, -0.6921357, 0.0023510843)
+
+                                over "link6"
+                                {
+                                    float3 physics:diagonalInertia = (0.000004371855, 0.000004422738, 0.000008542994)
+                                    quatf physics:principalAxes = (0.000012841821, 0.70712876, -0.7070848, -0.000013218725)
+
+                                    over "gripper_end"
+                                    {
+                                        float3 physics:diagonalInertia = (0.00015825892, 0.00037353695, 0.00045357412)
+                                        quatf physics:principalAxes = (0.70729434, -0.0019646983, 0.006368091, 0.7068878)
+
+                                        over "gripper_left"
+                                        {
+                                            float3 physics:diagonalInertia = (0.0000093078, 0.00000950146, 0.0000109877965)
+                                            quatf physics:principalAxes = (0.70710677, 0, 0.70710677, 0)
+
+                                            over "gripper_left"
+                                            {
+                                                uniform token physics:approximation = "convexDecomposition"
+                                            }
+                                        }
+
+                                        over "gripper_right"
+                                        {
+                                            float3 physics:diagonalInertia = (0.0000093078, 0.00000950146, 0.0000109877965)
+                                            quatf physics:principalAxes = (0.70710677, 0, 0.70710677, 0)
+
+                                            over "gripper_right"
+                                            {
+                                                uniform token physics:approximation = "convexDecomposition"
+                                            }
+                                        }
+
+                                        over "gripper_end"
+                                        {
+                                            uniform token physics:approximation = "convexDecomposition"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    over "Physics"
+    {
+        over "joint1" (
+            prepend apiSchemas = ["PhysicsDriveAPI:angular"]
+        )
+        {
+            float drive:angular:physics:damping = 60
+            float drive:angular:physics:maxForce = 36
+            float drive:angular:physics:stiffness = 500
+            float drive:angular:physics:targetPosition = 0
+            uniform token drive:angular:physics:type = "force"
+        }
+
+        over "joint2" (
+            prepend apiSchemas = ["PhysicsDriveAPI:angular"]
+        )
+        {
+            float drive:angular:physics:damping = 96
+            float drive:angular:physics:maxForce = 36
+            float drive:angular:physics:stiffness = 1500
+            float drive:angular:physics:targetPosition = 0
+            uniform token drive:angular:physics:type = "force"
+        }
+
+        over "joint3" (
+            prepend apiSchemas = ["PhysicsDriveAPI:angular"]
+        )
+        {
+            float drive:angular:physics:damping = 76
+            float drive:angular:physics:maxForce = 36
+            float drive:angular:physics:stiffness = 1000
+            float drive:angular:physics:targetPosition = 0
+            uniform token drive:angular:physics:type = "force"
+        }
+
+        over "joint4" (
+            prepend apiSchemas = ["PhysicsDriveAPI:angular"]
+        )
+        {
+            float drive:angular:physics:damping = 18
+            float drive:angular:physics:maxForce = 14
+            float drive:angular:physics:stiffness = 150
+            float drive:angular:physics:targetPosition = 0
+            uniform token drive:angular:physics:type = "force"
+        }
+
+        over "joint5" (
+            prepend apiSchemas = ["PhysicsDriveAPI:angular"]
+        )
+        {
+            float drive:angular:physics:damping = 10
+            float drive:angular:physics:maxForce = 14
+            float drive:angular:physics:stiffness = 80
+            float drive:angular:physics:targetPosition = 0
+            uniform token drive:angular:physics:type = "force"
+        }
+
+        over "joint6" (
+            prepend apiSchemas = ["PhysicsDriveAPI:angular"]
+        )
+        {
+            float drive:angular:physics:damping = 7
+            float drive:angular:physics:maxForce = 14
+            float drive:angular:physics:stiffness = 50
+            float drive:angular:physics:targetPosition = 0
+            uniform token drive:angular:physics:type = "force"
+        }
+
+        over "gripper_joint1" (
+            prepend apiSchemas = ["PhysicsDriveAPI:linear"]
+        )
+        {
+            float drive:linear:physics:damping = 41.28
+            float drive:linear:physics:maxForce = 500
+            float drive:linear:physics:stiffness = 5000
+            float drive:linear:physics:targetPosition = 0
+            uniform token drive:linear:physics:type = "force"
+        }
+
+        over "gripper_joint2" (
+            prepend apiSchemas = ["PhysicsDriveAPI:linear"]
+        )
+        {
+            float drive:linear:physics:damping = 41.28
+            float drive:linear:physics:maxForce = 500
+            float drive:linear:physics:stiffness = 5000
+            float drive:linear:physics:targetPosition = 0
+            uniform token drive:linear:physics:type = "force"
+            float physics:upperLimit = 0.05
+        }
+    }
+}
+
+def PhysicsScene "PhysicsScene" (
+    prepend payload = @./Payload/Contents.usda@</PhysicsScene>
+)
+{
+}
+

@@ -8,7 +8,7 @@
 
 **已知问题：** 实机体验时观察到 J2 持续漂移、末端下垂，原因尚未确认。使用时应保持支撑并观察；一次受支撑测试没有发现明显持续下垂，但尚未确认根因。
 
-当前脚本的动力学计算读取 `third_party/reBotArm_control_py` 配置指定的 SDK 内置 URDF；它是 SDK 中独立的一份模型，名称可能仍显示为 `00-arm-rs_asm-v3`。仓库根目录的 Isaac URDF 使用 `ReBot_Arm_RS` 和 `gripper_joint1/2` 名称，已有 USD 资产仍使用旧夹爪关节名，接收端兼容两种名称。
+动力学计算读取 SDK 配置指定的 `urdf/RS/urdf/ReBot_Arm_RS.urdf`。默认仿真使用从同版 URDF 生成的 `usd/ReBot_Arm_RS/ReBot_Arm_RS.usda`；接收端保留旧 UDP 符号约定并转换到新版 USD 关节方向。设置 `REBOT_ISAAC_USE_LEGACY_USD=1` 可回退旧资产。两份 URDF 在本次更新时哈希一致。
 
 ## 模型预检查
 

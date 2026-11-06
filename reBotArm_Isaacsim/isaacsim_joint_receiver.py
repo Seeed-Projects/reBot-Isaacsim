@@ -6,7 +6,7 @@ Isaac Sim arm + ground + UDP joint-angle receiver.
 
 功能概述：
 1. 使用 Isaac 官方 Python 运行时启动 `SimulationApp`。
-2. 创建地面并加载 `usd/RS-rebot-dev-arm` 机械臂资产。
+2. 创建地面并加载 `usd/ReBot_Arm_RS` 机械臂资产。
 3. 通过 UDP 接收真实机械臂前 6 个关节角，并实时同步到 Isaac Sim。
 4. 将收到的 `gripper_position`（米）裁剪到各指关节上限后，作为双关节位置目标
    同步到仿真夹爪。
@@ -17,7 +17,7 @@ Isaac Sim arm + ground + UDP joint-angle receiver.
 
 Overview:
 1. Launch `SimulationApp` via the official Isaac Python runtime.
-2. Create the ground plane and load the `usd/RS-rebot-dev-arm` robot asset.
+2. Create the ground plane and load the `usd/ReBot_Arm_RS` robot asset.
 3. Receive the first 6 joint angles from the physical arm over UDP and mirror
    them in Isaac Sim in real time.
 4. Clip the received `gripper_position` (meters) to each finger joint's upper
@@ -63,7 +63,8 @@ DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 5005
 DEFAULT_FEEDBACK_PORT = 5006
 DEFAULT_RENDER_HZ = 120.0
-ASSET_RELATIVE_PATH = Path("usd/RS-rebot-dev-arm/RS-rebot-dev-arm.usda")
+ASSET_RELATIVE_PATH = Path("usd/ReBot_Arm_RS/ReBot_Arm_RS.usda")
+LEGACY_ASSET_RELATIVE_PATH = Path("usd/RS-rebot-dev-arm/RS-rebot-dev-arm.usda")
 GRID_TEXTURE_RELATIVE_PATH = Path("reBotArm_Isaacsim/assets/grid_ground.png")
 GRID_TEXTURE_CELLS = 10
 GRID_TEXTURE_SIZE = 512
@@ -101,7 +102,12 @@ class IsaacJointMirror:
     """
 
     def __init__(self, host: str = DEFAULT_HOST, port: int = DEFAULT_PORT) -> None:
-        self.asset_path = REPO_ROOT / ASSET_RELATIVE_PATH
+        use_legacy = os.environ.get("REBOT_ISAAC_USE_LEGACY_USD", "0") == "1"
+        self.use_legacy_asset = use_legacy
+        self.asset_path = REPO_ROOT / (LEGACY_ASSET_RELATIVE_PATH if use_legacy else ASSET_RELATIVE_PATH)
+        # Existing UDP senders use the old USD sign convention; the new asset
+        # uses motor/SDK joint signs. Keep the wire protocol backward compatible.
+        self.wire_to_asset_sign = 1.0 if use_legacy else -1.0
         if not self.asset_path.exists():
             raise FileNotFoundError(
                 f"Isaac Sim 资产不存在: {self.asset_path} / Isaac Sim asset not found: {self.asset_path}"
@@ -327,14 +333,15 @@ class IsaacJointMirror:
         )
 
     def setup_isaac_sim(self) -> None:
-        self.sim_app = SimulationApp({"headless": False})
+        self.sim_app = SimulationApp({"headless": os.environ.get("REBOT_ISAAC_HEADLESS", "0") == "1"})
 
         from isaacsim.core.api import World
         from isaacsim.core.prims import SingleArticulation
         from isaacsim.core.utils.prims import is_prim_path_valid
         from isaacsim.core.utils.stage import add_reference_to_stage
 
-        self._ensure_texture_search_path()
+        if self.use_legacy_asset:
+            self._ensure_texture_search_path()
 
         self.world = World(stage_units_in_meters=1.0)
         self._add_local_ground_plane(self.world)
@@ -490,7 +497,7 @@ class IsaacJointMirror:
             if payload.get("type") == "feedback_request":
                 feedback = {
                     "type": "feedback",
-                    "joint_positions": self.latest_q.tolist(),
+                    "joint_positions": (self.wire_to_asset_sign * self.latest_q).tolist(),
                     "timestamp": time.time(),
                 }
                 self.feedback_socket.sendto(
@@ -506,7 +513,7 @@ class IsaacJointMirror:
                     f"received joint angle has wrong shape: {joint_positions.shape}, expected {(ARM_JOINT_COUNT,)}"
                 )
             gripper_value = payload.get("gripper_position")
-            latest_packet = (joint_positions, int(payload["sequence"]), None if gripper_value is None else float(gripper_value))
+            latest_packet = (self.wire_to_asset_sign * joint_positions, int(payload["sequence"]), None if gripper_value is None else float(gripper_value))
         return latest_packet
 
     def run(self, render_hz: float = DEFAULT_RENDER_HZ) -> None:
@@ -576,7 +583,8 @@ def main() -> None:
     print("  停止方式: 关闭 Isaac Sim 窗口或 Ctrl+C")
     print("=" * 72)
     print(f"[接收] udp://{DEFAULT_HOST}:{DEFAULT_PORT}")
-    print(f"[资产] {ASSET_RELATIVE_PATH}")
+    selected_asset = LEGACY_ASSET_RELATIVE_PATH if os.environ.get("REBOT_ISAAC_USE_LEGACY_USD", "0") == "1" else ASSET_RELATIVE_PATH
+    print(f"[资产] {selected_asset}")
 
     print()
     print("=" * 72)
@@ -587,7 +595,7 @@ def main() -> None:
     print("  To stop: close the Isaac Sim window or press Ctrl+C")
     print("=" * 72)
     print(f"[receiver] udp://{DEFAULT_HOST}:{DEFAULT_PORT}")
-    print(f"[asset] {ASSET_RELATIVE_PATH}")
+    print(f"[asset] {selected_asset}")
 
     mirror = IsaacJointMirror()
     try:

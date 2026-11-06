@@ -293,7 +293,11 @@ class AssistedGravity(GravityCompensation):
         self._stop_feedback.set()
         if self._feedback_thread:
             self._feedback_thread.join(timeout=2)
-        super().end()
+        # The SDK's end() now holds position with motors enabled. This example
+        # promises disconnect/disable on exit, so use the explicit robot API.
+        if self._running:
+            self.rebotarm.disconnect()
+            self._running = False
 
 
 def check_model(robot):

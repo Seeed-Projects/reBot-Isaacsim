@@ -58,8 +58,8 @@ reBot-Isaacsim/
 ├── third_party/
 │   └── reBotArm_control_py/                 # git submodule: upstream control library
 └── usd/
-    └── RS-rebot-dev-arm/
-        └── RS-rebot-dev-arm.usda            # Isaac Sim robot asset
+    └── ReBot_Arm_RS/
+        └── ReBot_Arm_RS.usda            # Isaac Sim robot asset
 ```
 
 ## Dependencies and Prerequisites
@@ -110,7 +110,7 @@ uv sync
 
 ### 3. Switch the hardware config to RS
 
-This repo's Isaac Sim asset is RS (`usd/RS-rebot-dev-arm`). Upstream `rebotarm.yaml` defaults to DM. Both `RebotArm()` and `load_robot_model()` follow this file, so gravity compensation, joint-reader, IK, and Traj all need RS first; leave it on DM and the motor protocol will not match, and Pinocchio will load the DM URDF. This only dirties the submodule working tree — do not commit it:
+This repo's Isaac Sim asset is RS (`usd/ReBot_Arm_RS`). The current SDK defaults `rebotarm.yaml` to RS; verify the actual configuration first. Both `RebotArm()` and `load_robot_model()` follow this file, so gravity compensation, joint-reader, IK, and Traj all need RS first; leave it on DM and the motor protocol will not match, and Pinocchio will load the DM URDF. This only dirties the submodule working tree — do not commit it:
 
 ```bash
 cd reBotArm_Isaacsim
@@ -275,7 +275,7 @@ The receiver applies the received `gripper_position` directly as the position ta
 | `DEFAULT_PORT` | 5005 | UDP port |
 | `DEFAULT_RENDER_HZ` | 120.0 | Simulation render frequency (Hz) |
 | `ROBOT_PRIM_PATH` | `/World/reBotArm` | Robot Prim path inside Isaac Sim |
-| `ASSET_RELATIVE_PATH` | `usd/RS-rebot-dev-arm/RS-rebot-dev-arm.usda` | USD asset path relative to the repo root |
+| `ASSET_RELATIVE_PATH` | `usd/ReBot_Arm_RS/ReBot_Arm_RS.usda` | USD asset path relative to the repo root |
 
 ## Troubleshooting
 
@@ -296,7 +296,7 @@ kill <PID>
 Confirm the USD asset path exists, or check that `REPO_ROOT` is correct:
 
 ```bash
-ls usd/RS-rebot-dev-arm/RS-rebot-dev-arm.usda
+ls usd/ReBot_Arm_RS/ReBot_Arm_RS.usda
 ```
 
 ### CAN bus not ready
