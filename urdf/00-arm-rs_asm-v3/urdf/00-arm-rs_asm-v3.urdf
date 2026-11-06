@@ -3,7 +3,7 @@
      Commit Version: 1.6.0-4-g7f85cfe  Build Version: 1.6.7995.38578
      For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
 <robot
-  name="00-arm-rs_asm-v3">
+  name="ReBot_Arm_RS">
   <link
     name="base_link">
     <inertial>
@@ -738,7 +738,7 @@
     </collision>
   </link>
   <joint
-    name="joint_left"
+    name="gripper_joint1"
     type="prismatic">
     <origin
       xyz="-0.041939 -7.3385E-05 0"
@@ -824,7 +824,7 @@
     </collision>
   </link>
   <joint
-    name="joint_right"
+    name="gripper_joint2"
     type="prismatic">
     <origin
       xyz="-0.041939 7.3385E-05 0"

@@ -74,7 +74,8 @@ DOME_LIGHT_PRIM_PATH = "/World/DomeLight"
 DISTANT_LIGHT_PRIM_PATH = "/World/DistantLight"
 DEFAULT_CAMERA_EYE = np.array([0.595, 0.532, 0.636], dtype=np.float64)
 DEFAULT_CAMERA_TARGET = np.array([0.0, 0.0, 0.35], dtype=np.float64)
-GRIPPER_JOINT_NAMES = ("joint_left", "joint_right")
+GRIPPER_JOINT_NAMES = ("gripper_joint1", "gripper_joint2")
+LEGACY_GRIPPER_JOINT_NAMES = ("joint_left", "joint_right")
 TEXTURE_SYMLINK_ENV = "REBOT_TEXTURE_SYMLINK"
 GROUND_TEXTURE_ENV = "REBOT_GROUND_TEXTURE"
 GROUND_PLANE_COLOR = np.array([0.96, 0.96, 0.96], dtype=np.float64)
@@ -121,6 +122,7 @@ class IsaacJointMirror:
         self.last_sequence = -1
         self.last_packet_time = 0.0
         self.arm_joint_indices = np.arange(ARM_JOINT_COUNT, dtype=np.int64)
+        self.gripper_joint_names = GRIPPER_JOINT_NAMES
         self.gripper_joint_indices: np.ndarray | None = None
         self.gripper_limits = np.zeros(2, dtype=np.float64)
         self.gripper_target_position = 0.0
@@ -411,16 +413,17 @@ class IsaacJointMirror:
         print("[recv-setup] 渲染器预热完成 / renderer warmup complete")
 
     def _setup_gripper_mapping(self, dof_names: list[str]) -> None:
-        missing_joints = [name for name in GRIPPER_JOINT_NAMES if name not in dof_names]
-        if missing_joints:
-            print(
-                f"[warn] 未找到夹爪 DOF: {missing_joints}，将跳过夹爪联动 / "
-                f"gripper DoFs not found: {missing_joints}; skipping gripper mirroring"
-            )
+        self.gripper_joint_indices = None
+        self.gripper_joint_names = next(
+            (names for names in (GRIPPER_JOINT_NAMES, LEGACY_GRIPPER_JOINT_NAMES)
+             if all(name in dof_names for name in names)), None)
+        if self.gripper_joint_names is None:
+            print("[warn] 未找到完整的夹爪 DOF 名称，将跳过夹爪联动 / "
+                  "gripper DoF pair not found; skipping gripper mirroring")
             return
 
         self.gripper_joint_indices = np.array(
-            [dof_names.index(name) for name in GRIPPER_JOINT_NAMES],
+            [dof_names.index(name) for name in self.gripper_joint_names],
             dtype=np.int64,
         )
         lower_limits = np.asarray(self.articulation.dof_properties["lower"])
@@ -431,16 +434,16 @@ class IsaacJointMirror:
             "[夹爪/gripper] DOF 映射 = "
             + "  ".join(
                 f"{name}:index={index}, lower={lower_limits[index]:+.4f}m, upper={upper_limits[index]:+.4f}m"
-                for name, index in zip(GRIPPER_JOINT_NAMES, self.gripper_joint_indices)
+                for name, index in zip(self.gripper_joint_names, self.gripper_joint_indices)
             )
         )
         print(
             "[夹爪/gripper] 位置控制已启用: "
-            + "  ".join(f"{name} 显式接收位置目标 / {name} receives explicit position target" for name in GRIPPER_JOINT_NAMES)
+            + "  ".join(f"{name} 显式接收位置目标 / {name} receives explicit position target" for name in self.gripper_joint_names)
         )
         print(
             "[夹爪/gripper] 行程上限 = "
-            + "  ".join(f"{name}:{limit:.4f}m" for name, limit in zip(GRIPPER_JOINT_NAMES, self.gripper_limits))
+            + "  ".join(f"{name}:{limit:.4f}m" for name, limit in zip(self.gripper_joint_names, self.gripper_limits))
         )
 
     def _apply_gripper_target(self, gripper_position: float) -> None:
@@ -464,7 +467,7 @@ class IsaacJointMirror:
                 f"[夹爪/gripper] command_position={self.gripper_target_position:+.4f}m "
                 + "  ".join(
                     f"{name}_target={position:+.4f}m"
-                    for name, position in zip(GRIPPER_JOINT_NAMES, target_positions)
+                    for name, position in zip(self.gripper_joint_names, target_positions)
                 )
             )
             self._last_gripper_command_signature = command_signature
@@ -538,11 +541,12 @@ class IsaacJointMirror:
                             f"[recv] gripper_position = {self.gripper_target_position:+.4f}m  "
                             + "  ".join(
                                 f"{name}={value:+.4f}m"
-                                for name, value in zip(GRIPPER_JOINT_NAMES, gripper_positions)
+                                for name, value in zip(self.gripper_joint_names, gripper_positions)
                             )
                         )
                         print(
-                            f"[sim] joint_left={gripper_positions[0]:+.4f}m  joint_right={gripper_positions[1]:+.4f}m"
+                            f"[sim] {self.gripper_joint_names[0]}={gripper_positions[0]:+.4f}m  "
+                            f"{self.gripper_joint_names[1]}={gripper_positions[1]:+.4f}m"
                         )
 
             self.world.step(render=True)
