@@ -214,7 +214,7 @@ uv run python isaacsim_joint_test_sender.py
 
 #### ⑤ Real-to-Sim 映射模式（`joint_reader_sender`）
 
-只读关节角并映射到 Isaac Sim，适合实际机械臂在运行其他任务时同步映射可视化。`RebotArm()` 读 submodule 的 `rebotarm.yaml`，需先切到 RS：
+读取 RS 真机反馈并映射到 Isaac Sim。`RebotArm()` 读取 submodule 的 `rebotarm.yaml`，需先切到 RS：
 
 ```bash
 cd reBotArm_Isaacsim
@@ -222,11 +222,11 @@ python set_hw_rs.py
 uv run python joint_reader_sender.py
 ```
 
-**预期行为：**
-- `set_hw_rs.py` 把电机配置切到 RS（本机改动，勿提交）
-- 仅读取关节角（被动反馈模式），不发送任何控制指令
-- 关节角以 60 Hz 持续通过 UDP 发送
-- 实际机械臂由其他项目控制时，可同时在 Isaac Sim 中可视化
+- `set_hw_rs.py` 把本机电机配置切到 RS，勿提交该本机改动。
+- 发送 RS 位置查询，不发送使能、失能、模式切换或运动控制命令；退出不会失能电机。
+- UDP 目标频率为 60 Hz；实际频率受 CAN 总线负载影响。任何电机反馈超时或无效时暂停发送，恢复后继续。
+- 默认使用 CAN host ID `0xfc`；如与其他程序冲突，可用 `--can-host-id 0xfb` 等指定空闲 ID。与其他真机控制程序并行使用前请核实总线负载和兼容性。
+- 夹爪默认按闭合 0 rad、全开 5 rad 映射到仿真单指 0–45 mm；其他端点可用 `--gripper-closed` 和 `--gripper-open` 临时指定。这只影响显示，不改变电机零点或运动限位。
 
 ## 通信协议
 
@@ -256,7 +256,7 @@ UDP JSON，端口 `127.0.0.1:5005`。
 | 发送端 | 到 `gripper_position`（m）的换算 |
 |------|------|
 | `gravity_joint_sender` | `gripper_q × 0.03`（`GRIPPER_POSITION_SCALE = 0.03`） |
-| `joint_reader_sender` | `gripper_q × 0.007`（`GRIPPER_POSITION_SCALE = 0.007`） |
+| `joint_reader_sender` | `clip((gripper_q - closed) / (open - closed), 0, 1) × 0.045 m` (default `closed=0`, `open=5` rad) |
 | `isaacsim_traj_sender` | `ratio × 0.045`（`gripper <0~1>` 输入，裁剪到 0.045 m） |
 | `isaacsim_ik_sender` | `ratio × 0.045` m，每指的仿真目标行程；下次关节命令时发送 |
 

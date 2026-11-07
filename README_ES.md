@@ -212,7 +212,7 @@ El emisor de prueba recorre en bucle varias poses articulares predefinidas con i
 
 #### 5. Modo de mapeo Real-to-Sim (`joint_reader_sender`)
 
-Ángulos articulares de solo lectura mapeados a Isaac Sim; adecuado para usarlo mientras el brazo físico ejecuta otras tareas (visualización simultánea). `RebotArm()` lee el `rebotarm.yaml` del submodule, así que cambia a RS primero:
+Lee las posiciones reales RS y las refleja en Isaac Sim. `RebotArm()` lee `rebotarm.yaml` del submódulo; selecciona RS primero:
 
 ```bash
 cd reBotArm_Isaacsim
@@ -220,11 +220,11 @@ python set_hw_rs.py
 uv run python joint_reader_sender.py
 ```
 
-**Comportamiento esperado:**
-- `set_hw_rs.py` cambia la configuración de motores a RS (cambio local; no hacer commit)
-- Los ángulos articulares se leen únicamente en modo de realimentación pasiva (no se envía ningún comando de control)
-- Los ángulos articulares se envían por UDP a 60 Hz
-- Cuando el brazo físico está controlado por otro proyecto, su movimiento se sigue reflejando en Isaac Sim para visualizarlo
+- `set_hw_rs.py` modifica la configuración local de motores; no incluyas ese cambio local en el commit.
+- Envía consultas de posición RS, sin comandos de habilitación, deshabilitación, cambio de modo ni movimiento. Al salir no deshabilita los motores.
+- La frecuencia UDP objetivo es 60 Hz y depende de la carga del bus CAN. Si falta una respuesta o es inválida, se pausa el envío hasta recuperarla.
+- El host CAN predeterminado es `0xfc`; usa, por ejemplo, `--can-host-id 0xfb` si hay conflicto. Comprueba la carga y la compatibilidad antes de usarlo junto con un controlador real.
+- La pinza se mapea por defecto de 0 rad cerrado a 5 rad abierto, correspondientes a 0–45 mm por dedo simulado. `--gripper-closed` y `--gripper-open` permiten cambiar solo el mapeo visual, no el cero ni los límites del motor.
 
 ## Protocolo de comunicación
 
@@ -254,7 +254,7 @@ El receptor aplica el `gripper_position` recibido directamente como objetivo de 
 | Emisor | Conversión a `gripper_position` (m) |
 |------|------|
 | `gravity_joint_sender` | `gripper_q × 0.03` (`GRIPPER_POSITION_SCALE = 0.03`) |
-| `joint_reader_sender` | `gripper_q × 0.007` (`GRIPPER_POSITION_SCALE = 0.007`) |
+| `joint_reader_sender` | `clip((gripper_q - closed) / (open - closed), 0, 1) × 0.045 m` (default `closed=0`, `open=5` rad) |
 | `isaacsim_traj_sender` | `ratio × 0.045` (entrada `gripper <0–1>`, recortado a 0,045 m) |
 | `isaacsim_ik_sender` | `ratio × 0.045` m de recorrido simulado por dedo, enviado con la siguiente orden articular |
 

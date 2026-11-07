@@ -1,297 +1,216 @@
 #!/usr/bin/env python3
-"""reBotArm 关节角只读 UDP 发送端 / Joint-angle read-only UDP sender.
-
-功能概述：
-1. 在当前工程 `uv` 环境中连接真实机械臂。
-2. 仅读取关节角度（被动反馈模式），不发送任何控制指令。
-3. 将前 6 个关节角和夹爪位置通过 UDP JSON 持续发送给 Isaac Sim 接收端。
-
-推荐运行方式：
-- 直接使用当前工程的 `uv` 环境运行本脚本。
-- 再单独使用 Isaac 官方 `python.sh` 启动 `isaacsim_joint_receiver.py`。
-
-Overview:
-1. Connect to the physical robot arm using the current project's `uv` environment.
-2. Read joint angles in passive feedback mode only - no control commands are sent.
-3. Continuously send the first 6 joint angles and gripper position to the
-   Isaac Sim receiver over UDP as JSON packets.
-
-Recommended usage:
-- Run this script inside the current project's `uv` environment.
-- Separately start `isaacsim_joint_receiver.py` with the official Isaac
-  `python.sh` launcher.
-"""
-
+"""RS 关节只读映射：读取实时位置并发送 UDP，不切换模式或控制电机。"""
 from __future__ import annotations
 
+import argparse
 import json
 import signal
 import socket
+import struct
 import sys
 import time
 from pathlib import Path
 
 import numpy as np
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-_THIRD_PARTY = REPO_ROOT / "third_party" / "reBotArm_control_py"
+_THIRD_PARTY = Path(__file__).resolve().parents[1] / 'third_party' / 'reBotArm_control_py'
 sys.path.insert(0, str(_THIRD_PARTY))
-
 from reBotArm_control_py.actuator import RebotArm  # noqa: E402
 
 ARM_JOINT_COUNT = 6
-DEFAULT_HOST = "127.0.0.1"
-DEFAULT_PORT = 5005
-DEFAULT_SEND_HZ = 60.0
-DEFAULT_REPORT_EVERY = 30
-GRIPPER_POSITION_SCALE = 0.007
-DEFAULT_MIT_ENABLED = False  # MIT 零命令发送开关 / MIT zero-command send toggle
-
+DEFAULT_HOST, DEFAULT_PORT = '127.0.0.1', 5005
+DEFAULT_SEND_HZ = 60.0  # 目标上限，实际取决于 CAN 总线负载
+GRIPPER_MAX_OPENING_M = 0.045  # 每根仿真手指最大行程
+MECH_POS = 0x7019
+READ_TIMEOUT_MS = 100
+DEFAULT_CAN_HOST_ID = 0xFC
+CAN_FRAME = struct.Struct("=IB3x8s")
+PARAM_REQUEST = struct.pack("<H6x", MECH_POS)
 _running = True
 
 
-def _sigint_handler(signum, frame) -> None:
+def _sigint_handler(signum, frame):
     del signum, frame
     global _running
-    print("\n[sender] 收到 Ctrl+C，准备退出... / received Ctrl+C, preparing to exit...")
     _running = False
 
 
 signal.signal(signal.SIGINT, _sigint_handler)
 
 
+class FeedbackError(RuntimeError):
+    """A current position response was unavailable; no packet should be sent."""
+
+
 class JointReaderSender:
-    """关节角只读发送器。
-
-    Joint-angle read-only sender - reads positions without sending control commands.
-    """
-
-    def __init__(self, host: str = DEFAULT_HOST, port: int = DEFAULT_PORT, mit_enabled: bool = DEFAULT_MIT_ENABLED) -> None:
-        self.host = host
-        self.port = port
-        self.mit_enabled = mit_enabled
+    def __init__(self, host=DEFAULT_HOST, port=DEFAULT_PORT, can_host_id=DEFAULT_CAN_HOST_ID,
+                 gripper_closed=0.0, gripper_open=5.0):
+        self.host, self.port = host, port
+        if not 0 <= can_host_id <= 255:
+            raise ValueError("CAN host ID 必须在 0–255 之间")
+        self.can_host_id = can_host_id
+        if not np.isfinite([gripper_closed, gripper_open]).all() or abs(gripper_open - gripper_closed) < 1e-6:
+            raise ValueError("夹爪开闭端点必须是不同的有限数值")
+        self.gripper_closed = gripper_closed
+        self.gripper_open = gripper_open
+        self.can_socket = None
+        self.motor_ids = []
         self.rebotarm = RebotArm()
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sequence = 0
-        self.latest_q = np.zeros(ARM_JOINT_COUNT, dtype=np.float64)
-        self.latest_q_raw = np.zeros(ARM_JOINT_COUNT, dtype=np.float64)
+        self.latest_q_raw = np.zeros(ARM_JOINT_COUNT)
+        self.latest_q = np.zeros(ARM_JOINT_COUNT)
         self.latest_gripper_q = 0.0
         self.latest_gripper_position = 0.0
 
-    @staticmethod
-    def _format_joint_values(values: np.ndarray) -> str:
-        q_rad = "  ".join(f"{value:+.3f}" for value in values)
-        q_deg = "  ".join(f"{value:+7.2f}" for value in np.rad2deg(values))
-        return f"rad=[{q_rad}]  deg=[{q_deg}]"
-
-    def setup_hardware(self) -> None:
-        self.rebotarm.connect()
-
-        if self.mit_enabled:
-            self.rebotarm.arm.mode_mit()
-            if self.rebotarm.has_gripper:
-                self.rebotarm.gripper.mode_mit()
-            self.rebotarm.disable_all()
-            time.sleep(0.1)
-            self.rebotarm.enable_all()
-
-            # 发送初始 MIT 命令触发电机回传
-            init_pos = np.zeros(self.rebotarm.arm.num_joints, dtype=np.float64)
-            init_tau = np.zeros(self.rebotarm.arm.num_joints, dtype=np.float64)
-            self.rebotarm.arm.send_mit(
-                pos=init_pos,
-                vel=np.zeros(self.rebotarm.arm.num_joints, dtype=np.float64),
-                kp=np.full(self.rebotarm.arm.num_joints, 0.0, dtype=np.float64),
-                kd=np.full(self.rebotarm.arm.num_joints, 0.0, dtype=np.float64),
-                tau=init_tau,
-            )
-            time.sleep(0.05)  # 等待电机回传
-
-            q0 = self.rebotarm.arm.get_positions(request_feedback=True)
-        else:
-            q0 = self.rebotarm.arm.get_positions(request_feedback=True)  # 使用实时反馈
-
-        if q0.shape[0] < ARM_JOINT_COUNT:
-            raise RuntimeError(
-                f"arm 组关节数不足 {ARM_JOINT_COUNT}，当前仅 {q0.shape[0]} 个 / "
-                f"arm joint count is less than {ARM_JOINT_COUNT}, only {q0.shape[0]} available"
-            )
-        self.latest_q_raw[:] = q0[:ARM_JOINT_COUNT]
-        self.latest_q[:] = -q0[:ARM_JOINT_COUNT]
-
+    def setup_hardware(self):
+        # RebotArm() reads YAML and builds groups without connecting or enabling.
+        joints = list(self.rebotarm.arm._jcfgs[:ARM_JOINT_COUNT])
+        if len(joints) != ARM_JOINT_COUNT:
+            raise RuntimeError('arm 组少于 6 个关节')
         if self.rebotarm.has_gripper:
-            # 发送初始 MIT 命令触发电爪回传
-            init_gripper_pos = np.zeros(self.rebotarm.gripper.num_joints, dtype=np.float64)
-            self.rebotarm.gripper.send_mit(
-                pos=init_gripper_pos,
-                vel=np.zeros(self.rebotarm.gripper.num_joints, dtype=np.float64),
-                kp=np.zeros(self.rebotarm.gripper.num_joints, dtype=np.float64),
-                kd=np.zeros(self.rebotarm.gripper.num_joints, dtype=np.float64),
-                tau=np.zeros(self.rebotarm.gripper.num_joints, dtype=np.float64),
-            )
-            time.sleep(0.05)
+            if len(self.rebotarm.gripper._jcfgs) != 1:
+                raise RuntimeError('夹爪组必须有一个电机')
+            joints += list(self.rebotarm.gripper._jcfgs)
+        if any(j.vendor != 'robstride' for j in joints):
+            raise RuntimeError('只读实时查询目前仅支持 RS 电机')
+        self.motor_ids = [int(j.motor_id) for j in joints]
+        if (len(set(self.motor_ids)) != len(self.motor_ids)
+                or any(not 1 <= mid <= 255 for mid in self.motor_ids)):
+            raise RuntimeError('CAN 电机 ID 无效或重复')
+        self.can_socket = socket.socket(socket.PF_CAN, socket.SOCK_RAW, socket.CAN_RAW)
+        self.can_socket.bind((self.rebotarm._channel,))
+        response_id = socket.CAN_EFF_FLAG | (0x11 << 24) | self.can_host_id
+        mask = socket.CAN_EFF_FLAG | 0x1f0000ff
+        self.can_socket.setsockopt(socket.SOL_CAN_RAW, socket.CAN_RAW_FILTER, struct.pack("=II", response_id, mask))
+        self.can_socket.setblocking(False)
 
-            gripper_q0 = self.rebotarm.gripper.get_positions(request_feedback=True) if self.mit_enabled else self.rebotarm.gripper.get_positions(request_feedback=True)
-            if gripper_q0.size > 0:
-                self.latest_gripper_q = float(gripper_q0[0])
-                self.latest_gripper_position = float(gripper_q0[0] * GRIPPER_POSITION_SCALE)
-
-    def start(self) -> None:
-        """启动 MIT 控制循环（仅在 mit_enabled=True 时生效）"""
-        if self.mit_enabled:
-            self.rebotarm.start_control_loop(self._mit_controller, rate=self.rebotarm.rate)
-
-    def _mit_controller(self, robot: RebotArm, dt: float) -> None:
-        """MIT 零命令控制回调 - 发送零力矩以触发电机回传"""
-        del dt
-        q = robot.arm.get_positions(request_feedback=True)
-        q_arm = q[:ARM_JOINT_COUNT]
-
-        pad_len = max(robot.arm.num_joints - ARM_JOINT_COUNT, 0)
-        tau_zero = np.concatenate([np.zeros(ARM_JOINT_COUNT, dtype=np.float64), np.zeros(pad_len, dtype=np.float64)])
-
-        robot.arm.send_mit(
-            pos=q,
-            vel=np.zeros(robot.arm.num_joints, dtype=np.float64),
-            kp=np.full(robot.arm.num_joints, 0.0, dtype=np.float64),
-            kd=np.full(robot.arm.num_joints, 0.0, dtype=np.float64),
-            tau=tau_zero,
-        )
-
-        if robot.has_gripper:
-            gripper_q = robot.gripper.get_positions(request_feedback=False)
-            robot.gripper.send_mit(
-                pos=gripper_q,
-                vel=np.zeros(robot.gripper.num_joints, dtype=np.float64),
-                kp=np.zeros(robot.gripper.num_joints, dtype=np.float64),
-                kd=np.zeros(robot.gripper.num_joints, dtype=np.float64),
-                tau=np.zeros(robot.gripper.num_joints, dtype=np.float64),
-            )
-            if gripper_q.size > 0:
-                self.latest_gripper_q = float(gripper_q[0])
-                self.latest_gripper_position = float(gripper_q[0] * GRIPPER_POSITION_SCALE)
-
-        self.latest_q_raw[:] = q_arm
-        self.latest_q[:] = -q_arm
-
-    def read_positions(self) -> None:
-        if self.mit_enabled:
-            return  # 位置已由 MIT 控制循环更新
-
-        q = self.rebotarm.arm.get_positions(request_feedback=True)
-        if q.shape[0] >= ARM_JOINT_COUNT:
-            self.latest_q_raw[:] = q[:ARM_JOINT_COUNT]
-            self.latest_q[:] = -q[:ARM_JOINT_COUNT]
-
-        if self.rebotarm.has_gripper:
-            gripper_q = self.rebotarm.gripper.get_positions(request_feedback=True)
-            if gripper_q.size > 0:
-                self.latest_gripper_q = float(gripper_q[0])
-                self.latest_gripper_position = float(gripper_q[0] * GRIPPER_POSITION_SCALE)
-
-    def run(self, send_hz: float = DEFAULT_SEND_HZ) -> None:
-        if send_hz <= 0:
-            raise ValueError("send_hz 必须为正数 / send_hz must be a positive number")
-
-        send_period = 1.0 / send_hz
-        report_every = DEFAULT_REPORT_EVERY
-        last_send_time = 0.0
-
-        while _running:
-            now = time.perf_counter()
-            if now - last_send_time < send_period:
-                time.sleep(send_period * 0.25)
-                continue
-
-            self.read_positions()
-
-            payload = {
-                "sequence": self.sequence,
-                "timestamp": time.time(),
-                "joint_positions": self.latest_q.tolist(),
-                "gripper_position": self.latest_gripper_position,
-            }
-            packet = json.dumps(payload, separators=(",", ":")).encode("utf-8")
-            self.socket.sendto(packet, (self.host, self.port))
-
-            if self.sequence % report_every == 0:
-                print("[send] raw  " + self._format_joint_values(self.latest_q_raw))
-                print("[send] send " + self._format_joint_values(self.latest_q))
-                print(f"[send] gripper_q={self.latest_gripper_q:+.3f}  gripper_position={self.latest_gripper_position:+.4f}")
-
-            self.sequence += 1
-            last_send_time = now
-
-    def shutdown(self) -> None:
-        """关闭连接"""
+    def read_positions(self):
+        # Type 17 only reads parameter 0x7019 (mechPos). Send the seven
+        # requests first, then match every reply by host, motor and parameter.
+        if self.can_socket is None:
+            raise FeedbackError('CAN 尚未连接')
+        can = self.can_socket
         try:
-            if self.mit_enabled:
-                self.rebotarm.disconnect()
-        finally:
-            self.socket.close()
+            can.setblocking(False)
+            while True:  # Discard responses already queued before this sample.
+                try:
+                    can.recv(CAN_FRAME.size)
+                except BlockingIOError:
+                    break
+            for mid in self.motor_ids:
+                request_id = socket.CAN_EFF_FLAG | (0x11 << 24) | (self.can_host_id << 8) | mid
+                can.send(CAN_FRAME.pack(request_id, 8, PARAM_REQUEST))
+            deadline = time.monotonic() + READ_TIMEOUT_MS / 1000.0
+            values = {}
+            while len(values) < len(self.motor_ids):
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise FeedbackError(f'位置反馈超时，缺少电机 {sorted(set(self.motor_ids) - values.keys())}')
+                can.settimeout(remaining)
+                try:
+                    frame = can.recv(CAN_FRAME.size)
+                except socket.timeout as exc:
+                    raise FeedbackError(f'位置反馈超时，缺少电机 {sorted(set(self.motor_ids) - values.keys())}') from exc
+                if len(frame) != CAN_FRAME.size:
+                    continue
+                can_id, length, data = CAN_FRAME.unpack(frame)
+                if not can_id & socket.CAN_EFF_FLAG or can_id & (socket.CAN_RTR_FLAG | socket.CAN_ERR_FLAG):
+                    continue
+                can_id &= socket.CAN_EFF_MASK
+                mid = (can_id >> 8) & 0xff
+                expected_id = (0x11 << 24) | (mid << 8) | self.can_host_id
+                if (can_id != expected_id or mid not in self.motor_ids or length != 8
+                        or data[:4] != PARAM_REQUEST[:4] or mid in values):
+                    continue
+                value = struct.unpack('<f', data[4:])[0]
+                if not np.isfinite(value):
+                    raise FeedbackError(f'电机 {mid} 的位置反馈不是有限值')
+                values[mid] = value
+        except OSError as exc:
+            raise FeedbackError(f'CAN 读写失败 ({exc})') from exc
+        q = np.array([values[mid] for mid in self.motor_ids[:ARM_JOINT_COUNT]])
+        gripper_q = values[self.motor_ids[ARM_JOINT_COUNT]] if self.rebotarm.has_gripper else 0.0
+        # Publish an entire sample only after all required reads succeed.
+        self.latest_q_raw[:] = q
+        self.latest_q[:] = -q
+        self.latest_gripper_q = float(gripper_q)
+        ratio = (gripper_q - self.gripper_closed) / (self.gripper_open - self.gripper_closed)
+        self.latest_gripper_position = float(np.clip(ratio, 0.0, 1.0) * GRIPPER_MAX_OPENING_M)
+
+    def run(self, send_hz=DEFAULT_SEND_HZ):
+        if not np.isfinite(send_hz) or send_hz <= 0:
+            raise ValueError('send_hz 必须为正数')
+        period = 1.0 / send_hz
+        next_send = time.monotonic()
+        last_error = 0.0
+        failed = False
+        gripper_range_warning = False
+        while _running:
+            delay = next_send - time.monotonic()
+            if delay > 0:
+                time.sleep(min(delay, 0.05))
+                continue
+            try:
+                self.read_positions()
+            except FeedbackError as exc:
+                now = time.monotonic()
+                if not failed or now - last_error >= 2.0:
+                    print(f'[反馈异常] {exc}；暂停发送，等待恢复', flush=True)
+                    last_error = now
+                failed = True
+                next_send = now + max(period, 0.1)
+                continue
+            if failed:
+                print('[反馈恢复] 继续发送', flush=True)
+                failed = False
+            low, high = sorted((self.gripper_closed, self.gripper_open))
+            outside_range = self.rebotarm.has_gripper and not low - 0.02 <= self.latest_gripper_q <= high + 0.02
+            if outside_range and not gripper_range_warning:
+                print(f'[夹爪] 反馈 {self.latest_gripper_q:+.3f} rad 超出映射范围 {low:.3f}–{high:.3f}；仿真已裁剪，请检查端点', flush=True)
+            gripper_range_warning = outside_range
+            payload = {'sequence': self.sequence, 'timestamp': time.time(),
+                       'joint_positions': self.latest_q.tolist(),
+                       'gripper_position': self.latest_gripper_position}
+            self.socket.sendto(json.dumps(payload, separators=(',', ':')).encode(),
+                               (self.host, self.port))
+            if self.sequence % 30 == 0:
+                print('[send] raw deg=' + np.array2string(np.degrees(self.latest_q_raw), precision=2)
+                      + f' gripper_rad={self.latest_gripper_q:+.3f}', flush=True)
+            self.sequence += 1
+            next_send = max(next_send + period, time.monotonic())
+
+    def shutdown(self):
+        # SDK disconnect() calls disable_all(): never call it for a read-only client.
+        # Releasing this process's socket/handles at exit leaves motor state alone.
+        if self.can_socket is not None:
+            self.can_socket.close()
+        self.socket.close()
 
 
-def main() -> None:
-    import argparse
-
-    parser = argparse.ArgumentParser(description="reBotArm Joint Reader Sender")
-    parser.add_argument(
-        "--mit", action="store_true",
-        help="强制启用 MIT 零命令模式 / Force enable MIT zero-command mode"
-    )
-    parser.add_argument(
-        "--no-mit", action="store_true",
-        help="强制禁用 MIT 零命令模式 / Force disable MIT zero-command mode"
-    )
+def main():
+    parser = argparse.ArgumentParser(description='RS 关节只读映射到 Isaac Sim')
+    parser.add_argument('--no-mit', action='store_true', help='兼容旧参数：只读模式')
+    parser.add_argument('--mit', action='store_true', help=argparse.SUPPRESS)
+    parser.add_argument('--can-host-id', type=lambda x: int(x, 0), default=DEFAULT_CAN_HOST_ID,
+                        help='CAN 查询 host ID，默认 0xfc；避免与其他控制程序冲突')
+    parser.add_argument('--gripper-closed', type=float, default=0.0, help='夹爪闭合时电机角度 rad（仅仿真映射）')
+    parser.add_argument('--gripper-open', type=float, default=5.0, help='夹爪全开时电机角度 rad（仅仿真映射）')
     args = parser.parse_args()
-
-    # 命令行参数覆盖默认值，但两者都指定时 no-mit 优先
-    if args.mit and args.no_mit:
-        mit_enabled = False
-    elif args.mit:
-        mit_enabled = True
-    elif args.no_mit:
-        mit_enabled = False
-    else:
-        mit_enabled = DEFAULT_MIT_ENABLED
-    mit_status = "启用" if mit_enabled else "禁用"
-    print("=" * 72)
-    print("  reBotArm 关节角 UDP 发送端")
-    print(f"  MIT 零命令: {mit_status}")
-    print("  停止方式: Ctrl+C")
-    print("=" * 72)
-    print(f"[发送] udp://{DEFAULT_HOST}:{DEFAULT_PORT}")
-    print(f"[关节] arm 前 {ARM_JOINT_COUNT} 个关节")
-    print(f"[MIT] {mit_status}")
-    print()
-    print("=" * 72)
-    print("  reBotArm joint-angle UDP sender")
-    print(f"  MIT zero-command: {mit_status}")
-    print("  To stop: press Ctrl+C")
-    print("=" * 72)
-    print(f"[sender] udp://{DEFAULT_HOST}:{DEFAULT_PORT}")
-    print(f"[joints] first {ARM_JOINT_COUNT} arm joints")
-    print(f"[MIT] {mit_status}")
-
-    sender = JointReaderSender(mit_enabled=mit_enabled)
+    if args.mit:
+        parser.error('此程序只读，不支持 --mit；请使用专门的控制程序')
+    print('[sender] RS 只读查询；不发送使能、失能或运动命令', flush=True)
+    print(f'[sender] udp://{DEFAULT_HOST}:{DEFAULT_PORT}，目标 {DEFAULT_SEND_HZ:g} Hz', flush=True)
+    print(f'[夹爪] 映射闭合={args.gripper_closed:+.3f}, 全开={args.gripper_open:+.3f} rad', flush=True)
+    sender = JointReaderSender(can_host_id=args.can_host_id,
+                               gripper_closed=args.gripper_closed, gripper_open=args.gripper_open)
     try:
         sender.setup_hardware()
-        print("[硬件] 已连接")
-        print("[hardware] connected")
-
-        if mit_enabled:
-            sender.start()
-            print("[MIT] 已启动零命令模式")
-            print("[MIT] zero-command mode started")
-
         sender.run()
     finally:
-        print("[停止] 正在关闭...")
-        print("[stopping] shutting down...")
         sender.shutdown()
-        print("[完成] 已安全退出")
-        print("[done] exited safely")
+        print('[sender] 已退出（未失能电机）', flush=True)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
