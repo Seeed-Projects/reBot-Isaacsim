@@ -2,8 +2,9 @@
 """RS arm gravity compensation, gripper hand-assist, and Isaac Sim mirror.
 
 Default: controls real motors. --check performs a model-only check without CAN.
-The default gripper range is closed=0 and open=5 radians after zero calibration. Stop with Ctrl+C: motors are
-disabled without returning home; the arm/gripper can lose support.
+The default gripper range is closed=0 and open=5 radians after zero calibration.
+Home, quit and the first Ctrl+C request a smooth return. A second Ctrl+C stops
+immediately and disables motors; the arm/gripper can lose support.
 
 Assist law and defaults follow Yang-Ci/ReBot_Arm_DigitalTwin_RS. Unlike a
 position command, this is hand guidance: at rest it applies no assist torque.
@@ -29,6 +30,7 @@ sys.path.insert(0, str(ROOT / "third_party" / "reBotArm_control_py"))
 from reBotArm_control_py.actuator import RebotArm
 from reBotArm_control_py.controllers import GravityCompensation
 from reBotArm_control_py.dynamics import compute_generalized_gravity, load_dynamics_model
+from reBotArm_control_py.kinematics import load_robot_model
 
 ARM_NAMES = tuple(f"joint{i}" for i in range(1, 7))
 READ_TIMEOUT_MS = 200
@@ -46,6 +48,19 @@ SPEED_LIMIT = 0.8
 BREAKAWAY_FRACTION = 0.30
 GRIPPER_TARGET_RATE = 0.1  # rad/s, deliberately slower than the reference UI
 GRIPPER_MAX_LEAD = 0.02   # rad: limit commanded error while waiting for feedback
+HOME_MAX_VELOCITY = math.radians(30.0)
+HOME_MAX_ACCELERATION = math.radians(25.0)
+HOME_MAX_JERK = math.radians(60.0)
+HOME_TARGET_MOTION_SECONDS = 4.0
+HOME_TRACKING_ERROR = math.radians(3.0)
+HOME_SETTLE_TOLERANCE = math.radians(0.75)
+HOME_PREP_SECONDS = 0.8
+HOME_SETTLE_SECONDS = 0.5
+HOME_SETTLE_TIMEOUT = 5.0
+HOME_MAX_LOOP_GAP = 0.15
+HOME_MAX_START_SPEED = math.radians(2.0)
+HOME_STILL_SECONDS = 0.6
+HOME_WAIT_STILL_TIMEOUT = 15.0
 
 
 def assist_torque(position, velocity, closed, opened):
@@ -75,6 +90,79 @@ def gripper_sim_position(position, closed, opened):
         raise ValueError("夹爪校准行程过小")
     ratio = max(0.0, min(1.0, (position - closed) / (opened - closed)))
     return ratio * 0.045
+
+
+def minimum_jerk(t):
+    t = min(1.0, max(0.0, float(t)))
+    return t ** 3 * (10.0 + t * (-15.0 + 6.0 * t))
+
+
+class HomeNotStationary(RuntimeError):
+    """The measured arm is still moving; keep waiting for it to settle."""
+
+
+class HomePlan:
+    """Bounded minimum-jerk trajectory with feedback tracking and settling."""
+    def __init__(self, start_q, started_at):
+        self.start_q = np.asarray(start_q, dtype=float).copy()
+        if self.start_q.shape != (6,) or not np.isfinite(self.start_q).all():
+            raise ValueError("回零起点无效")
+        distance = float(np.max(np.abs(self.start_q)))
+        # SDK safe_home uses a fixed minimum-jerk trajectory with a duration
+        # of 2 * distance / max_vel. Bound acceleration and jerk as well.
+        self.duration = max(HOME_TARGET_MOTION_SECONDS,
+                            2.0 * distance / HOME_MAX_VELOCITY,
+                            math.sqrt((10 / math.sqrt(3)) * distance / HOME_MAX_ACCELERATION),
+                            (60 * distance / HOME_MAX_JERK) ** (1 / 3))
+        self.distance = distance
+        self.started_at = float(started_at)
+        self.settled_at = None
+        self.last_step_at = self.started_at
+        self.motion_elapsed = 0.0
+        self.target = self.start_q.copy()
+        self.finished_at = None
+        self.done = False
+
+    def step(self, now, measured_q):
+        q = np.asarray(measured_q, dtype=float)
+        if q.shape != (6,) or not np.isfinite(q).all():
+            raise RuntimeError("回零反馈无效")
+        previous = self.last_step_at
+        dt = float(now) - previous
+        if dt < 0 or dt > HOME_MAX_LOOP_GAP:
+            raise RuntimeError("控制循环延迟过长，停止回零")
+        self.last_step_at = float(now)
+        elapsed = max(0.0, float(now) - self.started_at)
+        gain_blend = minimum_jerk(elapsed / HOME_PREP_SECONDS)
+        error = float(np.max(np.abs(self.target - q)))
+        if error > HOME_TRACKING_ERROR:
+            worst = int(np.argmax(np.abs(self.target - q)))
+            raise RuntimeError(f"J{worst + 1} 跟踪误差 {math.degrees(error):.2f}°（目标 {math.degrees(self.target[worst]):.2f}°，反馈 {math.degrees(q[worst]):.2f}°）超过 3°；停止回零")
+
+        motion_dt = min(0.02, max(0.0, now - max(previous, self.started_at + HOME_PREP_SECONDS)))
+        if motion_dt > 0 and self.motion_elapsed < self.duration:
+            # Fixed-rate SDK-style trajectory: no adaptive time scaling.
+            # A following error is handled by the guard above, not by forcing
+            # a delayed joint to catch up or sending an unconditional zero.
+            self.motion_elapsed = (self.duration if self.distance < 1e-9 else
+                                   min(self.duration, self.motion_elapsed + motion_dt))
+            self.target = self.start_q * (1.0 - minimum_jerk(self.motion_elapsed / self.duration))
+
+        progress = min(1.0, self.motion_elapsed / self.duration)
+        if progress >= 1.0:
+            if self.finished_at is None:
+                self.finished_at = now
+            if np.max(np.abs(q)) <= HOME_SETTLE_TOLERANCE:
+                if self.settled_at is None:
+                    self.settled_at = now
+                self.done = now - self.settled_at >= HOME_SETTLE_SECONDS
+            else:
+                self.settled_at = None
+            if not self.done and now - self.finished_at > HOME_SETTLE_TIMEOUT:
+                raise RuntimeError("回零未稳定到位，停止回零")
+        elif elapsed > HOME_PREP_SECONDS + max(20.0, 4.0 * self.duration):
+            raise RuntimeError("回零耗时过长，停止回零")
+        return self.target.copy(), gain_blend
 
 
 def read_position(motor):
@@ -124,6 +212,9 @@ class AssistedGravity(GravityCompensation):
         self._last_gripper = None
         self._last_gripper_time = None
         self._filtered_velocity = 0.0
+        self._last_arm_q = None
+        self._last_arm_time = None
+        self._arm_velocity = None
         self._hold_q = None
         self._initial_kp = None
         self._initial_kd = None
@@ -132,6 +223,14 @@ class AssistedGravity(GravityCompensation):
         self._gripper_goal = None
         self._gripper_command = None
         self._gripper_command_time = None
+        self._home_plan = None
+        self._home_hold_q = None
+        self._home_hold_kp = None
+        self._home_hold_kd = None
+        self._home_start_kp = None
+        self._home_start_kd = None
+        self._home_status = "idle"
+        self._home_message = ""
 
     def _read_snapshot(self, *, verify_start_range=False):
         motors = [self.rebotarm._motor_map[n] for n in ARM_NAMES]
@@ -148,6 +247,9 @@ class AssistedGravity(GravityCompensation):
         self._last_gripper, self._last_gripper_time = grip, stamp
         self._filtered_velocity = 0.7 * self._filtered_velocity + 0.3 * velocity
         with self._lock:
+            if self._last_arm_time is not None and stamp > self._last_arm_time:
+                self._arm_velocity = (q - self._last_arm_q) / (stamp - self._last_arm_time)
+            self._last_arm_q, self._last_arm_time = q.copy(), stamp
             self._feedback = (q.copy(), grip, self._filtered_velocity)
             self._sample_time = stamp
 
@@ -159,7 +261,11 @@ class AssistedGravity(GravityCompensation):
                 with self._lock:
                     self._feedback_fault = f"{type(exc).__name__}: {exc}"
                 return
-            self._stop_feedback.wait(0.05)
+            with self._lock:
+                is_homing = self._home_plan is not None
+            # Keep normal gravity/assist polling unchanged; sample more often
+            # only during home so the trajectory sees less stale feedback.
+            self._stop_feedback.wait(0.015 if is_homing else 0.05)
 
     def snapshot(self):
         with self._lock:
@@ -240,6 +346,36 @@ class AssistedGravity(GravityCompensation):
         target = self._hold_q + blend * (q - self._hold_q)
         kp = self._initial_kp + blend * (1.5 - self._initial_kp)
         kd = self._initial_kd + blend * (1.0 - self._initial_kd)
+        with self._lock:
+            plan = self._home_plan
+            if plan is not None:
+                try:
+                    target, home_blend = plan.step(time.monotonic(), q)
+                    kp = self._home_start_kp + home_blend * (self._initial_kp - self._home_start_kp)
+                    kd = self._home_start_kd + home_blend * (self._initial_kd - self._home_start_kd)
+                    if plan.done and self._home_status != "done":
+                        self._home_status = "done"
+                        self._home_message = f"回零已到位（最大绝对误差 ≤ {math.degrees(HOME_SETTLE_TOLERANCE):.2f}°），准备停止并失能。"
+                except RuntimeError as exc:
+                    # SDK-style stop: freeze the latest measured pose, keep the
+                    # current holding gains and gravity feedforward, never send
+                    # a zero target or drop into compliant hand-guidance.
+                    gain_blend = minimum_jerk((time.monotonic() - plan.started_at) / HOME_PREP_SECONDS)
+                    self._home_hold_kp = self._home_start_kp + gain_blend * (self._initial_kp - self._home_start_kp)
+                    self._home_hold_kd = self._home_start_kd + gain_blend * (self._initial_kd - self._home_start_kd)
+                    self._home_hold_q = q.copy()
+                    self._home_plan = None
+                    self._home_status = "aborted"
+                    self._home_message = str(exc)
+                    target = self._home_hold_q.copy()
+                    kp, kd = self._home_hold_kp.copy(), self._home_hold_kd.copy()
+            elif self._home_hold_q is not None:
+                # Avoid an accumulating position error if the arm is displaced
+                # while an operator handles a failed home; remain enabled.
+                if np.max(np.abs(self._home_hold_q - q)) > HOME_TRACKING_ERROR:
+                    self._home_hold_q = q.copy()
+                target = self._home_hold_q.copy()
+                kp, kd = self._home_hold_kp.copy(), self._home_hold_kd.copy()
         for i, name in enumerate(ARM_NAMES):
             robot._motor_map[name].send_mit(float(target[i]), 0.0,
                 float(kp[i]), float(kd[i]), float(tau[i]))
@@ -271,6 +407,51 @@ class AssistedGravity(GravityCompensation):
             else:
                 robot._motor_map["gripper"].send_mit(target_grip, 0.0,
                     float(robot.gripper._mit_kp[0]), float(robot.gripper._mit_kd[0]), 0.0)
+
+    def home_stationary(self):
+        with self._lock:
+            return (self._arm_velocity is not None
+                    and time.monotonic() - self._sample_time < 0.25
+                    and np.isfinite(self._arm_velocity).all()
+                    and np.max(np.abs(self._arm_velocity)) <= HOME_MAX_START_SPEED)
+
+    def request_home(self):
+        if time.monotonic() - self._transition_start < 0.5:
+            raise RuntimeError("重力补偿仍在启动，请稍后再回零")
+        model = load_robot_model()
+        lower = np.asarray(model.lowerPositionLimit[:6], dtype=float)
+        upper = np.asarray(model.upperPositionLimit[:6], dtype=float)
+        self.snapshot()  # Propagate any feedback fault before taking the lock.
+        with self._lock:
+            if self._feedback_fault or self._feedback is None or time.monotonic() - self._sample_time >= 0.25:
+                raise HomeNotStationary("反馈过期或不可用；等待新反馈")
+            q, _, _ = self._feedback
+            q = q.copy()
+            if (not np.isfinite(q).all() or np.any(q < lower - 0.03)
+                    or np.any(q > upper + 0.03) or np.any(lower > 0) or np.any(upper < 0)):
+                raise RuntimeError("实际角度或零位超出模型限位，不能回零")
+            if self._home_plan is not None and not self._home_plan.done:
+                raise RuntimeError("正在回零")
+            if self._arm_velocity is None or not np.isfinite(self._arm_velocity).all():
+                raise HomeNotStationary("缺少有效速度反馈；等待机械臂保持静止")
+            peak_speed_deg = float(np.degrees(np.max(np.abs(self._arm_velocity))))
+            if peak_speed_deg > math.degrees(HOME_MAX_START_SPEED):
+                raise HomeNotStationary(f"关节仍在运动（最大约 {peak_speed_deg:.1f}°/s）；等待机械臂保持静止")
+            if (not np.isfinite(self._initial_kp).all() or not np.isfinite(self._initial_kd).all()
+                    or np.any(self._initial_kp < 0) or np.any(self._initial_kd < 0)):
+                raise RuntimeError("关节回零保持增益无效")
+            plan = HomePlan(q, time.monotonic())
+            if self._home_hold_q is None:
+                self._home_start_kp = np.full(6, 1.5)
+                self._home_start_kd = np.full(6, 1.0)
+            else:
+                self._home_start_kp = self._home_hold_kp.copy()
+                self._home_start_kd = self._home_hold_kd.copy()
+            self._home_hold_q = None
+            self._home_plan = plan
+            self._home_status = "running"
+            self._home_message = "开始平稳回零"
+        return plan.duration
 
     def set_gripper_mode(self, mode):
         if mode not in {"assist", "open", "close", "hold"}:
@@ -314,6 +495,20 @@ def check_model(robot):
     print("动力学模型未考虑额外负载，夹爪指关节按零位处理。")
 
 
+class StopRequests:
+    """First Ctrl+C requests home; a second or an external termination stops."""
+    def __init__(self):
+        self.graceful = threading.Event()
+        self.immediate = threading.Event()
+
+    def on_signal(self, signum, frame):
+        del frame
+        if signum == signal.SIGINT and not self.graceful.is_set():
+            self.graceful.set()
+        else:
+            self.immediate.set()
+
+
 def run_live(robot, closed, opened):
     if not all(math.isfinite(v) for v in (closed, opened)) or abs(opened - closed) <= 2 * LIMIT_MARGIN:
         raise ValueError("请提供有效的真实夹爪开、合校准值（弧度）")
@@ -322,22 +517,24 @@ def run_live(robot, closed, opened):
         raise RuntimeError("已有真机读写进程，请先停止: " + ", ".join(conflicts))
     ctrl = AssistedGravity(robot, closed, opened)
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    stopping = threading.Event()
-    def on_signal(signum, frame):
-        del signum, frame
-        stopping.set()
-    signal.signal(signal.SIGINT, on_signal)
-    signal.signal(signal.SIGTERM, on_signal)
-    # Closing the terminal sends SIGHUP; run the same shutdown path instead of
-    # abandoning the control loop without requesting motor disable.
-    signal.signal(signal.SIGHUP, on_signal)
+    requests = StopRequests()
+    stopping = requests.immediate
+    signal.signal(signal.SIGINT, requests.on_signal)
+    signal.signal(signal.SIGTERM, requests.on_signal)
+    # Do not start motion on terminal hangup or an external termination signal.
+    signal.signal(signal.SIGHUP, requests.on_signal)
     try:
-        print("即将使能真实机械臂和夹爪；Ctrl+C 停止并失能，不自动回零。", flush=True)
+        print("即将使能真实机械臂和夹爪；home/quit/第一次 Ctrl+C 平稳回零；回零过程中再次 Ctrl+C 请求停止并失能。", flush=True)
         ctrl.start()
         print("重力补偿及夹爪手动助力已启用。", flush=True)
-        print("命令: open / close / hold / assist / quit（回车发送）", flush=True)
+        print("命令: home（平稳回零） / cancel（取消等待） / open / close / hold / assist / quit", flush=True)
         seq = 0
         read_input = True
+        last_home_status = "idle"
+        exit_home_started = False
+        home_pending = False
+        pending_since = None
+        still_since = None
         while not stopping.wait(1 / 60):
             if not robot.control_loop_active:
                 raise RuntimeError("控制线程停止")
@@ -353,16 +550,93 @@ def run_live(robot, closed, opened):
                 else:
                     command = command.strip().lower()
                     if command in {"quit", "exit", "q"}:
-                        stopping.set()
+                        requests.graceful.set()
+                    elif command == "home":
+                        # Demo 9 semantics: home completes by disconnecting,
+                        # exactly as quit / the first Ctrl+C do.
+                        requests.graceful.set()
+                    elif command == "cancel":
+                        if home_pending:
+                            home_pending = False
+                            requests.graceful.clear()
+                            exit_home_started = False
+                            print("已取消回零等待，维持当前控制状态。", flush=True)
+                        else:
+                            print("当前没有等待中的回零请求。", flush=True)
                     elif command:
                         try:
                             goal = ctrl.set_gripper_mode(command)
                             print(f"夹爪模式: {command}；参考目标 {goal:.3f} rad", flush=True)
                         except ValueError as exc:
                             print(str(exc), flush=True)
+            with ctrl._lock:
+                home_status, home_message = ctrl._home_status, ctrl._home_message
+            if requests.graceful.is_set() and not exit_home_started:
+                exit_home_started = True
+                if home_status == "done":
+                    stopping.set()
+                elif home_status == "running":
+                    print("正在回零，到位后退出；再次 Ctrl+C 请求停止并失能。", flush=True)
+                elif not home_pending:
+                    home_pending = True
+                    pending_since, still_since = time.monotonic(), None
+                    print("退出前回零：等待机械臂保持静止；请远离运动范围。输入 cancel 可取消等待。", flush=True)
+            if home_pending:
+                now = time.monotonic()
+                if now - pending_since > HOME_WAIT_STILL_TIMEOUT:
+                    home_pending = False
+                    requests.graceful.clear()
+                    exit_home_started = False
+                    print("等待静止超时，未开始回零；维持当前控制状态，可稍后重试。", flush=True)
+                elif ctrl.home_stationary():
+                    if still_since is None:
+                        still_since = now
+                    if now - still_since >= HOME_STILL_SECONDS:
+                        try:
+                            duration = ctrl.request_home()
+                        except HomeNotStationary:
+                            still_since = None
+                        except (ValueError, RuntimeError) as exc:
+                            home_pending = False
+                            requests.graceful.clear()
+                            exit_home_started = False
+                            print(f"回零未启动: {exc}；维持当前控制状态，可稍后重试。", flush=True)
+                        else:
+                            home_pending = False
+                            print(f"机械臂已稳定，开始回零（名义轨迹 {duration:.1f} 秒，目标速度上限 {math.degrees(HOME_MAX_VELOCITY):.1f}°/s；跟随误差超限时停止回零并保持当前位置）。", flush=True)
+                else:
+                    still_since = None
+            with ctrl._lock:
+                home_status, home_message = ctrl._home_status, ctrl._home_message
+            if requests.graceful.is_set() and exit_home_started and home_status == "done":
+                stopping.set()
+            if home_status != last_home_status:
+                if home_status in {"done", "aborted"}:
+                    print(f"[回零] {home_message}", flush=True)
+                    if home_status == "aborted" and requests.graceful.is_set():
+                        requests.graceful.clear()
+                        exit_home_started = False
+                        print("回零未完成，机械臂保持当前位置（电机仍使能）；请勿推动，排查后可再次 quit 或 Ctrl+C 重试。", flush=True)
+                last_home_status = home_status
             if seq % 60 == 0:
                 with ctrl._lock:
-                    feedback_age = time.monotonic() - ctrl._sample_time
+                    now = time.monotonic()
+                    feedback_age = now - ctrl._sample_time
+                    plan = ctrl._home_plan
+                    if plan is None:
+                        home_diagnostic = None
+                    else:
+                        elapsed = max(0.0, now - plan.started_at)
+                        progress = float(np.clip(plan.motion_elapsed / plan.duration, 0.0, 1.0))
+                        reference = plan.target.copy()
+                        error_deg = float(np.degrees(np.max(np.abs(reference - q))))
+                        remaining = max(0.0, plan.duration - plan.motion_elapsed) + max(0.0, HOME_PREP_SECONDS - elapsed)
+                        phase = ("已到位" if plan.done else "保持过渡" if elapsed < HOME_PREP_SECONDS
+                                 else "回零运动" if progress < 1.0 else "到位确认")
+                        home_diagnostic = (phase, progress, remaining, error_deg)
+                if home_diagnostic is not None:
+                    phase, progress, remaining, error_deg = home_diagnostic
+                    print(f"回零状态: {phase} | 轨迹进度 {progress * 100:.0f}% | 最少剩余 {remaining:.1f} 秒 | 最大跟踪误差 {error_deg:.2f}°", flush=True)
                 model_tau = np.asarray(compute_generalized_gravity(q=q)[:6], dtype=float) * GRAVITY_SCALE
                 print("诊断 J2/J3 模型前馈(Nm):", np.round(model_tau[1:3], 3),
                       "反馈年龄(ms):", round(feedback_age * 1000, 1), flush=True)
