@@ -193,9 +193,11 @@ x y z                       # position (m)
 x y z r p y                 # position + orientation (m/deg)
 q j1 j2 j3 j4 j5 j6         # direct joint-space target (deg)
 gripper <0~1>                # update gripper only
-speed <scale>                # adjust trajectory duration scale
-resync                       # re-read current joint angles from simulator
+speed <scale>                # speed scale 0.1–5.0; higher is faster
+resync                       # read measured joints (older receiver returns targets)
 ```
+
+At startup the sender requests joint feedback. If unavailable, motion commands are blocked until `resync` succeeds. The updated receiver provides measured simulator joints; older versions provide the last target. Failed IK or out-of-limit joints are not sent.
 
 #### ④ Joint Test Mode (`isaacsim_joint_test_sender`)
 

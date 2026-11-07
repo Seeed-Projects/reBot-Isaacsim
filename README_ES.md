@@ -193,9 +193,11 @@ x y z                       # posición (m)
 x y z r p y                 # posición + orientación (m/grados)
 q j1 j2 j3 j4 j5 j6         # objetivo directo en espacio articular (grados)
 gripper <0–1>                # actualiza solo la pinza
-speed <escala>               # ajusta la escala de duración de la trayectoria
-resync                       # vuelve a leer del simulador los ángulos articulares actuales
+speed <escala>               # velocidad entre 0.1 y 5.0; mayor es más rápido
+resync                       # lee articulaciones medidas (el receptor antiguo devuelve objetivos)
 ```
+
+Al iniciar, el emisor solicita la posición articular. Sin respuesta, bloquea el movimiento hasta que `resync` tenga éxito. El receptor nuevo devuelve posiciones medidas; el antiguo, los últimos objetivos. Una IK fallida o articulaciones fuera de límites no se envían.
 
 #### 4. Modo de prueba de articulaciones (`isaacsim_joint_test_sender`)
 

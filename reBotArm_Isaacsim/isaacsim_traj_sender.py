@@ -3,9 +3,8 @@
 
 功能概述：
 1. 在终端输入末端期望位姿（位置 / 位置+姿态），通过 IK 求解得到关节角。
-2. 调用 `reBotArm_control_py.trajectory.plan_joint_space_trajectory` 生成
-   关节空间轨迹（SE(3) 测地线 + MIN_JERK 时间剖面 + CLIK 跟踪）。
-3. 按轨迹点采样频率（默认 100 Hz）逐点把关节角通过 UDP JSON 发送给
+2. 在关节空间使用 MIN_JERK 插值，生成平滑且准确到达关节目标的轨迹。
+3. 按轨迹点采样频率（默认 1000 Hz）逐点把关节角通过 UDP JSON 发送给
    `isaacsim_joint_receiver.py`，由仿真端的 drive 闭环平滑跟踪。
 4. 同样支持 `q ...` 直发命令：直接规划一条关节空间直线轨迹（带时间剖面）
    从当前构型过渡到目标构型，避免位置阶跃。
@@ -26,7 +25,8 @@
     <x> <y> <z> <roll> <pitch> <yaw>     (位置+姿态, 米/度)
     gripper <ratio>                      (单独更新夹爪, ratio ∈ [0, 1])
     q <j1> <j2> ... <j6>                 (直接发送关节角, 度)
-    speed <scale>                        (调整轨迹时长比例, 默认 1.0)
+    speed <scale>                        (速度比例 0.1–5.0, 默认 1.0)
+    resync                               (读取仿真反馈)
     quit / :q                            退出
 """
 
@@ -60,7 +60,6 @@ from reBotArm_control_py.kinematics import (  # noqa: E402
 from reBotArm_control_py.trajectory import (  # noqa: E402
     TrajPlanParams,
     TrajProfile,
-    plan_joint_space_trajectory,
 )
 from reBotArm_control_py.trajectory.clik_tracker import (  # noqa: E402
     IKParams,
@@ -76,7 +75,6 @@ DEFAULT_BROADCAST_HZ = 1000.0        # 轨迹点 UDP 广播频率
 DEFAULT_TRAJ_DURATION = 3.0         # 默认轨迹时长（秒）
 DEFAULT_SPEED_SCALE = 1.0           # 速度比例：1.0 = 使用默认时长，>1 更快
 DEFAULT_JOINT_TOLERANCE = 1e-3      # 直发 q 模式下，目标与当前差距过小时跳过规划
-DEFAULT_NULL_GAIN = 0.05            # CLIK 零空间梯度增益（关节限位避让）
 DEFAULT_GRIPPER_MAX_OPENING_M = 0.045  # 夹爪完全打开时每指的滑动距离（米）；保守值，小于 USD upperLimit（两指均为 0.05）
 
 _running = True
@@ -114,13 +112,13 @@ class TrajSender:
         # points[-1].q 都属于同一坐标系；发送阶段才取反成兼容的 UDP 协议坐标。
         self.q_prev = np.zeros(self.model.nq)
         self.gripper = 0.0
+        self._synced = False
 
         self.traj_plan_params = TrajPlanParams(
             dt=1.0 / DEFAULT_BROADCAST_HZ,
             profile=TrajProfile.MIN_JERK,
             accel_ratio=0.25,
         )
-        self.clik_params = IKParams(max_iter=200, tolerance=1e-4, damping=1e-6, step_size=0.8)
         self.speed_scale = DEFAULT_SPEED_SCALE
 
         # 命令 socket（发送到接收端 5005）
@@ -152,13 +150,13 @@ class TrajSender:
 
     # ---------- 关节角反馈（从仿真端回读） ----------
 
-    def _request_feedback(self) -> np.ndarray:
-        """向接收端请求最近的关节目标（不是仿真关节实测值）。
+    def _request_feedback(self) -> Optional[np.ndarray]:
+        """优先请求仿真关节实测值；旧接收端回退到最近目标。
 
         UDP 协议保留旧资产约定 q_wire = -q_motor；接收端负责转换到
         所选 USD 的关节方向。返回值取反后可作为模型坐标的 q_prev。
 
-        超时则打印警告并返回当前 q_prev（不阻塞启动）。
+        超时返回 None，禁止发送轨迹，直到 resync 成功。
         """
         request_payload = json.dumps({"type": "feedback_request"}, separators=(",", ":")).encode("utf-8")
         self.socket.sendto(request_payload, (self.host, self.port))
@@ -171,7 +169,11 @@ class TrajSender:
                 packet, _ = self.feedback_socket.recvfrom(65535)
                 payload = json.loads(packet.decode("utf-8"))
                 if payload.get("type") == "feedback":
-                    q_wire = np.asarray(payload["joint_positions"], dtype=np.float64)
+                    q_wire = np.asarray(payload.get("actual_joint_positions", payload["joint_positions"]), dtype=np.float64)
+                    if q_wire.shape != (ARM_JOINT_COUNT,) or not np.isfinite(q_wire).all():
+                        raise ValueError("仿真反馈关节角无效")
+                    if "actual_joint_positions" not in payload:
+                        print("[warn] 接收端仅提供最近目标，不是实测关节位置")
                     # 协议坐标 → 电机坐标（取反），再补零到 model.nq。
                     q_motor = -q_wire
                     q_model = np.concatenate(
@@ -180,7 +182,7 @@ class TrajSender:
                     q_rad = q_motor[:ARM_JOINT_COUNT]
                     q_deg_str = "  ".join(f"{np.degrees(v):+7.2f}" for v in q_rad)
                     print(
-                        f"[feedback] 收到仿真端最近目标 (协议坐标): "
+                        f"[feedback] 收到仿真端关节反馈 (协议坐标): "
                         f"q_rad=[{'  '.join(f'{v:+.3f}' for v in q_wire)}]"
                     )
                     print(
@@ -193,8 +195,8 @@ class TrajSender:
                 time.sleep(0.01)
                 continue
 
-        print("[warn] 等待反馈超时，当前规划将从 q_prev={...} 开始（可能是全零）")
-        return self.q_prev.copy()
+        print("[warn] 等待反馈超时；请启动接收端后输入 resync，暂不发送运动命令")
+        return None
 
     # ---------- 轨迹回放 ----------
 
@@ -210,6 +212,8 @@ class TrajSender:
         next_deadline = 0.0
 
         for idx, pt in enumerate(points):
+            if not _running:
+                break
             # 既按"绝对时间"等时钟，也按"按顺序立刻发出"二选一：
             # 这里选立即按节奏发出，让仿真端的 drive 看到平滑目标序列。
             target_time = start + pt.time
@@ -221,8 +225,11 @@ class TrajSender:
                 continue
             next_deadline = pt.time + period
 
+            if not _running:
+                break
             q_send = -pt.q[:ARM_JOINT_COUNT]
             self._send(q_send, self.gripper)
+            self.q_prev[:] = pt.q
             if idx % 10 == 0 or not pt.ik_success:
                 marker = "" if pt.ik_success else " !ik-fail"
                 q_str = "  ".join(f"{v:+.3f}" for v in pt.q[:ARM_JOINT_COUNT])
@@ -231,61 +238,34 @@ class TrajSender:
     def _plan_joint_direct(
         self, q_start: np.ndarray, q_end: np.ndarray
     ) -> List[JointTrajectoryPoint]:
-        """对 `q ...` 命令：构造 SE(3) 测地线 + CLIK 跟踪的关节轨迹。
-
-        通过对起点和终点末端位姿做 SE(3) 直线插值（外层时间剖面为 MIN_JERK），
-        让 CLIK 把这条空间路径"翻译"回关节空间，避免关节空间的线性插值
-        经过奇异位姿或限位时出现突变。
-        """
-        T_start = compute_fk(self.model, q_start)[2]
-        T_end = compute_fk(self.model, q_end)[2]
-        duration = max(DEFAULT_TRAJ_DURATION / max(self.speed_scale, 1e-3), 0.05)
-        return plan_joint_space_trajectory(
-            model=self.model,
-            end_frame_id=self.end_frame_id,
-            q_start=q_start,
-            q_end=q_end,
-            duration=duration,
-            params=self.traj_plan_params,
-            ik_params=self.clik_params,
-            null_gain=DEFAULT_NULL_GAIN,
-            start_pose=T_start,
-            end_pose=T_end,
-        )
+        """用最小加加速度曲线直接插值关节，准确到达指定关节角。"""
+        duration = max(DEFAULT_TRAJ_DURATION / self.speed_scale, 0.05)
+        n = max(1, int(np.ceil(duration / self.traj_plan_params.dt)))
+        result = []
+        for i in range(n + 1):
+            u = i / n
+            blend = 10*u**3 - 15*u**4 + 6*u**5
+            result.append(JointTrajectoryPoint(
+                time=duration*u, q=q_start + blend*(q_end-q_start), ik_success=True
+            ))
+        return result
 
     def _plan_pose(
         self, target_pos: np.ndarray, target_rot: Optional[np.ndarray]
     ) -> List[JointTrajectoryPoint]:
-        """对位姿输入：先用 IK 解一个终态，再走一次关节空间轨迹。"""
-        ik_params = IKParams(max_iter=2000, damping=0.01)
+        """IK 解出终点后，在关节空间执行平滑轨迹。"""
+        if not np.isfinite(target_pos).all() or (target_rot is not None and not np.isfinite(target_rot).all()):
+            raise ValueError("目标位姿必须为有限数值")
+        if target_rot is None:
+            _, target_rot, _ = compute_fk(self.model, self.q_prev)
         result = compute_ik(
-            q_init=self.q_prev,
-            target_pos=target_pos,
-            target_rot=target_rot,
-            params=ik_params,
+            q_init=self.q_prev, target_pos=target_pos, target_rot=target_rot,
+            params=IKParams(max_iter=2000, damping=0.001),
         )
-        q_end = result.q.copy()
-        success_marker = "" if result.success else " (ik-did-not-converge)"
-        q_deg_str = "  ".join(f"{np.degrees(v):+7.2f}" for v in q_end[:ARM_JOINT_COUNT])
-        print(
-            f"[ik] success={result.success}  err={result.error:.2e}  "
-            f"iter={result.iterations}{success_marker}  q_deg=[{q_deg_str}]"
-        )
-
-        # 位姿变化越大，规划时长越长（封顶 6 秒），避免抖动
-        q_diff = float(np.linalg.norm(q_end[:ARM_JOINT_COUNT] - self.q_prev[:ARM_JOINT_COUNT]))
-        duration = float(np.clip(0.5 + 0.4 * q_diff, 0.5, 6.0)) / max(self.speed_scale, 1e-3)
-
-        return plan_joint_space_trajectory(
-            model=self.model,
-            end_frame_id=self.end_frame_id,
-            q_start=self.q_prev.copy(),
-            q_end=q_end,
-            duration=duration,
-            params=self.traj_plan_params,
-            ik_params=self.clik_params,
-            null_gain=DEFAULT_NULL_GAIN,
-        )
+        if not result.success or not np.isfinite(result.q).all():
+            raise ValueError(f"IK 求解失败 err={result.error:.2e}，未发送轨迹")
+        print(f"[ik] success=True  err={result.error:.2e}  iter={result.iterations}")
+        return self._plan_joint_direct(self.q_prev.copy(), result.q.copy())
 
     # ---------- 输入解析 ----------
 
@@ -311,19 +291,19 @@ class TrajSender:
             return "quit"
 
         if line.startswith("speed ") or line.startswith("speed\t"):
-            try:
-                self.speed_scale = float(line.split(None, 1)[1])
-            except ValueError as exc:
-                print(f"[traj-sender] 解析 speed 失败: {exc}")
-                return None
-            if self.speed_scale <= 0:
-                self.speed_scale = 1.0
-            print(f"[traj-sender] speed_scale = {self.speed_scale:.3f} "
-                  f"(规划时长 = 默认 / {self.speed_scale:.3f})")
+            speed = float(line.split(None, 1)[1])
+            if not np.isfinite(speed) or not 0.1 <= speed <= 5.0:
+                raise ValueError("speed 必须是 0.1–5.0 的有限数值")
+            self.speed_scale = speed
+            print(f"[traj-sender] speed_scale = {speed:.3f}")
             return None
 
         if line.startswith("gripper ") or line.startswith("gripper\t"):
+            if not self._synced:
+                raise RuntimeError("尚未同步仿真状态，请先执行 resync")
             ratio = float(line.split(None, 1)[1])
+            if not np.isfinite(ratio):
+                raise ValueError("夹爪比例必须为有限数值")
             ratio = float(np.clip(ratio, 0.0, 1.0))
             gripper_m = ratio * DEFAULT_GRIPPER_MAX_OPENING_M
             self.gripper = gripper_m
@@ -332,17 +312,22 @@ class TrajSender:
             # 取上一次 joint 目标 q 的前 6 个当作静止参考（不触发任何臂规划）；
             # q_prev 是电机坐标，广播前取反成协议坐标（q_wire = -q_motor）。
             self._send(-self.q_prev[:ARM_JOINT_COUNT], gripper_m)
-            return (
-                f"夹爪比例已更新为 {ratio:.2f} "
-                f"→ {gripper_m * 1000:.1f} mm（已立即广播）"
-            )
+            print(f"夹爪比例已更新为 {ratio:.2f} → {gripper_m * 1000:.1f} mm（已立即广播）")
+            return None
 
         if line.strip() == "resync":
             q_new = self._request_feedback()
+            if q_new is None:
+                return None
             self.q_prev[:] = q_new
+            self._synced = True
             q_rad = self.q_prev[:ARM_JOINT_COUNT]
             q_deg_str = "  ".join(f"{np.degrees(v):+7.2f}" for v in q_rad)
-            return f"已同步 q_prev ← q_deg=[{q_deg_str}]"
+            print(f"已同步 q_prev ← q_deg=[{q_deg_str}]")
+            return None
+
+        if not self._synced:
+            raise RuntimeError("尚未同步仿真状态，请先执行 resync")
 
         if line.startswith("q ") or line.startswith("q\t"):
             q_deg = np.array([float(x) for x in line[1:].split()], dtype=np.float64)
@@ -352,6 +337,11 @@ class TrajSender:
             # 广播阶段统一取反为协议坐标。
             q_target_model = np.zeros(self.model.nq)
             q_target_model[:ARM_JOINT_COUNT] = np.radians(q_deg)
+            q_arm = q_target_model[:ARM_JOINT_COUNT]
+            if not np.isfinite(q_arm).all():
+                raise ValueError("关节角必须为有限数值")
+            if np.any(q_arm < self.model.lowerPositionLimit[:ARM_JOINT_COUNT]) or np.any(q_arm > self.model.upperPositionLimit[:ARM_JOINT_COUNT]):
+                raise ValueError("关节角超出 URDF 限位，未发送轨迹")
 
             if float(np.linalg.norm(q_target_model[:ARM_JOINT_COUNT]
                                     - self.q_prev[:ARM_JOINT_COUNT])) < DEFAULT_JOINT_TOLERANCE:
@@ -360,17 +350,16 @@ class TrajSender:
 
             points = self._plan_joint_direct(self.q_prev, q_target_model)
             self._broadcast_trajectory(points)
-            self.q_prev[:] = points[-1].q
             q_rad = self.q_prev[:ARM_JOINT_COUNT]
             q_deg_str = "  ".join(f"{np.degrees(v):+7.2f}" for v in q_rad)
-            print(f"[traj-sender] 关节直发完成，最终 q_deg=[{q_deg_str}]")
+            state = "完成" if _running else "已中断"
+            print(f"[traj-sender] 关节轨迹{state}，最后发送 q_deg=[{q_deg_str}]")
             return None
 
         # 默认按位姿输入解析
         target_pos, target_rot = self._parse_pose(line)
         points = self._plan_pose(target_pos, target_rot)
         self._broadcast_trajectory(points)
-        self.q_prev[:] = points[-1].q
         return None
 
     # ---------- 主循环 ----------
@@ -391,15 +380,17 @@ class TrajSender:
         print("    x y z r p y                 (位置+姿态, 米/度)")
         print("    gripper <0~1>                (单独更新夹爪, 立即广播)")
         print("    q j1 j2 j3 j4 j5 j6         (直接发关节角, 度)")
-        print("    speed <scale>                (调整规划时长比例, 默认 1.0)")
-        print("    resync                       (重新从仿真端读取当前关节角)")
+        print("    speed <scale>                (速度比例 0.1–5.0，默认 1.0)")
+        print("    resync                       (读取仿真关节反馈；旧接收端仅返回目标)")
         print("  退出: Ctrl+C / quit / :q")
         print("=" * 72)
 
         # ── 启动时先从仿真端读取当前关节角，初始化 q_prev ──
         print("[traj-sender] 正在从仿真端请求当前关节角...")
         q_init = self._request_feedback()
-        self.q_prev[:] = q_init
+        if q_init is not None:
+            self.q_prev[:] = q_init
+            self._synced = True
 
         while _running:
             # 用 select 等用户输入，给轨迹回放让出 CPU

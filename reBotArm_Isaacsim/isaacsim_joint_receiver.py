@@ -500,6 +500,16 @@ class IsaacJointMirror:
                     "joint_positions": (self.wire_to_asset_sign * self.latest_q).tolist(),
                     "timestamp": time.time(),
                 }
+                # 保留原有目标字段供旧客户端使用；新版发送端优先读取实测值。
+                try:
+                    actual = np.asarray(
+                        self.articulation.get_joint_positions(joint_indices=self.arm_joint_indices),
+                        dtype=np.float64,
+                    )
+                    if actual.shape == (ARM_JOINT_COUNT,) and np.isfinite(actual).all():
+                        feedback["actual_joint_positions"] = (self.wire_to_asset_sign * actual).tolist()
+                except (AttributeError, RuntimeError, TypeError, ValueError):
+                    pass
                 self.feedback_socket.sendto(
                     json.dumps(feedback, separators=(",", ":")).encode("utf-8"),
                     (addr[0], self.feedback_port),
