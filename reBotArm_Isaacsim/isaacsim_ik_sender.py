@@ -9,9 +9,9 @@
 4. 每次发送前携带可选的夹爪开合比（与 6_ik_test.py 保持一致）。
 
 输入格式（每行一条，支持空行 / Ctrl+C / `quit` 退出）：
-    <x> <y> <z>                          (位置, 米; 姿态保持当前)
+    <x> <y> <z>                          (位置, 米; 保持上一目标姿态，启动默认为零位)
     <x> <y> <z> <roll> <pitch> <yaw>     (位置+姿态, 米/度)
-    gripper <ratio>                      (单独更新夹爪, ratio ∈ [0, 1])
+    gripper <ratio>                      (设置夹爪比例，下次关节命令生效, ratio ∈ [0, 1])
     q <j1> <j2> ... <j6>                 (直接发送关节角, 度)
 
 启动方式：
@@ -40,6 +40,7 @@ if str(_THIRD_PARTY) not in sys.path:
     sys.path.insert(0, str(_THIRD_PARTY))
 
 from reBotArm_control_py.kinematics import (  # noqa: E402
+    compute_fk,
     compute_ik,
     get_joint_count,
     get_joint_names,
@@ -52,6 +53,7 @@ DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 5005
 DEFAULT_SEND_HZ = 60.0
 DEFAULT_GRIPPER = 0.0
+GRIPPER_MAX_OPENING_M = 0.045
 
 _running = True
 
@@ -76,7 +78,7 @@ class IKSender:
         self.model = load_robot_model()
         self.joint_names = get_joint_names(self.model)
         self.n_joints = get_joint_count()
-        self.ik_params = IKParams(max_iter=2000, damping=0.01)
+        self.ik_params = IKParams(max_iter=2000, damping=0.001)
         self.q_prev = np.zeros(self.model.nq)
         self.gripper = DEFAULT_GRIPPER
 
@@ -90,7 +92,7 @@ class IKSender:
             "sequence": self.sequence,
             "timestamp": time.time(),
             "joint_positions": q_rad.tolist(),
-            "gripper_position": float(np.clip(gripper, 0.0, 1.0)),
+            "gripper_position": float(np.clip(gripper, 0.0, 1.0) * GRIPPER_MAX_OPENING_M),
         }
         packet = json.dumps(payload, separators=(",", ":")).encode("utf-8")
         self.socket.sendto(packet, (self.host, self.port))
@@ -122,7 +124,10 @@ class IKSender:
             q_deg = np.array([float(x) for x in line[1:].split()], dtype=np.float64)
             if q_deg.shape != (ARM_JOINT_COUNT,):
                 raise ValueError(f"q 需要 {ARM_JOINT_COUNT} 个数，实际 {q_deg.shape[0]} 个")
+            if not np.isfinite(q_deg).all():
+                raise ValueError("关节角必须为有限数值")
             q_rad = np.radians(q_deg)
+            self.q_prev[:ARM_JOINT_COUNT] = q_rad
             self._send(-q_rad, self.gripper)
             return self._log("直接下发", q_rad, None, None, None, unit="rad")
 
@@ -131,6 +136,8 @@ class IKSender:
             # 否则接收端会把 latest_q 覆盖为零，让仿真臂瞬间回原点。
             # 新比例会在下一次 IK 或 `q` 命令随包一起下发。
             ratio = float(line.split(None, 1)[1])
+            if not np.isfinite(ratio):
+                raise ValueError("夹爪比例必须为有限数值")
             self.gripper = float(np.clip(ratio, 0.0, 1.0))
             return f"夹爪比例已更新为 {self.gripper:.2f}（下一次关节命令生效）"
 
@@ -139,6 +146,11 @@ class IKSender:
 
         # 默认按位姿输入解析
         target_pos, target_rot = self._parse_pose(line)
+        if not np.isfinite(target_pos).all() or (target_rot is not None and not np.isfinite(target_rot).all()):
+            raise ValueError("目标位姿必须为有限数值")
+        if target_rot is None:
+            # 保持上一次已发送关节目标对应的末端姿态。
+            _, target_rot, _ = compute_fk(self.model, self.q_prev)
         result = compute_ik(
             q_init=self.q_prev,
             target_pos=target_pos,
@@ -146,9 +158,10 @@ class IKSender:
             params=self.ik_params,
         )
         if not result.success:
-            print(
-                f"[ik-sender] 求解失败: err={result.error:.2e}, iter={result.iterations}，仍将下发当前解"
-            )
+            message = (f"[ik-sender] 求解失败: err={result.error:.2e}, "
+                       f"iter={result.iterations}；未发送，保持上一目标")
+            print(message)
+            return message
 
         self.q_prev = result.q.copy()
         # 与 joint_reader_sender.py 保持一致：电机反馈 → 仿真端的符号约定为取反。
@@ -195,9 +208,9 @@ class IKSender:
         print(f"  关节名      : {self.joint_names}")
         print(f"  目标 (UDP)  : {self.host}:{self.port}")
         print("  输入位姿 (每行一条):")
-        print("    x y z                  (位置, 米; 姿态保持当前)")
+        print("    x y z                  (位置, 米; 保持上一目标姿态，启动默认为零位)")
         print("    x y z r p y            (位置+姿态, 米/度)")
-        print("    gripper <0~1>           (单独更新夹爪)")
+        print("    gripper <0~1>           (设置夹爪比例，下次关节命令生效)")
         print("    q j1 j2 j3 j4 j5 j6    (直接发关节角, 度)")
         print("  退出: Ctrl+C / quit / :q")
         print("=" * 64)

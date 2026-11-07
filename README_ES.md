@@ -169,11 +169,13 @@ uv run python isaacsim_ik_sender.py
 
 **Formato de entrada (una orden por línea):**
 ```
-x y z                       # posición (m), se mantiene la orientación
+x y z                       # posición (m), mantiene la orientación del último objetivo
 x y z r p y                 # posición + orientación (m/grados)
 q j1 j2 j3 j4 j5 j6         # ángulos articulares directos (grados)
-gripper <0–1>                # actualiza solo la pinza
+gripper <0–1>                # fija la proporción para la siguiente orden articular
 ```
+
+El emisor inicia con un objetivo articular cero y no lee automáticamente la pose del simulador. Una orden `q` o una IK correcta actualiza ese objetivo. Los resultados IK fallidos no se envían.
 
 #### 3. Modo de planificación de trayectorias (`isaacsim_traj_sender`)
 
@@ -252,7 +254,7 @@ El receptor aplica el `gripper_position` recibido directamente como objetivo de 
 | `gravity_joint_sender` | `gripper_q × 0.03` (`GRIPPER_POSITION_SCALE = 0.03`) |
 | `joint_reader_sender` | `gripper_q × 0.007` (`GRIPPER_POSITION_SCALE = 0.007`) |
 | `isaacsim_traj_sender` | `ratio × 0.045` (entrada `gripper <0–1>`, recortado a 0,045 m) |
-| `isaacsim_ik_sender` | `ratio ∈ [0, 1]` sin convertir, enviado como metros, de modo que cualquier ratio ≥ el límite superior de un dedo abre ese dedo por completo |
+| `isaacsim_ik_sender` | `ratio × 0.045` m de recorrido simulado por dedo, enviado con la siguiente orden articular |
 
 ## Parámetros de configuración
 

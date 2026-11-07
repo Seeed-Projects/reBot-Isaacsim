@@ -169,11 +169,13 @@ uv run python isaacsim_ik_sender.py
 
 **Input format (one per line):**
 ```
-x y z                       # position (m), orientation held
+x y z                       # position (m), keep last joint target orientation
 x y z r p y                 # position + orientation (m/deg)
 q j1 j2 j3 j4 j5 j6         # direct joint angles (deg)
-gripper <0~1>                # update gripper only
+gripper <0~1>                # set ratio; sent with the next joint command
 ```
+
+The sender starts with a zero joint target; it does not automatically read the simulator pose. A `q` or successful IK command updates that target. Failed IK results are not sent.
 
 #### ③ Trajectory Planning Mode (`isaacsim_traj_sender`)
 
@@ -252,7 +254,7 @@ The receiver applies the received `gripper_position` directly as the position ta
 | `gravity_joint_sender` | `gripper_q × 0.03` (`GRIPPER_POSITION_SCALE = 0.03`) |
 | `joint_reader_sender` | `gripper_q × 0.007` (`GRIPPER_POSITION_SCALE = 0.007`) |
 | `isaacsim_traj_sender` | `ratio × 0.045` (`gripper <0~1>` input, clipped to 0.045 m) |
-| `isaacsim_ik_sender` | raw `ratio ∈ [0, 1]` sent as meters, so any ratio ≥ a finger's upper limit fully opens that finger |
+| `isaacsim_ik_sender` | `ratio × 0.045` m simulated travel per finger, sent with the next joint command |
 
 ## Configuration Parameters
 

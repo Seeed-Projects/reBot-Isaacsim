@@ -171,11 +171,13 @@ uv run python isaacsim_ik_sender.py
 
 **输入格式（每行一条）：**
 ```
-x y z                       # 位置 (米)，姿态保持当前
+x y z                       # 位置 (米)，保持上一关节目标的姿态
 x y z r p y                 # 位置 + 姿态 (米/度)
 q j1 j2 j3 j4 j5 j6         # 直接发送关节角 (度)
-gripper <0~1>                # 单独更新夹爪
+gripper <0~1>                # 设置夹爪比例，下次关节命令生效
 ```
+
+发送端启动时关节目标从零位开始，不会自动读取仿真姿态；`q` 或成功的 IK 命令会更新该目标。IK 求解失败时不会发送关节命令。
 
 #### ③ 轨迹规划模式（`isaacsim_traj_sender`）
 
@@ -254,7 +256,7 @@ UDP JSON，端口 `127.0.0.1:5005`。
 | `gravity_joint_sender` | `gripper_q × 0.03`（`GRIPPER_POSITION_SCALE = 0.03`） |
 | `joint_reader_sender` | `gripper_q × 0.007`（`GRIPPER_POSITION_SCALE = 0.007`） |
 | `isaacsim_traj_sender` | `ratio × 0.045`（`gripper <0~1>` 输入，裁剪到 0.045 m） |
-| `isaacsim_ik_sender` | 原始 `ratio ∈ [0, 1]` 直接按米发送，因此 ratio ≥ 某指上限时该指完全打开 |
+| `isaacsim_ik_sender` | `ratio × 0.045` m，每指的仿真目标行程；下次关节命令时发送 |
 
 ## 配置参数
 
