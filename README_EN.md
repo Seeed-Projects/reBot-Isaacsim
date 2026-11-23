@@ -110,6 +110,8 @@ uv sync
 
 ### 3. Switch the hardware config to RS
 
+The current RS URDF uses measured masses and centers of mass. The model totals 6.5503 kg. Each gripper finger weighs 55.9 g and has 0–50 mm of travel. [URDF source](urdf/RS/urdf/ReBot_Arm_RS.urdf)
+
 This repo's Isaac Sim asset is RS (`usd/ReBot_Arm_RS`). The current SDK defaults `rebotarm.yaml` to RS; verify the actual configuration first. Both `RebotArm()` and `load_robot_model()` follow this file, so gravity compensation, joint-reader, IK, and Traj all need RS first; leave it on DM and the motor protocol will not match, and Pinocchio will load the DM URDF. This only dirties the submodule working tree — do not commit it:
 
 ```bash
@@ -224,7 +226,7 @@ uv run python joint_reader_sender.py
 - Sends RS position queries, but no enable, disable, mode-change or motion commands. Exiting does not disable motors.
 - The UDP target rate is 60 Hz, subject to CAN bus load. Sending pauses on missing or invalid motor feedback and resumes when it recovers.
 - The default CAN host ID is `0xfc`; use e.g. `--can-host-id 0xfb` if another process uses it. Check bus load and compatibility before using it alongside a hardware controller.
-- The default gripper mapping is 0 rad closed to 5 rad open, corresponding to 0–45 mm per simulated finger. `--gripper-closed` and `--gripper-open` optionally override the display mapping only; they do not change motor zero or motion limits.
+- The default gripper mapping is 0 rad closed to 5 rad open, corresponding to a 0–45 mm command range per simulated finger. The current URDF and default USD allow 0–50 mm per finger. `--gripper-closed` and `--gripper-open` optionally override the display mapping only; they do not change motor zero or motion limits.
 
 ## Communication Protocol
 

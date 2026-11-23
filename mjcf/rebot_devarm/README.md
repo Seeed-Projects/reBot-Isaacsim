@@ -8,8 +8,7 @@ This package is **vendored from the MuJoCo Menagerie**
 model, pinned to commit
 [`da76818`](https://github.com/google-deepmind/mujoco_menagerie/commit/da76818e269b82289eba39808e2fb91d679d6994).
 That model was in turn derived from this repository's
-[`urdf/00-arm-rs_asm-v3`](../../urdf/00-arm-rs_asm-v3), so the MJCF, the URDF
-and the Isaac Sim USD asset all describe the same arm.
+[`urdf/00-arm-rs_asm-v3`](../../urdf/00-arm-rs_asm-v3), and is paired with the [legacy Isaac Sim USD](../../usd/RS-rebot-dev-arm/RS-rebot-dev-arm.usda) for the checks below. The [current RS URDF and default USD](../../usd/ReBot_Arm_RS/README.md) use the newer measured inertials.
 
 ## Files
 
@@ -91,7 +90,7 @@ evidence is `usd/RS-rebot-dev-arm/evidence/physics_fidelity_validation.json`.
 - Joint sign convention follows the repo URDF: joint2/3 ∈ [−π, 0], joint4 ∈
   [−1.79, 1.69]. (The Seeed vendor control URDF mirrors all six axes;
   `q_repo = −q_vendor`.)
-- Total mass 6.0085 kg. `home` = arm extended (URDF zero); `raised` = elbow-up
+- This pinned Menagerie model has a total mass of 6.0085 kg. `home` = arm extended (URDF zero); `raised` = elbow-up
   L pose used for gravity validation.
 
 ## Load

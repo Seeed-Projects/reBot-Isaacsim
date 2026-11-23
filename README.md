@@ -112,6 +112,8 @@ uv sync
 
 ### 3. 将硬件配置切到 RS
 
+当前 RS URDF 使用实测质量和质心。模型总质量为 6.5503 kg，每侧夹爪手指为 55.9 g，滑动行程各为 0–50 mm。 [URDF 源文件](urdf/RS/urdf/ReBot_Arm_RS.urdf)
+
 本仓 Isaac Sim 资产是 RS（`usd/ReBot_Arm_RS`）。当前 SDK 的 `rebotarm.yaml` 默认是 RS，请仍先核对实际配置。`RebotArm()` 和 `load_robot_model()` 都读这一份，所以重力补偿、只读映射、IK、Traj 都要先切到 RS；不切的话电机协议会对不上，Pinocchio 也会用 DM URDF。只改 submodule 工作区，不要提交：
 
 ```bash
@@ -226,7 +228,7 @@ uv run python joint_reader_sender.py
 - 发送 RS 位置查询，不发送使能、失能、模式切换或运动控制命令；退出不会失能电机。
 - UDP 目标频率为 60 Hz；实际频率受 CAN 总线负载影响。任何电机反馈超时或无效时暂停发送，恢复后继续。
 - 默认使用 CAN host ID `0xfc`；如与其他程序冲突，可用 `--can-host-id 0xfb` 等指定空闲 ID。与其他真机控制程序并行使用前请核实总线负载和兼容性。
-- 夹爪默认按闭合 0 rad、全开 5 rad 映射到仿真单指 0–45 mm；其他端点可用 `--gripper-closed` 和 `--gripper-open` 临时指定。这只影响显示，不改变电机零点或运动限位。
+- 夹爪默认按闭合 0 rad、全开 5 rad 映射到单指的 0–45 mm 发送目标（URDF 与默认 USD 的单指上限均为 50 mm）；其他端点可用 `--gripper-closed` 和 `--gripper-open` 临时指定。这只影响显示，不改变电机零点或运动限位。
 
 ## 通信协议
 

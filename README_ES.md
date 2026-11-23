@@ -110,6 +110,8 @@ uv sync
 
 ### 3. Cambiar la configuración de hardware a RS
 
+El URDF RS actual utiliza las masas y los centros de masa medidos. La masa total del modelo es de 6,5503 kg. Cada dedo de la pinza pesa 55,9 g y tiene un recorrido de 0 a 50 mm. [Archivo URDF](urdf/RS/urdf/ReBot_Arm_RS.urdf)
+
 El asset de Isaac Sim de este repo es RS (`usd/ReBot_Arm_RS`). El SDK actual usa RS por defecto en `rebotarm.yaml`; comprueba la configuración real. Tanto `RebotArm()` como `load_robot_model()` leen este archivo, así que compensación de gravedad, mapeo de solo lectura, IK y Traj necesitan RS primero; si se deja en DM, el protocolo de motores no coincidirá y Pinocchio cargará el URDF de DM. Solo ensucia el working tree del submodule: no hagas commit:
 
 ```bash
@@ -224,7 +226,7 @@ uv run python joint_reader_sender.py
 - Envía consultas de posición RS, sin comandos de habilitación, deshabilitación, cambio de modo ni movimiento. Al salir no deshabilita los motores.
 - La frecuencia UDP objetivo es 60 Hz y depende de la carga del bus CAN. Si falta una respuesta o es inválida, se pausa el envío hasta recuperarla.
 - El host CAN predeterminado es `0xfc`; usa, por ejemplo, `--can-host-id 0xfb` si hay conflicto. Comprueba la carga y la compatibilidad antes de usarlo junto con un controlador real.
-- La pinza se mapea por defecto de 0 rad cerrado a 5 rad abierto, correspondientes a 0–45 mm por dedo simulado. `--gripper-closed` y `--gripper-open` permiten cambiar solo el mapeo visual, no el cero ni los límites del motor.
+- La pinza se mapea por defecto de 0 rad cerrado a 5 rad abierto, correspondientes a un rango de mando de 0 a 45 mm por dedo simulado. El URDF actual y el USD predeterminado permiten de 0 a 50 mm por dedo. `--gripper-closed` y `--gripper-open` permiten cambiar solo el mapeo visual, no el cero ni los límites del motor.
 
 ## Protocolo de comunicación
 
