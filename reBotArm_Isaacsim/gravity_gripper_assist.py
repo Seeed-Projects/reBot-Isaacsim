@@ -25,6 +25,8 @@ from pathlib import Path
 
 import numpy as np
 
+from rs_gripper import motor_to_finger_travel
+
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "third_party" / "reBotArm_control_py"))
 from reBotArm_control_py.actuator import RebotArm
@@ -83,13 +85,12 @@ def assist_torque(position, velocity, closed, opened):
 
 
 def gripper_sim_position(position, closed, opened):
-    """Map the calibrated real opening to 0..0.045 m per simulated finger."""
+    """Map the calibrated real opening to 0..0.05 m per simulated finger."""
     if not all(math.isfinite(v) for v in (position, closed, opened)):
         raise ValueError("夹爪输入不是有限数值")
     if abs(opened - closed) <= 2 * LIMIT_MARGIN:
         raise ValueError("夹爪校准行程过小")
-    ratio = max(0.0, min(1.0, (position - closed) / (opened - closed)))
-    return ratio * 0.045
+    return motor_to_finger_travel(position, closed, opened)
 
 
 def minimum_jerk(t):

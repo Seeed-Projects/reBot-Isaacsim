@@ -226,7 +226,7 @@ uv run python joint_reader_sender.py
 - Envía consultas de posición RS, sin comandos de habilitación, deshabilitación, cambio de modo ni movimiento. Al salir no deshabilita los motores.
 - La frecuencia UDP objetivo es 60 Hz y depende de la carga del bus CAN. Si falta una respuesta o es inválida, se pausa el envío hasta recuperarla.
 - El host CAN predeterminado es `0xfc`; usa, por ejemplo, `--can-host-id 0xfb` si hay conflicto. Comprueba la carga y la compatibilidad antes de usarlo junto con un controlador real.
-- La pinza se mapea por defecto de 0 rad cerrado a 5 rad abierto, correspondientes a un rango de mando de 0 a 45 mm por dedo simulado. El URDF actual y el USD predeterminado permiten de 0 a 50 mm por dedo. `--gripper-closed` y `--gripper-open` permiten cambiar solo el mapeo visual, no el cero ni los límites del motor.
+- La pinza se mapea por defecto de 0 rad cerrado a 5 rad abierto, correspondientes a un recorrido de 0 a 50 mm por dedo simulado, igual que en el URDF y el USD predeterminado. `--gripper-closed` y `--gripper-open` permiten cambiar solo el mapeo visual, no el cero ni los límites del motor.
 
 ## Protocolo de comunicación
 
@@ -255,10 +255,10 @@ El receptor aplica el `gripper_position` recibido directamente como objetivo de 
 
 | Emisor | Conversión a `gripper_position` (m) |
 |------|------|
-| `gravity_joint_sender` | `gripper_q × 0.03` (`GRIPPER_POSITION_SCALE = 0.03`) |
-| `joint_reader_sender` | `clip((gripper_q - closed) / (open - closed), 0, 1) × 0.045 m` (default `closed=0`, `open=5` rad) |
-| `isaacsim_traj_sender` | `ratio × 0.045` (entrada `gripper <0–1>`, recortado a 0,045 m) |
-| `isaacsim_ik_sender` | `ratio × 0.045` m de recorrido simulado por dedo, enviado con la siguiente orden articular |
+| `gravity_joint_sender` | `clip(gripper_q / 5, 0, 1) × 0.05 m` |
+| `joint_reader_sender` | `clip((gripper_q - closed) / (open - closed), 0, 1) × 0.05 m` (default `closed=0`, `open=5` rad) |
+| `isaacsim_traj_sender` | `ratio × 0.05` (entrada `gripper <0–1>`, recortado a 0,05 m) |
+| `isaacsim_ik_sender` | `ratio × 0.05` m de recorrido simulado por dedo, enviado con la siguiente orden articular |
 
 ## Parámetros de configuración
 
@@ -270,7 +270,7 @@ El receptor aplica el `gripper_position` recibido directamente como objetivo de 
 | `ARM_JOINT_COUNT` | 6 | Número de articulaciones |
 | `DEFAULT_PORT` | 5005 | Puerto UDP |
 | `DEFAULT_SEND_HZ` | 60.0 | Frecuencia de envío (Hz) |
-| `GRIPPER_POSITION_SCALE` | 0.03 | Factor de conversión del ángulo de la pinza a posición |
+| `MOTOR_OPEN_RAD` / `FINGER_TRAVEL_M` | 5 rad / 0,05 m | Ángulo del motor a apertura máxima y recorrido por dedo |
 | `position_alpha` | 0.2 | Coeficiente del filtro paso bajo |
 
 ### Receptor (`isaacsim_joint_receiver.py`)

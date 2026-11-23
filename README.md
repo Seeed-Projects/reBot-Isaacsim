@@ -228,7 +228,7 @@ uv run python joint_reader_sender.py
 - 发送 RS 位置查询，不发送使能、失能、模式切换或运动控制命令；退出不会失能电机。
 - UDP 目标频率为 60 Hz；实际频率受 CAN 总线负载影响。任何电机反馈超时或无效时暂停发送，恢复后继续。
 - 默认使用 CAN host ID `0xfc`；如与其他程序冲突，可用 `--can-host-id 0xfb` 等指定空闲 ID。与其他真机控制程序并行使用前请核实总线负载和兼容性。
-- 夹爪默认按闭合 0 rad、全开 5 rad 映射到单指的 0–45 mm 发送目标（URDF 与默认 USD 的单指上限均为 50 mm）；其他端点可用 `--gripper-closed` 和 `--gripper-open` 临时指定。这只影响显示，不改变电机零点或运动限位。
+- 夹爪默认按闭合 0 rad、全开 5 rad 映射到单指的 0–50 mm 发送目标，与 URDF 和默认 USD 的单指行程一致；其他端点可用 `--gripper-closed` 和 `--gripper-open` 临时指定。这只影响显示，不改变电机零点或运动限位。
 
 ## 通信协议
 
@@ -257,10 +257,10 @@ UDP JSON，端口 `127.0.0.1:5005`。
 
 | 发送端 | 到 `gripper_position`（m）的换算 |
 |------|------|
-| `gravity_joint_sender` | `gripper_q × 0.03`（`GRIPPER_POSITION_SCALE = 0.03`） |
-| `joint_reader_sender` | `clip((gripper_q - closed) / (open - closed), 0, 1) × 0.045 m` (default `closed=0`, `open=5` rad) |
-| `isaacsim_traj_sender` | `ratio × 0.045`（`gripper <0~1>` 输入，裁剪到 0.045 m） |
-| `isaacsim_ik_sender` | `ratio × 0.045` m，每指的仿真目标行程；下次关节命令时发送 |
+| `gravity_joint_sender` | `clip(gripper_q / 5, 0, 1) × 0.05 m` |
+| `joint_reader_sender` | `clip((gripper_q - closed) / (open - closed), 0, 1) × 0.05 m` (default `closed=0`, `open=5` rad) |
+| `isaacsim_traj_sender` | `ratio × 0.05`（`gripper <0~1>` 输入，裁剪到 0.05 m） |
+| `isaacsim_ik_sender` | `ratio × 0.05` m，每指的仿真目标行程；下次关节命令时发送 |
 
 ## 配置参数
 
@@ -272,7 +272,7 @@ UDP JSON，端口 `127.0.0.1:5005`。
 | `ARM_JOINT_COUNT` | 6 | 关节数 |
 | `DEFAULT_PORT` | 5005 | UDP 端口 |
 | `DEFAULT_SEND_HZ` | 60.0 | 发送频率（Hz） |
-| `GRIPPER_POSITION_SCALE` | 0.03 | 夹爪角到位置的缩放系数 |
+| `MOTOR_OPEN_RAD` / `FINGER_TRAVEL_M` | 5 rad / 0.05 m | 电机全开角度与单指行程 |
 | `position_alpha` | 0.2 | 低通滤波系数 |
 
 ### 接收端 (`isaacsim_joint_receiver.py`)

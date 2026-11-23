@@ -32,6 +32,8 @@ import time
 from pathlib import Path
 
 import numpy as np
+
+from rs_gripper import FINGER_TRAVEL_M
 import pinocchio as pin
 
 # 兼容直接 python3 运行：把 reBotArm_control_py 加入 sys.path。
@@ -53,7 +55,6 @@ DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 5005
 DEFAULT_SEND_HZ = 60.0
 DEFAULT_GRIPPER = 0.0
-GRIPPER_MAX_OPENING_M = 0.045
 
 _running = True
 
@@ -92,7 +93,7 @@ class IKSender:
             "sequence": self.sequence,
             "timestamp": time.time(),
             "joint_positions": q_rad.tolist(),
-            "gripper_position": float(np.clip(gripper, 0.0, 1.0) * GRIPPER_MAX_OPENING_M),
+            "gripper_position": float(np.clip(gripper, 0.0, 1.0) * FINGER_TRAVEL_M),
         }
         packet = json.dumps(payload, separators=(",", ":")).encode("utf-8")
         self.socket.sendto(packet, (self.host, self.port))

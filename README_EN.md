@@ -226,7 +226,7 @@ uv run python joint_reader_sender.py
 - Sends RS position queries, but no enable, disable, mode-change or motion commands. Exiting does not disable motors.
 - The UDP target rate is 60 Hz, subject to CAN bus load. Sending pauses on missing or invalid motor feedback and resumes when it recovers.
 - The default CAN host ID is `0xfc`; use e.g. `--can-host-id 0xfb` if another process uses it. Check bus load and compatibility before using it alongside a hardware controller.
-- The default gripper mapping is 0 rad closed to 5 rad open, corresponding to a 0–45 mm command range per simulated finger. The current URDF and default USD allow 0–50 mm per finger. `--gripper-closed` and `--gripper-open` optionally override the display mapping only; they do not change motor zero or motion limits.
+- The default gripper mapping is 0 rad closed to 5 rad open, corresponding to 0–50 mm per simulated finger, matching the URDF and default USD. `--gripper-closed` and `--gripper-open` optionally override the display mapping only; they do not change motor zero or motion limits.
 
 ## Communication Protocol
 
@@ -255,10 +255,10 @@ The receiver applies the received `gripper_position` directly as the position ta
 
 | Sender | Mapping to `gripper_position` (m) |
 |------|------|
-| `gravity_joint_sender` | `gripper_q × 0.03` (`GRIPPER_POSITION_SCALE = 0.03`) |
-| `joint_reader_sender` | `clip((gripper_q - closed) / (open - closed), 0, 1) × 0.045 m` (default `closed=0`, `open=5` rad) |
-| `isaacsim_traj_sender` | `ratio × 0.045` (`gripper <0~1>` input, clipped to 0.045 m) |
-| `isaacsim_ik_sender` | `ratio × 0.045` m simulated travel per finger, sent with the next joint command |
+| `gravity_joint_sender` | `clip(gripper_q / 5, 0, 1) × 0.05 m` |
+| `joint_reader_sender` | `clip((gripper_q - closed) / (open - closed), 0, 1) × 0.05 m` (default `closed=0`, `open=5` rad) |
+| `isaacsim_traj_sender` | `ratio × 0.05` (`gripper <0~1>` input, clipped to 0.05 m) |
+| `isaacsim_ik_sender` | `ratio × 0.05` m simulated travel per finger, sent with the next joint command |
 
 ## Configuration Parameters
 
@@ -270,7 +270,7 @@ The receiver applies the received `gripper_position` directly as the position ta
 | `ARM_JOINT_COUNT` | 6 | Number of joints |
 | `DEFAULT_PORT` | 5005 | UDP port |
 | `DEFAULT_SEND_HZ` | 60.0 | Send frequency (Hz) |
-| `GRIPPER_POSITION_SCALE` | 0.03 | Scale factor from gripper angle to position |
+| `MOTOR_OPEN_RAD` / `FINGER_TRAVEL_M` | 5 rad / 0.05 m | Motor angle at full opening and travel per finger |
 | `position_alpha` | 0.2 | Low-pass filter coefficient |
 
 ### Receiver (`isaacsim_joint_receiver.py`)

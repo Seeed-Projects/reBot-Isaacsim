@@ -42,6 +42,8 @@ from pathlib import Path
 from typing import List, Optional
 
 import numpy as np
+
+from rs_gripper import FINGER_TRAVEL_M
 import pinocchio as pin
 
 # 把 third_party/reBotArm_control_py 加入 sys.path，兼容直接 python3 运行。
@@ -75,7 +77,6 @@ DEFAULT_BROADCAST_HZ = 1000.0        # 轨迹点 UDP 广播频率
 DEFAULT_TRAJ_DURATION = 3.0         # 默认轨迹时长（秒）
 DEFAULT_SPEED_SCALE = 1.0           # 速度比例：1.0 = 使用默认时长，>1 更快
 DEFAULT_JOINT_TOLERANCE = 1e-3      # 直发 q 模式下，目标与当前差距过小时跳过规划
-DEFAULT_GRIPPER_MAX_OPENING_M = 0.045  # 夹爪完全打开时每指的滑动距离（米）；保守值，小于 USD upperLimit（两指均为 0.05）
 
 _running = True
 
@@ -134,10 +135,10 @@ class TrajSender:
     # ---------- UDP 发送 ----------
 
     def _send(self, q_rad: np.ndarray, gripper: float) -> None:
-        # gripper 入参约定：0~DEFAULT_GRIPPER_MAX_OPENING_M 米。如果调用方传入
-        # 的值 > DEFAULT_GRIPPER_MAX_OPENING_M，会被解释为旧版"0~1 当米"的错误
+        # gripper 入参约定：0~FINGER_TRAVEL_M 米。如果调用方传入
+        # 的值 > FINGER_TRAVEL_M，会被解释为旧版"0~1 当米"的错误
         # 习惯用法，按 USD 行程上限裁剪到合理区间。
-        gripper_m = float(np.clip(gripper, 0.0, DEFAULT_GRIPPER_MAX_OPENING_M))
+        gripper_m = float(np.clip(gripper, 0.0, FINGER_TRAVEL_M))
         payload = {
             "sequence": self.sequence,
             "timestamp": time.time(),
@@ -305,7 +306,7 @@ class TrajSender:
             if not np.isfinite(ratio):
                 raise ValueError("夹爪比例必须为有限数值")
             ratio = float(np.clip(ratio, 0.0, 1.0))
-            gripper_m = ratio * DEFAULT_GRIPPER_MAX_OPENING_M
+            gripper_m = ratio * FINGER_TRAVEL_M
             self.gripper = gripper_m
             # 立即广播一帧；既解决"等下次规划才生效"的延迟，也让"单独
             # 更新夹爪"的命令在不动 arm 时也能动 gripper。

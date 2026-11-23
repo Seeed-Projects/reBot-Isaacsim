@@ -27,6 +27,8 @@ from pathlib import Path
 
 import numpy as np
 
+from rs_gripper import motor_to_finger_travel
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 _THIRD_PARTY = REPO_ROOT / "third_party" / "reBotArm_control_py"
 sys.path.insert(0, str(_THIRD_PARTY))
@@ -48,7 +50,6 @@ DEFAULT_PORT = 5005
 DEFAULT_SEND_HZ = 60.0
 DEFAULT_REPORT_EVERY = 30
 DEFAULT_POSITION_ALPHA = 0.2
-GRIPPER_POSITION_SCALE = 0.03
 
 _running = True
 
@@ -92,7 +93,7 @@ class GravityCompensationSender:
 
     @staticmethod
     def _gripper_q_to_position(gripper_q: float) -> float:
-        return float(gripper_q * GRIPPER_POSITION_SCALE)
+        return motor_to_finger_travel(gripper_q)
 
     def _snapshot_positions(self, *, filter_position: bool) -> None:
         q = self.rebotarm.arm.get_positions()

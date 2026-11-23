@@ -13,6 +13,8 @@ from pathlib import Path
 
 import numpy as np
 
+from rs_gripper import MOTOR_CLOSED_RAD, MOTOR_OPEN_RAD, motor_to_finger_travel
+
 _THIRD_PARTY = Path(__file__).resolve().parents[1] / 'third_party' / 'reBotArm_control_py'
 sys.path.insert(0, str(_THIRD_PARTY))
 from reBotArm_control_py.actuator import RebotArm  # noqa: E402
@@ -20,7 +22,6 @@ from reBotArm_control_py.actuator import RebotArm  # noqa: E402
 ARM_JOINT_COUNT = 6
 DEFAULT_HOST, DEFAULT_PORT = '127.0.0.1', 5005
 DEFAULT_SEND_HZ = 60.0  # 目标上限，实际取决于 CAN 总线负载
-GRIPPER_MAX_OPENING_M = 0.045  # 每根仿真手指最大行程
 MECH_POS = 0x7019
 READ_TIMEOUT_MS = 100
 DEFAULT_CAN_HOST_ID = 0xFC
@@ -44,7 +45,7 @@ class FeedbackError(RuntimeError):
 
 class JointReaderSender:
     def __init__(self, host=DEFAULT_HOST, port=DEFAULT_PORT, can_host_id=DEFAULT_CAN_HOST_ID,
-                 gripper_closed=0.0, gripper_open=5.0):
+                 gripper_closed=MOTOR_CLOSED_RAD, gripper_open=MOTOR_OPEN_RAD):
         self.host, self.port = host, port
         if not 0 <= can_host_id <= 255:
             raise ValueError("CAN host ID 必须在 0–255 之间")
@@ -135,8 +136,9 @@ class JointReaderSender:
         self.latest_q_raw[:] = q
         self.latest_q[:] = -q
         self.latest_gripper_q = float(gripper_q)
-        ratio = (gripper_q - self.gripper_closed) / (self.gripper_open - self.gripper_closed)
-        self.latest_gripper_position = float(np.clip(ratio, 0.0, 1.0) * GRIPPER_MAX_OPENING_M)
+        self.latest_gripper_position = motor_to_finger_travel(
+            gripper_q, self.gripper_closed, self.gripper_open
+        )
 
     def run(self, send_hz=DEFAULT_SEND_HZ):
         if not np.isfinite(send_hz) or send_hz <= 0:
@@ -195,7 +197,7 @@ def main():
     parser.add_argument('--can-host-id', type=lambda x: int(x, 0), default=DEFAULT_CAN_HOST_ID,
                         help='CAN 查询 host ID，默认 0xfc；避免与其他控制程序冲突')
     parser.add_argument('--gripper-closed', type=float, default=0.0, help='夹爪闭合时电机角度 rad（仅仿真映射）')
-    parser.add_argument('--gripper-open', type=float, default=5.0, help='夹爪全开时电机角度 rad（仅仿真映射）')
+    parser.add_argument('--gripper-open', type=float, default=MOTOR_OPEN_RAD, help='夹爪全开时电机角度 rad（仅仿真映射）')
     args = parser.parse_args()
     if args.mit:
         parser.error('此程序只读，不支持 --mit；请使用专门的控制程序')

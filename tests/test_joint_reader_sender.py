@@ -66,7 +66,7 @@ class JointReaderTests(unittest.TestCase):
     def test_only_read_requests_and_matching_feedback(self):
         self.sender.read_positions()
         np.testing.assert_allclose(self.sender.latest_q, -np.arange(1, 7)/10, atol=1e-6)
-        self.assertAlmostEqual(self.sender.latest_gripper_position, .7*.009)
+        self.assertAlmostEqual(self.sender.latest_gripper_position, .7*.01)
         self.assertEqual(len(self.can.commands), 7)
         for frame, motor in zip(self.can.commands, range(1, 8)):
             cid, length, data = reader.CAN_FRAME.unpack(frame)
@@ -87,7 +87,7 @@ class JointReaderTests(unittest.TestCase):
 
     def test_gripper_endpoint_mapping_is_only_a_visual_conversion(self):
         self.sender.gripper_closed, self.sender.gripper_open = -.479, 5.987
-        for raw, expected in [(-1.0, 0), (-.479, 0), (2.754, .0225), (5.987, .045), (6.5, .045)]:
+        for raw, expected in [(-1.0, 0), (-.479, 0), (2.754, .025), (5.987, .05), (6.5, .05)]:
             self.can.values[7] = raw
             self.sender.read_positions()
             self.assertAlmostEqual(self.sender.latest_gripper_position, expected, places=5)

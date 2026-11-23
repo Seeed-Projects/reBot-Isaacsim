@@ -45,8 +45,8 @@ class FakeControlTests(unittest.TestCase):
 
     def test_gripper_mapping_accepts_either_encoder_direction(self):
         self.assertAlmostEqual(app.gripper_sim_position(-0.4, -0.4, 6), 0)
-        self.assertAlmostEqual(app.gripper_sim_position(6, -0.4, 6), 0.045)
-        self.assertAlmostEqual(app.gripper_sim_position(2.8, 6, -0.4), 0.0225)
+        self.assertAlmostEqual(app.gripper_sim_position(6, -0.4, 6), 0.05)
+        self.assertAlmostEqual(app.gripper_sim_position(2.8, 6, -0.4), 0.025)
         with self.assertRaises(ValueError):
             app.gripper_sim_position(0, 0, 0)
 

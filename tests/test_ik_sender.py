@@ -30,7 +30,7 @@ class TestIKSender(unittest.TestCase):
         self.sender._handle_command("q 10 20 30 0 0 0")
         np.testing.assert_allclose(self.sender.q_prev[:6], np.radians([10, 20, 30, 0, 0, 0]))
         pkt = self.packets()[-1]
-        self.assertAlmostEqual(pkt["gripper_position"], 0.0225)
+        self.assertAlmostEqual(pkt["gripper_position"], 0.025)
         np.testing.assert_allclose(pkt["joint_positions"], -self.sender.q_prev[:6])
 
     def test_position_command_preserves_last_command_orientation(self):
