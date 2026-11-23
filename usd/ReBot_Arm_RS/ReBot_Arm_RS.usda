@@ -64,8 +64,8 @@ def Xform "ReBot_Arm_RS" (
 
                                         over "gripper_left"
                                         {
-                                            float3 physics:diagonalInertia = (0.0000093078, 0.00000950146, 0.0000109877965)
-                                            quatf physics:principalAxes = (0.70710677, 0, 0.70710677, 0)
+                                            float3 physics:diagonalInertia = (0.000016944177, 0.000032911346, 0.00003829315)
+                                            quatf physics:principalAxes = (0.6027694, 0.02540237, 0.7487486, 0.2745893)
 
                                             over "gripper_left"
                                             {
@@ -75,8 +75,8 @@ def Xform "ReBot_Arm_RS" (
 
                                         over "gripper_right"
                                         {
-                                            float3 physics:diagonalInertia = (0.0000093078, 0.00000950146, 0.0000109877965)
-                                            quatf physics:principalAxes = (0.70710677, 0, 0.70710677, 0)
+                                            float3 physics:diagonalInertia = (0.000016944177, 0.000032911346, 0.00003829315)
+                                            quatf physics:principalAxes = (0.02540237, 0.6027694, 0.2745893, 0.7487486)
 
                                             over "gripper_right"
                                             {

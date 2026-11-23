@@ -162,7 +162,7 @@ def Xform "ReBot_Arm_RS"
         {
             point3f physics:centerOfMass = (0.0000028764189, -0.00012230249, 0.024337612)
             float3 physics:diagonalInertia = (0.0013304, 0.00213119, 0.00275877)
-            float physics:mass = 1.1774
+            float physics:mass = 1.2013
             quatf physics:principalAxes = (1, 0, -0, 0.0000062438353)
 
             over "base_link_1" (
@@ -178,7 +178,7 @@ def Xform "ReBot_Arm_RS"
             {
                 point3f physics:centerOfMass = (0.008176523, 0.0012258422, 0.033141967)
                 float3 physics:diagonalInertia = (0.00015464, 0.0002134129, 0.0002728171)
-                float physics:mass = 0.4655
+                float physics:mass = 0.4658
                 quatf physics:principalAxes = (-0.31977478, 0.63066953, 0.63066953, 0.31977478)
 
                 over "link1_1" (
@@ -192,9 +192,9 @@ def Xform "ReBot_Arm_RS"
                     prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
                 )
                 {
-                    point3f physics:centerOfMass = (-0.11786481, -0.0034222642, -0.027155194)
+                    point3f physics:centerOfMass = (-0.06463431, 0.020291645, -0.027155194)
                     float3 physics:diagonalInertia = (0.000733734, 0.012559864, 0.012813883)
-                    float physics:mass = 1.552
+                    float physics:mass = 1.9641
                     quatf physics:principalAxes = (0.9999968, 0.0025189344, -0.00035218598, -0.000019105386)
 
                     over "link2" (
@@ -208,9 +208,9 @@ def Xform "ReBot_Arm_RS"
                         prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
                     )
                     {
-                        point3f physics:centerOfMass = (0.10342716, -0.06641379, -0.027106868)
+                        point3f physics:centerOfMass = (0.08652125, -0.039828688, -0.027106868)
                         float3 physics:diagonalInertia = (0.00046756444, 0.006327153, 0.006482512)
-                        float physics:mass = 1.252
+                        float physics:mass = 1.0273
                         quatf physics:principalAxes = (0.9999889, 0.0009913049, 0.0035441353, -0.0029454725)
 
                         over "link3" (
@@ -224,9 +224,9 @@ def Xform "ReBot_Arm_RS"
                             prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
                         )
                         {
-                            point3f physics:centerOfMass = (0.047554456, -0.04411135, -0.031411193)
+                            point3f physics:centerOfMass = (0.03795576, -0.031245155, -0.031411193)
                             float3 physics:diagonalInertia = (0.00032324076, 0.00066742, 0.0008891992)
-                            float physics:mass = 0.46
+                            float physics:mass = 0.6781
                             quatf physics:principalAxes = (-0.6839188, 0.6839188, -0.17959702, -0.17959702)
 
                             over "link4" (
@@ -240,9 +240,9 @@ def Xform "ReBot_Arm_RS"
                                 prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
                             )
                             {
-                                point3f physics:centerOfMass = (0.011440062, 0.000004790774, 0.038048748)
+                                point3f physics:centerOfMass = (-0.0061875647, -0.011640246, 0.038048748)
                                 float3 physics:diagonalInertia = (0.00005295596, 0.000055153945, 0.00007345979)
-                                float physics:mass = 0.20120457
+                                float physics:mass = 0.5341
                                 quatf physics:principalAxes = (0.7217615, 0.0017204558, 0.6921357, -0.0023510843)
 
                                 over "link5" (
@@ -272,9 +272,9 @@ def Xform "ReBot_Arm_RS"
                                         prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
                                     )
                                     {
-                                        point3f physics:centerOfMass = (-0.11275169, 0.00012844308, -0.0000057260245)
+                                        point3f physics:centerOfMass = (-0.107557036, 0.00548443, 0.007347541)
                                         float3 physics:diagonalInertia = (0.00015825892, 0.00037353695, 0.00045357412)
-                                        float physics:mass = 0.65
+                                        float physics:mass = 0.4678
                                         quatf physics:principalAxes = (-0.0019646983, 0.70729434, 0.7068878, -0.006368091)
 
                                         over "gripper_end" (
@@ -288,10 +288,10 @@ def Xform "ReBot_Arm_RS"
                                             prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
                                         )
                                         {
-                                            point3f physics:centerOfMass = (-0.0021800871, 0.018709036, 0.009321886)
-                                            float3 physics:diagonalInertia = (0.0000093078, 0.00000950146, 0.0000109877965)
-                                            float physics:mass = 0.0752
-                                            quatf physics:principalAxes = (0.70710677, 0, 0.70710677, 0)
+                                            point3f physics:centerOfMass = (-0.0043521947, 0.028872197, 0.0074810362)
+                                            float3 physics:diagonalInertia = (0.000016944177, 0.000032911346, 0.00003829315)
+                                            float physics:mass = 0.0559
+                                            quatf physics:principalAxes = (0.6027694, 0.02540237, 0.7487486, 0.2745893)
 
                                             over "gripper_left" (
                                                 prepend apiSchemas = ["PhysicsCollisionAPI", "NewtonCollisionAPI", "PhysicsMeshCollisionAPI", "NewtonMeshCollisionAPI"]
@@ -305,10 +305,10 @@ def Xform "ReBot_Arm_RS"
                                             prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
                                         )
                                         {
-                                            point3f physics:centerOfMass = (0.0021800871, -0.018709036, 0.009321886)
-                                            float3 physics:diagonalInertia = (0.0000093078, 0.00000950146, 0.0000109877965)
-                                            float physics:mass = 0.0752
-                                            quatf physics:principalAxes = (0.70710677, 0, 0.70710677, 0)
+                                            point3f physics:centerOfMass = (0.0043521947, -0.028872197, 0.0074810362)
+                                            float3 physics:diagonalInertia = (0.000016944177, 0.000032911346, 0.00003829315)
+                                            float physics:mass = 0.0559
+                                            quatf physics:principalAxes = (0.02540237, 0.6027694, 0.2745893, 0.7487486)
 
                                             over "gripper_right" (
                                                 prepend apiSchemas = ["PhysicsCollisionAPI", "NewtonCollisionAPI", "PhysicsMeshCollisionAPI", "NewtonMeshCollisionAPI"]
